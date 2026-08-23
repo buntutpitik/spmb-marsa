@@ -1,7 +1,34 @@
 <?php
 
 return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Provider
+    |--------------------------------------------------------------------------
+    */
+
+    'enabled' => env('WA_ENABLED', false),
+    'provider' => env('WHATSAPP_PROVIDER', 'fake'),
+
+    'providers' => [
+        'fake' => [
+            'driver' => App\Services\WhatsApp\FakeWhatsAppProvider::class,
+        ],
+
+        'meta' => [
+            'driver' => App\Services\MetaWhatsappProvider::class,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Templates
+    |--------------------------------------------------------------------------
+    */
+
     'templates' => [
+
         'registration_success' => [
             'name' => env(
                 'META_WA_TEMPLATE_REGISTRATION_SUCCESS',
@@ -56,5 +83,7 @@ return [
                 'id'
             ),
         ],
+
     ],
+
 ];

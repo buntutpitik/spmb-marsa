@@ -4,13 +4,16 @@ namespace App\Services;
 
 use App\Models\WhatsappLog;
 use Illuminate\Support\Facades\DB;
+
+use App\Contracts\WhatsAppProvider;
+
 use InvalidArgumentException;
 use Throwable;
 
 class WhatsappService
 {
     public function __construct(
-        protected MetaWhatsappProvider $provider
+        protected WhatsAppProvider $provider
     ) {
     }
 

@@ -4,10 +4,13 @@ namespace App\Services;
 
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+
 use InvalidArgumentException;
 use RuntimeException;
 
-class MetaWhatsappProvider
+use App\Contracts\WhatsAppProvider;
+
+class MetaWhatsappProvider implements WhatsAppProvider
 {
     public function __construct(
         protected WhatsappPhoneNormalizer $phoneNormalizer
@@ -15,10 +18,10 @@ class MetaWhatsappProvider
     }
 
     public function sendTemplate(
-        string $phone,
-        string $templateName,
+        string $recipient,
+        string $template,
         string $languageCode = 'id',
-        array $bodyParameters = []
+        array $parameters = []
     ): array {
         if (! config('services.whatsapp.enabled')) {
             throw new RuntimeException(
@@ -52,17 +55,17 @@ class MetaWhatsappProvider
             );
         }
 
-        $phone = $this->phoneNormalizer->normalize($phone);
+        $recipient = $this->phoneNormalizer->normalize($recipient);
 
-        $template = [
-            'name' => $templateName,
+        $templatePayload = [
+            'name' => $template,
             'language' => [
                 'code' => $languageCode,
             ],
         ];
 
-        if ($bodyParameters !== []) {
-            $template['components'] = [
+        if ($parameters !== []) {
+            $templatePayload['components'] = [
                 [
                     'type' => 'body',
                     'parameters' => array_map(
@@ -70,7 +73,7 @@ class MetaWhatsappProvider
                             'type' => 'text',
                             'text' => (string) $value,
                         ],
-                        $bodyParameters
+                        $parameters
                     ),
                 ],
             ];
@@ -79,9 +82,9 @@ class MetaWhatsappProvider
         $payload = [
             'messaging_product' => 'whatsapp',
             'recipient_type' => 'individual',
-            'to' => $phone,
+            'to' => $recipient,
             'type' => 'template',
-            'template' => $template,
+            'template' => $templatePayload,
         ];
 
         $url = sprintf(

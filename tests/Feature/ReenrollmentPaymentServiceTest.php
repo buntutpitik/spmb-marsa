@@ -8,10 +8,13 @@ use App\Models\PpdbPeriod;
 use App\Models\Registration;
 use App\Models\School;
 use App\Models\User;
+use App\Models\WhatsappLog;
+use App\Jobs\SendWhatsappTemplateJob;
 use App\Services\ReenrollmentPaymentService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -34,6 +37,8 @@ class ReenrollmentPaymentServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Queue::fake();
 
         Carbon::setTestNow(
             Carbon::parse(
@@ -220,6 +225,36 @@ class ReenrollmentPaymentServiceTest extends TestCase
                 'to_status' => 'REENROLLED',
                 'changed_by' => $this->user->id,
             ]
+        );
+        $whatsappLog = WhatsappLog::query()
+            ->where('registration_id', $registration->id)
+            ->where('message_type', 'REENROLLMENT_COMPLETE')
+            ->firstOrFail();
+
+        $this->assertSame(
+            'PENDING',
+            $whatsappLog->status
+        );
+
+        $this->assertSame(
+            0,
+            $whatsappLog->attempt_count
+        );
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            function ($job) use (
+                $whatsappLog,
+                $registration
+            ) {
+                return $job->whatsappLogId === $whatsappLog->id
+                    && $job->templateName === 'reenrollment_complete'
+                    && $job->languageCode === 'id'
+                    && $job->bodyParameters === [
+                        $registration->full_name,
+                        $registration->registration_number,
+                    ];
+            }
         );
     }
 

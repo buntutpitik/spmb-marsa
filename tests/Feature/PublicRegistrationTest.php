@@ -4,10 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
+use App\Jobs\SendWhatsappTemplateJob;
+use App\Models\WhatsappLog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+
 
 class PublicRegistrationTest extends TestCase
 {
@@ -22,6 +26,8 @@ class PublicRegistrationTest extends TestCase
 
     public function test_public_registration_can_be_submitted_end_to_end(): void
     {
+        Queue::fake();
+
         /*
          * =========================================================
          * 1. Simulasikan tanggal jalur KHUSUS.
@@ -398,6 +404,47 @@ class PublicRegistrationTest extends TestCase
             ->where('period_id', $periodId)
             ->where('nik', '3399999999999999')
             ->firstOrFail();
+
+        /*
+         * =========================================================
+         * 16A. WhatsApp notification.
+         * =========================================================
+         */
+        $whatsappLog = WhatsappLog::query()
+            ->where('registration_id', $registration->id)
+            ->where('message_type', 'REGISTRATION_SUCCESS')
+            ->firstOrFail();
+
+        $this->assertSame(
+            '081299999999',
+            $whatsappLog->phone
+        );
+
+        $this->assertSame(
+            'PENDING',
+            $whatsappLog->status
+        );
+
+        $this->assertSame(
+            0,
+            $whatsappLog->attempt_count
+        );
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            function ($job) use (
+                $whatsappLog,
+                $registration
+            ) {
+                return $job->whatsappLogId === $whatsappLog->id
+                    && $job->templateName === 'registration_success'
+                    && $job->languageCode === 'id'
+                    && $job->bodyParameters === [
+                        $registration->full_name,
+                        $registration->registration_number,
+                    ];
+            }
+        );
 
         /*
          * =========================================================

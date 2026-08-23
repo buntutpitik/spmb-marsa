@@ -8,10 +8,13 @@ use App\Models\PpdbPeriod;
 use App\Models\School;
 use App\Models\Registration;
 use App\Models\User;
+use App\Models\WhatsappLog;
+use App\Jobs\SendWhatsappTemplateJob;
 use App\Services\RegistrationStatusService;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -34,6 +37,8 @@ class RegistrationStatusServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Queue::fake();
 
         Carbon::setTestNow(
             Carbon::parse(
@@ -148,6 +153,20 @@ class RegistrationStatusServiceTest extends TestCase
                 'action' => 'CHANGE_STATUS',
             ]
         );
+        $whatsappLog = WhatsappLog::query()
+            ->where('registration_id', $registration->id)
+            ->where('message_type', 'REGISTRATION_ACCEPTED')
+            ->firstOrFail();
+
+        $this->assertSame('PENDING', $whatsappLog->status);
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            fn ($job) =>
+                $job->whatsappLogId === $whatsappLog->id
+                && $job->templateName === 'registration_accepted'
+                && $job->languageCode === 'id'
+        );
     }
 
     public function test_registered_can_be_rejected(): void
@@ -189,6 +208,20 @@ class RegistrationStatusServiceTest extends TestCase
                 'notes' => 'Tidak lolos seleksi.',
             ]
         );
+        $whatsappLog = WhatsappLog::query()
+            ->where('registration_id', $registration->id)
+            ->where('message_type', 'REGISTRATION_REJECTED')
+            ->firstOrFail();
+
+        $this->assertSame('PENDING', $whatsappLog->status);
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            fn ($job) =>
+                $job->whatsappLogId === $whatsappLog->id
+                && $job->templateName === 'registration_rejected'
+                && $job->languageCode === 'id'
+        );
     }
 
     public function test_registered_can_be_withdrawn(): void
@@ -228,6 +261,20 @@ class RegistrationStatusServiceTest extends TestCase
                 'to_status' => 'WITHDRAWN',
                 'changed_by' => $this->user->id,
             ]
+        );
+        $whatsappLog = WhatsappLog::query()
+            ->where('registration_id', $registration->id)
+            ->where('message_type', 'REGISTRATION_WITHDRAWN')
+            ->firstOrFail();
+
+        $this->assertSame('PENDING', $whatsappLog->status);
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            fn ($job) =>
+                $job->whatsappLogId === $whatsappLog->id
+                && $job->templateName === 'registration_withdrawn'
+                && $job->languageCode === 'id'
         );
     }
 
