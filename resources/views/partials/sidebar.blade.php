@@ -213,8 +213,17 @@
                     Komunikasi
                 </div>
 
-                <a href="#" class="sidebar-link">
-                    <span class="sidebar-icon">
+                <a
+                    href="{{ route('admin.whatsapp-logs.index') }}"
+                    class="{{ request()->routeIs('admin.whatsapp-logs.*')
+                        ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'
+                        : 'sidebar-link' }}"
+                >
+                    <span
+                        class="{{ request()->routeIs('admin.whatsapp-logs.*')
+                            ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
+                            : 'sidebar-icon' }}"
+                    >
                         <i
                             data-lucide="message-circle-more"
                             class="h-4 w-4"

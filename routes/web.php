@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\ReenrollmentFinanceRecapController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\RecapController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\WhatsappLogController;
 
 use App\Http\Controllers\Admin\RegistrationExportController;
 use App\Http\Controllers\Admin\AdmissionExportController;
@@ -217,6 +218,17 @@ Route::prefix('admin')
             '/laporan/rekap-referral/pdf',
             [ReferralRecapPdfController::class, 'download']
         )->name('reports.referral-recap.pdf');
+
+        /*
+        |--------------------------------------------------------------------------
+        | WhatsApp
+        |--------------------------------------------------------------------------
+        */
+
+        Route::get(
+            '/whatsapp',
+            [WhatsappLogController::class, 'index']
+        )->name('whatsapp-logs.index');
                 
         /*
         |--------------------------------------------------------------------------
