@@ -34,6 +34,7 @@ use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\PpdbPeriodController;
+use App\Http\Controllers\Admin\SchoolProfileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -466,5 +467,19 @@ Route::prefix('admin')
                 '/activity-logs',
                 [ActivityLogController::class, 'index']
             )->name('activity-logs.index');
+
+            /*
+            * Profil Sekolah
+            */
+
+            Route::get(
+                '/pengaturan/profil-sekolah',
+                [SchoolProfileController::class, 'edit']
+            )->name('school-profile.edit');
+
+            Route::put(
+                '/pengaturan/profil-sekolah',
+                [SchoolProfileController::class, 'update']
+            )->name('school-profile.update');
         });
     });
