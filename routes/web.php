@@ -31,6 +31,7 @@ use App\Http\Controllers\Admin\WhatsappLogController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicRegistrationController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -320,6 +321,35 @@ Route::prefix('admin')
         Route::middleware(
             'role:SUPERADMIN'
         )->group(function () {
+
+            /*
+             * Users
+             */
+
+            Route::get(
+                '/users',
+                [UserController::class, 'index']
+            )->name('users.index');
+
+            Route::post(
+                '/users',
+                [UserController::class, 'store']
+            )->name('users.store');
+
+            Route::put(
+                '/users/{user}',
+                [UserController::class, 'update']
+            )->name('users.update');
+
+            Route::patch(
+                '/users/{user}/toggle-active',
+                [UserController::class, 'toggleActive']
+            )->name('users.toggle-active');
+
+            Route::patch(
+                '/users/{user}/reset-password',
+                [UserController::class, 'resetPassword']
+            )->name('users.reset-password');
 
             /*
              * Pengaturan Utama

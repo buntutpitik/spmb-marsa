@@ -244,6 +244,26 @@
                     <div class="space-y-1">
 
                         <a
+                            href="{{ route('admin.users.index') }}"
+                            class="{{ request()->routeIs('admin.users.*')
+                                ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'
+                                : 'sidebar-link' }}"
+                        >
+                            <span
+                                class="{{ request()->routeIs('admin.users.*')
+                                    ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
+                                    : 'sidebar-icon' }}"
+                            >
+                                <i
+                                    data-lucide="users"
+                                    class="h-4 w-4"
+                                ></i>
+                            </span>
+
+                            Users
+                        </a>
+
+                        <a
                             href="{{ route('admin.settings.index') }}"
                             class="{{ request()->routeIs('admin.settings.*')
                                 ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'

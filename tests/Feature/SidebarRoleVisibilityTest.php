@@ -22,37 +22,55 @@ class SidebarRoleVisibilityTest extends TestCase
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertSee('Pengaturan');
+            ->assertSee('Pengaturan')
+            ->assertSee('Users');
     }
 
-    public function test_admin_does_not_see_settings_menu(): void
+    public function test_admin_does_not_see_system_menu(): void
     {
         $user = $this->makeUser('ADMIN');
 
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertDontSee('Pengaturan');
+            ->assertDontSee('Pengaturan')
+            ->assertDontSee('Users');
     }
 
-    public function test_panitia_does_not_see_settings_menu(): void
+    public function test_panitia_does_not_see_system_menu(): void
     {
         $user = $this->makeUser('PANITIA');
 
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertDontSee('Pengaturan');
+            ->assertDontSee('Pengaturan')
+            ->assertDontSee('Users');
     }
 
-    public function test_bendahara_does_not_see_settings_menu(): void
+    public function test_bendahara_does_not_see_system_menu(): void
     {
         $user = $this->makeUser('BENDAHARA');
 
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertDontSee('Pengaturan');
+            ->assertDontSee('Pengaturan')
+            ->assertDontSee('Users');
+    }
+
+    public function test_users_menu_is_active_only_on_users_page(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $response = $this
+            ->actingAs($user)
+            ->get('/admin/users');
+
+        $response
+            ->assertOk()
+            ->assertSee('Users')
+            ->assertSee('bg-emerald-50', false);
     }
 
     public function test_all_internal_roles_see_common_operational_menu(): void
