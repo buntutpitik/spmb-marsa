@@ -32,6 +32,8 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\PpdbPeriodController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -441,5 +443,28 @@ Route::prefix('admin')
                 '/pengaturan/asal-sekolah/{originSchool}/toggle',
                 [OriginSchoolController::class, 'toggle']
             )->name('origin-schools.toggle');
+
+            /*
+            * Periode SPMB
+            */
+
+            Route::get(
+                '/pengaturan/periode',
+                [PpdbPeriodController::class, 'index']
+            )->name('periods.index');
+
+            Route::put(
+                '/pengaturan/periode/{period}',
+                [PpdbPeriodController::class, 'update']
+            )->name('periods.update');
+
+            /*
+            * Activity Log
+            */
+
+            Route::get(
+                '/activity-logs',
+                [ActivityLogController::class, 'index']
+            )->name('activity-logs.index');
         });
     });

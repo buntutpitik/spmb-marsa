@@ -25,7 +25,11 @@ class RegistrationStatusController extends Controller
                 $registration,
                 $request->validated('status'),
                 $request->user(),
-                $request->validated('notes')
+                $request->validated('notes'),
+                [
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]
             );
         } catch (InvalidArgumentException $exception) {
             return redirect()

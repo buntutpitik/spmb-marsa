@@ -766,6 +766,53 @@ class AdminRoleAccessTest extends TestCase
         }
     }
 
+    public function test_status_change_records_ip_address_and_user_agent(): void
+    {
+        $user = $this->makeUser('ADMIN');
+
+        $fixture = $this->makeRegistrationFixture(
+            'REGISTERED',
+            $user
+        );
+
+        $registration = $fixture['registration'];
+
+        $this->actingAs($user)
+            ->withServerVariables([
+                'REMOTE_ADDR' => '203.0.113.25',
+                'HTTP_USER_AGENT' =>
+                    'SPMB-MARSA-Audit-Test/1.0',
+            ])
+            ->patch(
+                route(
+                    'admin.registrations.status.update',
+                    $registration
+                ),
+                [
+                    'status' => 'ACCEPTED',
+                    'notes' => 'Test audit context.',
+                ]
+            )
+            ->assertRedirect(
+                route(
+                    'admin.registrations.show',
+                    $registration
+                )
+            );
+
+        $this->assertDatabaseHas(
+            'activity_logs',
+            [
+                'user_id' => $user->id,
+                'registration_id' => $registration->id,
+                'action' => 'CHANGE_STATUS',
+                'ip_address' => '203.0.113.25',
+                'user_agent' =>
+                    'SPMB-MARSA-Audit-Test/1.0',
+            ]
+        );
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Helpers

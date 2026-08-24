@@ -28,10 +28,7 @@
                 Tutup sidebar
             </span>
 
-            <i
-                data-lucide="x"
-                class="h-5 w-5"
-            ></i>
+            <i data-lucide="x" class="h-5 w-5"></i>
         </button>
     </div>
 
@@ -55,10 +52,7 @@
                             ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                             : 'sidebar-icon' }}"
                     >
-                        <i
-                            data-lucide="layout-dashboard"
-                            class="h-4 w-4"
-                        ></i>
+                        <i data-lucide="layout-dashboard" class="h-4 w-4"></i>
                     </span>
 
                     Dashboard
@@ -72,7 +66,6 @@
                 </div>
 
                 <div class="space-y-1">
-
                     <a
                         href="{{ route('admin.registrations.index') }}"
                         class="{{ request()->routeIs('admin.registrations.*')
@@ -84,10 +77,7 @@
                                 ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                 : 'sidebar-icon' }}"
                         >
-                            <i
-                                data-lucide="user-plus"
-                                class="h-4 w-4"
-                            ></i>
+                            <i data-lucide="user-plus" class="h-4 w-4"></i>
                         </span>
 
                         Pendaftaran
@@ -104,10 +94,7 @@
                                 ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                 : 'sidebar-icon' }}"
                         >
-                            <i
-                                data-lucide="circle-check-big"
-                                class="h-4 w-4"
-                            ></i>
+                            <i data-lucide="circle-check-big" class="h-4 w-4"></i>
                         </span>
 
                         Penerimaan
@@ -124,15 +111,11 @@
                                 ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                 : 'sidebar-icon' }}"
                         >
-                            <i
-                                data-lucide="wallet-cards"
-                                class="h-4 w-4"
-                            ></i>
+                            <i data-lucide="wallet-cards" class="h-4 w-4"></i>
                         </span>
 
                         Daftar Ulang
                     </a>
-
                 </div>
             </div>
 
@@ -143,7 +126,6 @@
                 </div>
 
                 <div class="space-y-1">
-
                     <a
                         href="{{ route('admin.recaps.index') }}"
                         class="{{ request()->routeIs('admin.recaps.*')
@@ -155,10 +137,7 @@
                                 ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                 : 'sidebar-icon' }}"
                         >
-                            <i
-                                data-lucide="chart-column-big"
-                                class="h-4 w-4"
-                            ></i>
+                            <i data-lucide="chart-column-big" class="h-4 w-4"></i>
                         </span>
 
                         Rekap
@@ -175,10 +154,7 @@
                                 ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                 : 'sidebar-icon' }}"
                         >
-                            <i
-                                data-lucide="chart-no-axes-combined"
-                                class="h-4 w-4"
-                            ></i>
+                            <i data-lucide="chart-no-axes-combined" class="h-4 w-4"></i>
                         </span>
 
                         Analitik
@@ -195,15 +171,11 @@
                                 ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                 : 'sidebar-icon' }}"
                         >
-                            <i
-                                data-lucide="file-text"
-                                class="h-4 w-4"
-                            ></i>
+                            <i data-lucide="file-text" class="h-4 w-4"></i>
                         </span>
 
                         Laporan
                     </a>
-
                 </div>
             </div>
 
@@ -224,10 +196,7 @@
                             ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                             : 'sidebar-icon' }}"
                     >
-                        <i
-                            data-lucide="message-circle-more"
-                            class="h-4 w-4"
-                        ></i>
+                        <i data-lucide="message-circle-more" class="h-4 w-4"></i>
                     </span>
 
                     WhatsApp
@@ -242,7 +211,6 @@
                     </div>
 
                     <div class="space-y-1">
-
                         <a
                             href="{{ route('admin.users.index') }}"
                             class="{{ request()->routeIs('admin.users.*')
@@ -254,13 +222,27 @@
                                     ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                     : 'sidebar-icon' }}"
                             >
-                                <i
-                                    data-lucide="users"
-                                    class="h-4 w-4"
-                                ></i>
+                                <i data-lucide="users" class="h-4 w-4"></i>
                             </span>
 
                             Users
+                        </a>
+
+                        <a
+                            href="{{ route('admin.activity-logs.index') }}"
+                            class="{{ request()->routeIs('admin.activity-logs.*')
+                                ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'
+                                : 'sidebar-link' }}"
+                        >
+                            <span
+                                class="{{ request()->routeIs('admin.activity-logs.*')
+                                    ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
+                                    : 'sidebar-icon' }}"
+                            >
+                                <i data-lucide="list-checks" class="h-4 w-4"></i>
+                            </span>
+
+                            Activity Log
                         </a>
 
                         <a
@@ -274,31 +256,24 @@
                                     ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
                                     : 'sidebar-icon' }}"
                             >
-                                <i
-                                    data-lucide="settings"
-                                    class="h-4 w-4"
-                                ></i>
+                                <i data-lucide="settings" class="h-4 w-4"></i>
                             </span>
 
                             Pengaturan
                         </a>
-
                     </div>
                 </div>
             @endif
-
         </nav>
     </div>
 
     <div class="border-t border-slate-100 p-4">
         <div class="rounded-2xl bg-slate-50 p-4">
-
             <div class="text-xs font-medium text-slate-500">
                 Periode Aktif
             </div>
 
             <div class="mt-1 flex items-center gap-2">
-
                 @if ($activePeriod)
                     <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
 
@@ -312,9 +287,7 @@
                         Belum diatur
                     </span>
                 @endif
-
             </div>
-
         </div>
     </div>
 </aside>

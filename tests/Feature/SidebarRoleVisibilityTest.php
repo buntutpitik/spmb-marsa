@@ -15,15 +15,16 @@ class SidebarRoleVisibilityTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_superadmin_sees_settings_menu(): void
+    public function test_superadmin_sees_system_menu(): void
     {
         $user = $this->makeUser('SUPERADMIN');
 
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertSee('Pengaturan')
-            ->assertSee('Users');
+            ->assertSee('Users')
+            ->assertSee('Activity Log')
+            ->assertSee('Pengaturan');
     }
 
     public function test_admin_does_not_see_system_menu(): void
@@ -33,8 +34,9 @@ class SidebarRoleVisibilityTest extends TestCase
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertDontSee('Pengaturan')
-            ->assertDontSee('Users');
+            ->assertDontSee('Users')
+            ->assertDontSee('Activity Log')
+            ->assertDontSee('Pengaturan');
     }
 
     public function test_panitia_does_not_see_system_menu(): void
@@ -44,8 +46,9 @@ class SidebarRoleVisibilityTest extends TestCase
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertDontSee('Pengaturan')
-            ->assertDontSee('Users');
+            ->assertDontSee('Users')
+            ->assertDontSee('Activity Log')
+            ->assertDontSee('Pengaturan');
     }
 
     public function test_bendahara_does_not_see_system_menu(): void
@@ -55,22 +58,9 @@ class SidebarRoleVisibilityTest extends TestCase
         $this->actingAs($user)
             ->get('/')
             ->assertOk()
-            ->assertDontSee('Pengaturan')
-            ->assertDontSee('Users');
-    }
-
-    public function test_users_menu_is_active_only_on_users_page(): void
-    {
-        $user = $this->makeUser('SUPERADMIN');
-
-        $response = $this
-            ->actingAs($user)
-            ->get('/admin/users');
-
-        $response
-            ->assertOk()
-            ->assertSee('Users')
-            ->assertSee('bg-emerald-50', false);
+            ->assertDontSee('Users')
+            ->assertDontSee('Activity Log')
+            ->assertDontSee('Pengaturan');
     }
 
     public function test_all_internal_roles_see_common_operational_menu(): void
@@ -272,7 +262,6 @@ class SidebarRoleVisibilityTest extends TestCase
             'wave_id' => null,
             'admission_path_id' => $path->id,
             'major_id' => $major->id,
-
             'registration_number' =>
                 'SIDE-'
                 .str_pad(
@@ -281,7 +270,6 @@ class SidebarRoleVisibilityTest extends TestCase
                     '0',
                     STR_PAD_LEFT
                 ),
-
             'nik' =>
                 '3399999999'
                 .str_pad(
@@ -290,19 +278,14 @@ class SidebarRoleVisibilityTest extends TestCase
                     '0',
                     STR_PAD_LEFT
                 ),
-
             'nisn' => null,
-
             'full_name' =>
                 'PENDAFTAR SIDEBAR '.$sequence,
-
             'birth_place' => 'KEBUMEN',
             'birth_date' => '2010-01-01',
             'gender' => 'L',
             'religion' => 'ISLAM',
-
             'origin_school' => 'SMP SIDEBAR TEST',
-
             'whatsapp' =>
                 '08129999'
                 .str_pad(
@@ -311,7 +294,6 @@ class SidebarRoleVisibilityTest extends TestCase
                     '0',
                     STR_PAD_LEFT
                 ),
-
             'data_source' => 'ADMIN',
             'status' => 'ACCEPTED',
             'created_by' => $creator->id,

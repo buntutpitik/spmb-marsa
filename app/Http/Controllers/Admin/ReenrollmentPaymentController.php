@@ -27,7 +27,11 @@ class ReenrollmentPaymentController extends Controller
                 $request->user(),
                 $request->validated('payment_method'),
                 $request->validated('reference_number'),
-                $request->validated('notes')
+                $request->validated('notes'),
+                [
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]
             );
         } catch (InvalidArgumentException $exception) {
             return redirect()

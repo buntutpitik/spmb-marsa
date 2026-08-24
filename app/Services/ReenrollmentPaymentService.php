@@ -23,7 +23,8 @@ class ReenrollmentPaymentService
         ?User $receiver = null,
         ?string $paymentMethod = null,
         ?string $referenceNumber = null,
-        ?string $notes = null
+        ?string $notes = null,
+        array $auditContext = []
     ): ReenrollmentPayment {
         if ($amount <= 0) {
             throw new InvalidArgumentException(
@@ -37,6 +38,7 @@ class ReenrollmentPaymentService
             $receiver,
             $paymentMethod,
             $referenceNumber,
+            $auditContext,
             $notes
         ) {
             /*
@@ -115,7 +117,7 @@ class ReenrollmentPaymentService
             /*
              * Activity log pembayaran.
              */
-            ActivityLog::create([
+           ActivityLog::create([
                 'user_id' => $receiver?->id,
                 'registration_id' => $registration->id,
                 'action' => 'REENROLLMENT_PAYMENT',
@@ -127,6 +129,10 @@ class ReenrollmentPaymentService
                     'total_paid' => $newTotalPaid,
                     'remaining' => $newRemaining,
                 ],
+                'ip_address' =>
+                    $auditContext['ip_address'] ?? null,
+                'user_agent' =>
+                    $auditContext['user_agent'] ?? null,
             ]);
 
             /*
@@ -141,7 +147,8 @@ class ReenrollmentPaymentService
                     $registration,
                     'REENROLLED',
                     $receiver,
-                    'Pembayaran daftar ulang telah lunas.'
+                    'Pembayaran daftar ulang telah lunas.',
+                    $auditContext
                 );
 
                 $registration->refresh();

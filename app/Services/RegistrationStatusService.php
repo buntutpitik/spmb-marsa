@@ -41,7 +41,8 @@ class RegistrationStatusService
         Registration $registration,
         string $newStatus,
         ?User $user = null,
-        ?string $notes = null
+        ?string $notes = null,
+        array $auditContext = []
     ): Registration {
         $newStatus = strtoupper(trim($newStatus));
 
@@ -49,7 +50,8 @@ class RegistrationStatusService
             $registration,
             $newStatus,
             $user,
-            $notes
+            $notes,
+            $auditContext
         ) {
             /*
              * Ambil ulang sekaligus lock registration.
@@ -128,6 +130,12 @@ class RegistrationStatusService
                     'from_status' => $oldStatus,
                     'to_status' => $newStatus,
                 ],
+
+                'ip_address' =>
+                    $auditContext['ip_address'] ?? null,
+
+                'user_agent' =>
+                    $auditContext['user_agent'] ?? null,
             ]);
 
             /*

@@ -491,6 +491,69 @@ class AdminReenrollmentPaymentTest extends TestCase
         );
     }
 
+    public function test_full_payment_records_audit_context_on_payment_and_status_logs(): void
+    {
+        $registration = $this->makeRegistration(
+            'ACCEPTED'
+        );
+
+        $this->actingAs($this->admin)
+            ->withServerVariables([
+                'REMOTE_ADDR' => '203.0.113.30',
+                'HTTP_USER_AGENT' =>
+                    'SPMB-MARSA-Payment-Audit-Test/1.0',
+            ])
+            ->post(
+                route(
+                    'admin.registrations.reenrollment-payments.store',
+                    $registration
+                ),
+                [
+                    'amount' => 250000,
+                    'payment_method' => 'CASH',
+                    'notes' => 'Pelunasan audit context.',
+                ]
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(
+                route(
+                    'admin.registrations.show',
+                    $registration
+                )
+            );
+
+        $registration->refresh();
+
+        $this->assertSame(
+            'REENROLLED',
+            $registration->status
+        );
+
+        $this->assertDatabaseHas(
+            'activity_logs',
+            [
+                'user_id' => $this->admin->id,
+                'registration_id' => $registration->id,
+                'action' => 'REENROLLMENT_PAYMENT',
+                'ip_address' => '203.0.113.30',
+                'user_agent' =>
+                    'SPMB-MARSA-Payment-Audit-Test/1.0',
+            ]
+        );
+
+        $this->assertDatabaseHas(
+        'activity_logs',
+        [
+            'user_id' => $this->admin->id,
+            'registration_id' => $registration->id,
+            'action' => 'CHANGE_STATUS',
+            'ip_address' => '203.0.113.30',
+            'user_agent' =>
+                'SPMB-MARSA-Payment-Audit-Test/1.0',
+        ]
+    );
+}
+
     private function makeRegistration(
         string $status
     ): Registration {
