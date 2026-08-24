@@ -322,9 +322,17 @@ class PublicRegistrationTest extends TestCase
          * -> database
          * =========================================================
          */
-        $response = $this->post(
-            route('registration.store'),
-            [
+        $response = $this
+            ->withServerVariables([
+                'REMOTE_ADDR' => '203.0.113.40',
+            ])
+            ->withHeader(
+                'User-Agent',
+                'SPMB-MARSA-Public-Audit-Test/1.0'
+            )
+            ->post(
+                route('registration.store'),
+                [
                 'period_id' => $periodId,
                 'major_id' => $majorId,
 
@@ -641,8 +649,12 @@ class PublicRegistrationTest extends TestCase
         $this->assertDatabaseHas(
             'activity_logs',
             [
+                'user_id' => null,
                 'registration_id' => $registration->id,
                 'action' => 'CREATE_REGISTRATION',
+                'ip_address' => '203.0.113.40',
+                'user_agent' =>
+                    'SPMB-MARSA-Public-Audit-Test/1.0',
             ]
         );
 

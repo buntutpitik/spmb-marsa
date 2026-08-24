@@ -86,7 +86,11 @@ class PublicRegistrationController extends Controller
         $registration = $this->registrationService->create(
             $request->validated(),
             null,
-            'Notifikasi pendaftaran berhasil.'
+            'Notifikasi pendaftaran berhasil.',
+            [
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]
         );
 
         return redirect()->route(

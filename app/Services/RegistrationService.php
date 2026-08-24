@@ -27,12 +27,14 @@ class RegistrationService
     public function create(
         array $data,
         ?User $creator = null,
-        ?string $whatsappMessage = null
+        ?string $whatsappMessage = null,
+        array $auditContext = []
     ): Registration {
         return DB::transaction(function () use (
             $data,
             $creator,
-            $whatsappMessage
+            $whatsappMessage,
+            $auditContext
         ) {
             /*
              * ---------------------------------------------------------
@@ -487,6 +489,12 @@ class RegistrationService
                     'special_program_ids' =>
                         $specialProgramIds->all(),
                 ],
+
+                'ip_address' =>
+                    $auditContext['ip_address'] ?? null,
+
+                'user_agent' =>
+                    $auditContext['user_agent'] ?? null,
             ]);
 
             /*

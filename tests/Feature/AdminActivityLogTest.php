@@ -16,6 +16,56 @@ class AdminActivityLogTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_activity_log_is_paginated_twenty_items_per_page(): void
+    {
+        $superadmin = $this->makeUser('SUPERADMIN');
+
+        for ($i = 1; $i <= 21; $i++) {
+            ActivityLog::query()->create([
+                'user_id' => $superadmin->id,
+                'registration_id' => null,
+                'action' => 'PAGINATION_TEST',
+                'description' => sprintf(
+                    'Aktivitas pagination %02d',
+                    $i
+                ),
+                'created_at' => now()
+                    ->addSeconds($i),
+            ]);
+        }
+
+        /*
+        * Page 1 berisi 20 log terbaru:
+        * 21 sampai 02.
+        *
+        * Log 01 harus berada di page 2.
+        */
+        $this->actingAs($superadmin)
+            ->get(
+                route('admin.activity-logs.index')
+            )
+            ->assertOk()
+            ->assertSee('Aktivitas pagination 21')
+            ->assertSee('Aktivitas pagination 02')
+            ->assertDontSee('Aktivitas pagination 01');
+
+        /*
+        * Page 2 hanya berisi log paling lama.
+        */
+        $this->actingAs($superadmin)
+            ->get(
+                route(
+                    'admin.activity-logs.index',
+                    [
+                        'page' => 2,
+                    ]
+                )
+            )
+            ->assertOk()
+            ->assertSee('Aktivitas pagination 01')
+            ->assertDontSee('Aktivitas pagination 21');
+    }
+
     public function test_guest_cannot_access_activity_log(): void
     {
         $this->get('/admin/activity-logs')
