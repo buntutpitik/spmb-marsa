@@ -58,7 +58,9 @@ class LoginController extends Controller
          */
         if (! $request->user()->hasRole(
             'SUPERADMIN',
-            'ADMIN'
+            'ADMIN',
+            'PANITIA',
+            'BENDAHARA'
         )) {
             Auth::logout();
 

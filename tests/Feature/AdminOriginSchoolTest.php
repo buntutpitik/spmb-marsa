@@ -32,19 +32,20 @@ class AdminOriginSchoolTest extends TestCase
             ->assertSee('Tambah Asal Sekolah');
     }
 
-    public function test_admin_can_access_origin_school_management(): void
+    public function test_non_superadmin_roles_cannot_access_origin_school_management(): void
     {
-        $user = $this->makeUser('ADMIN');
+        foreach ($this->nonSuperadminRoles() as $role) {
+            $user = $this->makeUser($role);
 
-        $this->actingAs($user)
-            ->get(route('admin.origin-schools.index'))
-            ->assertOk()
-            ->assertSee('Asal Sekolah');
+            $this->actingAs($user)
+                ->get(route('admin.origin-schools.index'))
+                ->assertForbidden();
+        }
     }
 
-    public function test_admin_can_create_origin_school(): void
+    public function test_superadmin_can_create_origin_school(): void
     {
-        $user = $this->makeUser('ADMIN');
+        $user = $this->makeUser('SUPERADMIN');
 
         $response = $this->actingAs($user)
             ->post(
@@ -73,6 +74,29 @@ class AdminOriginSchoolTest extends TestCase
         );
     }
 
+    public function test_non_superadmin_roles_cannot_create_origin_school(): void
+    {
+        foreach ($this->nonSuperadminRoles() as $role) {
+            $user = $this->makeUser($role);
+
+            $this->actingAs($user)
+                ->post(
+                    route('admin.origin-schools.store'),
+                    [
+                        'name' => 'SMP DILARANG '.$role,
+                        'type' => 'SMP',
+                        'sort_order' => 10,
+                    ]
+                )
+                ->assertForbidden();
+        }
+
+        $this->assertSame(
+            0,
+            OriginSchool::query()->count()
+        );
+    }
+
     public function test_new_origin_school_is_active_by_default(): void
     {
         $user = $this->makeUser('SUPERADMIN');
@@ -97,7 +121,7 @@ class AdminOriginSchoolTest extends TestCase
 
     public function test_duplicate_origin_school_name_is_rejected(): void
     {
-        $user = $this->makeUser('ADMIN');
+        $user = $this->makeUser('SUPERADMIN');
 
         OriginSchool::create([
             'name' => 'SMP DUPLIKAT',
@@ -131,9 +155,9 @@ class AdminOriginSchoolTest extends TestCase
         );
     }
 
-    public function test_admin_can_update_origin_school(): void
+    public function test_superadmin_can_update_origin_school(): void
     {
-        $user = $this->makeUser('ADMIN');
+        $user = $this->makeUser('SUPERADMIN');
 
         $school = OriginSchool::create([
             'name' => 'SMP NAMA LAMA',
@@ -173,9 +197,49 @@ class AdminOriginSchoolTest extends TestCase
         );
     }
 
-    public function test_admin_can_deactivate_origin_school(): void
+    public function test_non_superadmin_roles_cannot_update_origin_school(): void
     {
-        $user = $this->makeUser('ADMIN');
+        $school = OriginSchool::create([
+            'name' => 'SMP TIDAK BOLEH DIUBAH',
+            'type' => 'SMP',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        foreach ($this->nonSuperadminRoles() as $role) {
+            $user = $this->makeUser($role);
+
+            $this->actingAs($user)
+                ->put(
+                    route(
+                        'admin.origin-schools.update',
+                        $school
+                    ),
+                    [
+                        'name' => 'SMP HASIL UBAH '.$role,
+                        'type' => 'SMP',
+                        'sort_order' => 99,
+                    ]
+                )
+                ->assertForbidden();
+        }
+
+        $school->refresh();
+
+        $this->assertSame(
+            'SMP TIDAK BOLEH DIUBAH',
+            $school->name
+        );
+
+        $this->assertSame(
+            1,
+            $school->sort_order
+        );
+    }
+
+    public function test_superadmin_can_deactivate_origin_school(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
 
         $school = OriginSchool::create([
             'name' => 'SMP AKTIF',
@@ -204,7 +268,7 @@ class AdminOriginSchoolTest extends TestCase
         );
     }
 
-    public function test_admin_can_reactivate_origin_school(): void
+    public function test_superadmin_can_reactivate_origin_school(): void
     {
         $user = $this->makeUser('SUPERADMIN');
 
@@ -235,6 +299,35 @@ class AdminOriginSchoolTest extends TestCase
         );
     }
 
+    public function test_non_superadmin_roles_cannot_toggle_origin_school(): void
+    {
+        $school = OriginSchool::create([
+            'name' => 'SMP TOGGLE TERLINDUNGI',
+            'type' => 'SMP',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        foreach ($this->nonSuperadminRoles() as $role) {
+            $user = $this->makeUser($role);
+
+            $this->actingAs($user)
+                ->patch(
+                    route(
+                        'admin.origin-schools.toggle',
+                        $school
+                    )
+                )
+                ->assertForbidden();
+
+            $school->refresh();
+
+            $this->assertTrue(
+                $school->is_active
+            );
+        }
+    }
+
     public function test_origin_school_management_has_no_delete_route(): void
     {
         $routes = collect(
@@ -256,6 +349,15 @@ class AdminOriginSchoolTest extends TestCase
         );
 
         $this->assertFalse($deleteRouteExists);
+    }
+
+    private function nonSuperadminRoles(): array
+    {
+        return [
+            'ADMIN',
+            'PANITIA',
+            'BENDAHARA',
+        ];
     }
 
     private function makeUser(string $role): User

@@ -255,19 +255,27 @@
 
                             <div class="flex flex-wrap gap-3">
 
-                                <button
-                                    type="button"
-                                    @click="paymentOpen = true"
-                                    style="display:inline-flex"
-                                    class="items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
-                                >
-                                    <i
-                                        data-lucide="wallet-cards"
-                                        class="h-4 w-4"
-                                    ></i>
+                               @if (
+                                    auth()->user()?->hasRole(
+                                        'SUPERADMIN',
+                                        'ADMIN',
+                                        'BENDAHARA'
+                                    )
+                                )
+                                    <button
+                                        type="button"
+                                        @click="paymentOpen = true"
+                                        style="display:inline-flex"
+                                        class="items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
+                                    >
+                                        <i
+                                            data-lucide="wallet-cards"
+                                            class="h-4 w-4"
+                                        ></i>
 
-                                    Input Pembayaran
-                                </button>
+                                        Input Pembayaran
+                                    </button>
+                                @endif
 
                                 <button
                                     type="button"
@@ -283,6 +291,14 @@
                                 </button>
 
                             </div>
+
+                            @if (
+                                auth()->user()?->hasRole(
+                                    'SUPERADMIN',
+                                    'ADMIN',
+                                    'BENDAHARA'
+                                )
+                            )
 
                             {{-- Modal Pembayaran --}}
                             <div
@@ -553,6 +569,8 @@
                                     </form>
 
                                 </div>
+
+                            @endif
 
                             </div>
 

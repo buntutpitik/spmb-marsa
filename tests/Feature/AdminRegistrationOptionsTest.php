@@ -19,7 +19,7 @@ class AdminRegistrationOptionsTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_admin_can_manage_relief_options_and_special_programs(): void
+    public function test_superadmin_can_manage_relief_options_and_special_programs(): void
     {
         Carbon::setTestNow(
             Carbon::parse(
@@ -28,12 +28,12 @@ class AdminRegistrationOptionsTest extends TestCase
             )
         );
 
-        $admin = User::factory()->create([
-            'role' => 'ADMIN',
+        $superadmin = User::factory()->create([
+            'role' => 'SUPERADMIN',
             'is_active' => true,
         ]);
 
-        $this->actingAs($admin);
+        $this->actingAs($superadmin);
 
         $now = now();
 

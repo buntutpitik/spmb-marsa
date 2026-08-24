@@ -235,57 +235,37 @@
             </div>
 
             {{-- SISTEM --}}
-            <div>
-                <div class="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
-                    Sistem
-                </div>
+            @if (auth()->user()?->role === 'SUPERADMIN')
+                <div>
+                    <div class="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+                        Sistem
+                    </div>
 
-                <div class="space-y-1">
+                    <div class="space-y-1">
 
-                    <a href="#" class="sidebar-link">
-                        <span class="sidebar-icon">
-                            <i
-                                data-lucide="users"
-                                class="h-4 w-4"
-                            ></i>
-                        </span>
-
-                        Users
-                    </a>
-
-                    <a href="#" class="sidebar-link">
-                        <span class="sidebar-icon">
-                            <i
-                                data-lucide="list-checks"
-                                class="h-4 w-4"
-                            ></i>
-                        </span>
-
-                        Activity Log
-                    </a>
-
-                    <a
-                        href="{{ route('admin.settings.index') }}"
-                        class="{{ request()->routeIs('admin.settings.*')
-                            ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'
-                            : 'sidebar-link' }}"
-                    >
-                        <span
+                        <a
+                            href="{{ route('admin.settings.index') }}"
                             class="{{ request()->routeIs('admin.settings.*')
-                                ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
-                                : 'sidebar-icon' }}"
+                                ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'
+                                : 'sidebar-link' }}"
                         >
-                            <i
-                                data-lucide="settings"
-                                class="h-4 w-4"
-                            ></i>
-                        </span>
+                            <span
+                                class="{{ request()->routeIs('admin.settings.*')
+                                    ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
+                                    : 'sidebar-icon' }}"
+                            >
+                                <i
+                                    data-lucide="settings"
+                                    class="h-4 w-4"
+                                ></i>
+                            </span>
 
-                        Pengaturan
-                    </a>
+                            Pengaturan
+                        </a>
 
+                    </div>
                 </div>
-            </div>
+            @endif
 
         </nav>
     </div>
