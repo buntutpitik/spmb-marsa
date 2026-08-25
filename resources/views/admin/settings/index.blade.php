@@ -207,8 +207,8 @@
                             </div>
 
                             <p class="mt-2 text-sm leading-6 text-slate-500">
-                                Atur jalur KHUSUS, UMUM, rentang tanggal,
-                                status aktif, dan urutan jalur.
+                                Atur jalur pendaftaran, rentang tanggal,
+                                status aktif, dan urutan jalur per periode.
                             </p>
 
                         </div>
