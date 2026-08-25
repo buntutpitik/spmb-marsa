@@ -64,8 +64,6 @@ class RegistrationService
              * ---------------------------------------------------------
              * 2. Jalur otomatis.
              * ---------------------------------------------------------
-             *
-             * Flow SPMB baru tidak menggunakan gelombang.
              */
             $admissionPath = $this->admissionPathResolver->resolve(
                 $period,
@@ -344,11 +342,6 @@ class RegistrationService
              * ---------------------------------------------------------
              */
             $payload['period_id'] = $period->id;
-
-            /*
-             * Flow baru tidak memakai gelombang.
-             */
-            $payload['wave_id'] = null;
 
             /*
              * Jalur hasil resolver.

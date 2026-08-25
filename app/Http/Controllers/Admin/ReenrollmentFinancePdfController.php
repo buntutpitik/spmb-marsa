@@ -24,7 +24,6 @@ class ReenrollmentFinancePdfController extends Controller
         $registrations = Registration::query()
             ->with([
                 'period',
-                'wave',
                 'major',
                 'reenrollmentPayments.receiver',
             ])

@@ -11,7 +11,6 @@ class Registration extends Model
 {
     protected $fillable = [
         'period_id',
-        'wave_id',
         'admission_path_id',
         'major_id',
         'registration_number',
@@ -64,11 +63,6 @@ class Registration extends Model
     public function period(): BelongsTo
     {
         return $this->belongsTo(PpdbPeriod::class);
-    }
-
-    public function wave(): BelongsTo
-    {
-        return $this->belongsTo(PpdbWave::class);
     }
 
     public function admissionPath(): BelongsTo

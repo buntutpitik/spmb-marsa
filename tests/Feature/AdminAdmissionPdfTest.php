@@ -207,7 +207,6 @@ class AdminAdmissionPdfTest extends TestCase
 
         return Registration::create([
             'period_id' => $period->id,
-            'wave_id' => null,
             'admission_path_id' => $path->id,
             'major_id' => $major->id,
             'registration_number' =>

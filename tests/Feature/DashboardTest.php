@@ -185,7 +185,6 @@ class DashboardTest extends TestCase
         ) use ($majorId): int {
             return DB::table('registrations')->insertGetId([
                 'period_id' => $periodId,
-                'wave_id' => null,
                 'admission_path_id' => $pathId,
                 'major_id' => $majorId,
 

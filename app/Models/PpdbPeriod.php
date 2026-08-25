@@ -47,11 +47,6 @@ class PpdbPeriod extends Model
         return $this->belongsTo(School::class);
     }
 
-    public function waves(): HasMany
-    {
-        return $this->hasMany(PpdbWave::class, 'period_id');
-    }
-
     public function admissionPaths(): HasMany
     {
         return $this->hasMany(AdmissionPath::class, 'period_id');

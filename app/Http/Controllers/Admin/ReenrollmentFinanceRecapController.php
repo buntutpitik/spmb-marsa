@@ -49,7 +49,6 @@ class ReenrollmentFinanceRecapController extends Controller
             $query = Registration::query()
                 ->with([
                     'period',
-                    'wave',
                     'major',
                     'reenrollmentPayments',
                 ])
@@ -117,7 +116,6 @@ class ReenrollmentFinanceRecapController extends Controller
             $allRegistrations = Registration::query()
                 ->with([
                     'period',
-                    'wave',
                     'reenrollmentPayments',
                 ])
                 ->where(
@@ -131,15 +129,10 @@ class ReenrollmentFinanceRecapController extends Controller
                 ->get();
 
             foreach ($allRegistrations as $registration) {
-                $requiredFee = (
-                    $registration->wave
-                    && $registration->wave->reenroll_fee !== null
-                )
-                    ? (int) $registration->wave->reenroll_fee
-                    : (int) (
-                        $registration->period?->default_reenroll_fee
-                        ?? 0
-                    );
+                $requiredFee = (int) (
+                    $registration->period?->default_reenroll_fee
+                    ?? 0
+                );
 
                 $totalPaid = (int) $registration
                     ->reenrollmentPayments

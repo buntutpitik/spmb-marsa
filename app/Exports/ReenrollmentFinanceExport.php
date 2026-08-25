@@ -34,7 +34,6 @@ class ReenrollmentFinanceExport implements
         return Registration::query()
             ->with([
                 'period',
-                'wave',
                 'major',
                 'reenrollmentPayments.receiver',
             ])
@@ -79,15 +78,10 @@ class ReenrollmentFinanceExport implements
 
     public function map($registration): array
     {
-        $requiredFee = (
-            $registration->wave
-            && $registration->wave->reenroll_fee !== null
-        )
-            ? (int) $registration->wave->reenroll_fee
-            : (int) (
-                $registration->period?->default_reenroll_fee
-                ?? 0
-            );
+        $requiredFee = (int) (
+            $registration->period?->default_reenroll_fee
+            ?? 0
+        );
 
         $payments = $registration
             ->reenrollmentPayments

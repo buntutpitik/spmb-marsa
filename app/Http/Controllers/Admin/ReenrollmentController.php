@@ -85,7 +85,6 @@ class ReenrollmentController extends Controller
             $query = Registration::query()
                 ->with([
                     'period',
-                    'wave',
                     'major',
                     'reenrollmentPayments',
                 ])

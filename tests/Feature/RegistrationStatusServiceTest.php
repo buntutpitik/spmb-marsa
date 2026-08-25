@@ -506,7 +506,6 @@ class RegistrationStatusServiceTest extends TestCase
 
         return Registration::query()->create([
             'period_id' => $this->period->id,
-            'wave_id' => null,
             'admission_path_id' => $this->admissionPath->id,
             'major_id' => $this->major->id,
 

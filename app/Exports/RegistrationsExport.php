@@ -34,7 +34,6 @@ class RegistrationsExport implements
         return Registration::query()
             ->with([
                 'period',
-                'wave',
                 'major',
                 'admissionPath',
                 'creator',
@@ -55,7 +54,6 @@ class RegistrationsExport implements
         return [
             'No. Pendaftaran',
             'Periode',
-            'Gelombang',
             'Jalur Pendaftaran',
             'Jurusan',
 
@@ -114,9 +112,6 @@ class RegistrationsExport implements
             $registration->registration_number,
 
             $registration->period
-                ?->name,
-
-            $registration->wave
                 ?->name,
 
             $registration->admissionPath

@@ -25,10 +25,7 @@ class StorePublicRegistrationRequest extends FormRequest
             ],
 
             /*
-             * admission_path_id dan wave_id sengaja tidak diterima.
-             *
              * Jalur ditentukan otomatis berdasarkan tanggal.
-             * Gelombang tidak dipakai pada flow SPMB baru.
              */
 
             'major_id' => [

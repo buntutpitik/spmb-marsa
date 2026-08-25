@@ -48,7 +48,6 @@ class ReenrollmentPaymentService
             $registration = Registration::query()
                 ->with([
                     'period',
-                    'wave',
                 ])
                 ->lockForUpdate()
                 ->findOrFail($registration->id);
@@ -165,21 +164,12 @@ class ReenrollmentPaymentService
     public function requiredFee(
         Registration $registration
     ): int {
-        $registration->loadMissing([
-            'period',
-            'wave',
-        ]);
+        $registration->loadMissing('period');
 
-        if (
-            $registration->wave
-            && $registration->wave->reenroll_fee !== null
-        ) {
-            return (int) $registration->wave->reenroll_fee;
-        }
-
-        return (int) $registration
-            ->period
-            ->default_reenroll_fee;
+        return (int) (
+            $registration->period?->default_reenroll_fee
+            ?? 0
+        );
     }
 
     public function totalPaid(

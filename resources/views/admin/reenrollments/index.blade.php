@@ -267,12 +267,8 @@
                             @foreach ($registrations as $registration)
 
                                 @php
-                                    $requiredFee = (
-                                        $registration->wave
-                                        && $registration->wave->reenroll_fee !== null
-                                    )
-                                        ? (int) $registration->wave->reenroll_fee
-                                        : (int) (
+                                    $requiredFee =
+                                        (int) (
                                             $registration->period?->default_reenroll_fee
                                             ?? 0
                                         );
