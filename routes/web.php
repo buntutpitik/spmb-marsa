@@ -28,13 +28,14 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SpecialProgramController;
 use App\Http\Controllers\Admin\WhatsappLogController;
-use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\PpdbPeriodController;
 use App\Http\Controllers\Admin\SchoolProfileController;
+use App\Http\Controllers\Admin\MajorController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\PublicRegistrationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -481,5 +482,34 @@ Route::prefix('admin')
                 '/pengaturan/profil-sekolah',
                 [SchoolProfileController::class, 'update']
             )->name('school-profile.update');
+
+            /*
+            * Jurusan
+            */
+
+            Route::get(
+                '/pengaturan/jurusan',
+                [MajorController::class, 'index']
+            )->name('majors.index');
+
+            Route::post(
+                '/pengaturan/jurusan',
+                [MajorController::class, 'store']
+            )->name('majors.store');
+
+            Route::put(
+                '/pengaturan/jurusan/{major}',
+                [MajorController::class, 'update']
+            )->name('majors.update');
+
+            Route::patch(
+                '/pengaturan/jurusan/{major}/toggle-master',
+                [MajorController::class, 'toggleMaster']
+            )->name('majors.toggle-master');
+
+            Route::put(
+                '/pengaturan/jurusan/{major}/periode',
+                [MajorController::class, 'updatePeriod']
+            )->name('majors.update-period');
         });
     });

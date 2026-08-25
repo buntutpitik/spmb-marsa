@@ -128,7 +128,7 @@
         </div>
 
         {{-- Jurusan --}}
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm">
 
             <div class="flex items-start gap-4">
 
@@ -141,13 +141,21 @@
 
                 <div>
 
-                    <h2 class="font-bold text-slate-900">
-                        Jurusan
-                    </h2>
+                    <div class="flex flex-wrap items-center gap-2">
+
+                        <h2 class="font-bold text-slate-900">
+                            Jurusan
+                        </h2>
+
+                        <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                            Aktif
+                        </span>
+
+                    </div>
 
                     <p class="mt-2 text-sm leading-6 text-slate-500">
-                        Kelola kompetensi keahlian dan jurusan yang tersedia
-                        pada masing-masing periode.
+                        Kelola master kompetensi keahlian,
+                        ketersediaan jurusan, dan kuota per periode.
                     </p>
 
                 </div>
@@ -155,9 +163,19 @@
             </div>
 
             <div class="mt-5">
-                <span class="text-xs font-semibold text-slate-400">
-                    Akan dikembangkan
-                </span>
+
+                <a
+                    href="{{ route('admin.majors.index') }}"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+                >
+                    Kelola Jurusan
+
+                    <i
+                        data-lucide="arrow-right"
+                        class="h-4 w-4"
+                    ></i>
+                </a>
+
             </div>
 
         </div>
