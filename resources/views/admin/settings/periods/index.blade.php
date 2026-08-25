@@ -326,7 +326,21 @@
                                         class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
                                     <span>
                                         <span class="block text-sm font-semibold text-slate-800">Sertakan kode jurusan</span>
-                                        <span class="mt-1 block text-xs text-slate-500">Contoh: MARSA-2027-RPL-0001.</span>
+                                        <span class="mt-1 block text-xs text-slate-500">
+                                            Contoh:
+                                            <span
+                                                x-text="
+                                                    (selectedPeriod.number_prefix || 'SPMB')
+                                                    + '-'
+                                                    + (selectedPeriod.number_year || '2027')
+                                                    + '-RPL-'
+                                                    + String(1).padStart(
+                                                        Number(selectedPeriod.number_digits || 4),
+                                                        '0'
+                                                    )
+                                                "
+                                            ></span>
+                                        </span>
                                     </span>
                                 </label>
                             </div>
