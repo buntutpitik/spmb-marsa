@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\MajorController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicRegistrationController;
+use App\Http\Controllers\Admin\AdmissionPathController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -511,5 +512,29 @@ Route::prefix('admin')
                 '/pengaturan/jurusan/{major}/periode',
                 [MajorController::class, 'updatePeriod']
             )->name('majors.update-period');
+
+            /*
+            * Jalur Pendaftaran
+            */
+
+            Route::get(
+                '/pengaturan/jalur-pendaftaran',
+                [AdmissionPathController::class, 'index']
+            )->name('admission-paths.index');
+
+            Route::post(
+                '/pengaturan/jalur-pendaftaran',
+                [AdmissionPathController::class, 'store']
+            )->name('admission-paths.store');
+
+            Route::put(
+                '/pengaturan/jalur-pendaftaran/{admissionPath}',
+                [AdmissionPathController::class, 'update']
+            )->name('admission-paths.update');
+
+            Route::patch(
+                '/pengaturan/jalur-pendaftaran/{admissionPath}/toggle',
+                [AdmissionPathController::class, 'toggle']
+            )->name('admission-paths.toggle');
         });
     });

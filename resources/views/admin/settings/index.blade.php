@@ -180,40 +180,58 @@
 
         </div>
 
-        {{-- Jalur Pendaftaran --}}
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                {{-- Jalur Pendaftaran --}}
+                <div class="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm">
 
-            <div class="flex items-start gap-4">
+                    <div class="flex items-start gap-4">
 
-                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-                    <i
-                        data-lucide="route"
-                        class="h-5 w-5"
-                    ></i>
+                        <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
+                            <i
+                                data-lucide="route"
+                                class="h-5 w-5"
+                            ></i>
+                        </div>
+
+                        <div>
+
+                            <div class="flex flex-wrap items-center gap-2">
+
+                                <h2 class="font-bold text-slate-900">
+                                    Jalur Pendaftaran
+                                </h2>
+
+                                <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                                    Aktif
+                                </span>
+
+                            </div>
+
+                            <p class="mt-2 text-sm leading-6 text-slate-500">
+                                Atur jalur KHUSUS, UMUM, rentang tanggal,
+                                status aktif, dan urutan jalur.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                    <div class="mt-5">
+
+                        <a
+                            href="{{ route('admin.admission-paths.index') }}"
+                            class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+                        >
+                            Kelola Jalur Pendaftaran
+
+                            <i
+                                data-lucide="arrow-right"
+                                class="h-4 w-4"
+                            ></i>
+                        </a>
+
+                    </div>
+
                 </div>
-
-                <div>
-
-                    <h2 class="font-bold text-slate-900">
-                        Jalur Pendaftaran
-                    </h2>
-
-                    <p class="mt-2 text-sm leading-6 text-slate-500">
-                        Atur jalur KHUSUS, UMUM, rentang tanggal,
-                        status aktif, dan urutan jalur.
-                    </p>
-
-                </div>
-
-            </div>
-
-            <div class="mt-5">
-                <span class="text-xs font-semibold text-slate-400">
-                    Akan dikembangkan
-                </span>
-            </div>
-
-        </div>
 
         {{-- Asal Sekolah --}}
         <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
