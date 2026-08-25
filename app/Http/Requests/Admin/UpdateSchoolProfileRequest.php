@@ -85,6 +85,48 @@ class UpdateSchoolProfileRequest extends FormRequest
                 'url',
                 'max:150',
             ],
+
+            /*
+             * ---------------------------------------------------------
+             * Branding
+             * ---------------------------------------------------------
+             *
+             * Logo:
+             * - PNG / JPG / JPEG / WEBP
+             * - maksimal 2 MB
+             *
+             * Favicon:
+             * - PNG / ICO
+             * - maksimal 512 KB
+             *
+             * SVG sengaja tidak diterima.
+             */
+            'logo' => [
+                'nullable',
+                'file',
+                'mimes:png,jpg,jpeg,webp',
+                'max:2048',
+            ],
+
+            'favicon' => [
+                'nullable',
+                'file',
+                'mimes:png,ico',
+                'max:512',
+            ],
+
+            /*
+             * Checkbox penghapusan branding.
+             */
+            'remove_logo' => [
+                'nullable',
+                'boolean',
+            ],
+
+            'remove_favicon' => [
+                'nullable',
+                'boolean',
+            ],
         ];
     }
 
@@ -123,6 +165,30 @@ class UpdateSchoolProfileRequest extends FormRequest
 
             'website.max' =>
                 'Website maksimal 150 karakter.',
+
+            'logo.file' =>
+                'Logo yang diunggah tidak valid.',
+
+            'logo.mimes' =>
+                'Logo harus berformat PNG, JPG, JPEG, atau WEBP.',
+
+            'logo.max' =>
+                'Ukuran logo maksimal 2 MB.',
+
+            'favicon.file' =>
+                'Favicon yang diunggah tidak valid.',
+
+            'favicon.mimes' =>
+                'Favicon harus berformat PNG atau ICO.',
+
+            'favicon.max' =>
+                'Ukuran favicon maksimal 512 KB.',
+
+            'remove_logo.boolean' =>
+                'Pilihan hapus logo tidak valid.',
+
+            'remove_favicon.boolean' =>
+                'Pilihan hapus favicon tidak valid.',
         ];
     }
 
@@ -220,6 +286,16 @@ class UpdateSchoolProfileRequest extends FormRequest
                         )
                     )
                     : null,
+
+            /*
+             * Checkbox HTML yang tidak dicentang tidak dikirim.
+             * Normalisasi menjadi boolean eksplisit.
+             */
+            'remove_logo' =>
+                $this->boolean('remove_logo'),
+
+            'remove_favicon' =>
+                $this->boolean('remove_favicon'),
         ]);
     }
 }

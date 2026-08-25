@@ -7,6 +7,8 @@ use App\Models\PpdbPeriod;
 use App\Models\School;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AdminSchoolProfileTest extends TestCase
@@ -437,6 +439,501 @@ class AdminSchoolProfileTest extends TestCase
             '197001012000011001',
             $this->period->principal_nip
         );
+    }
+
+    public function test_superadmin_can_upload_school_logo(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $logo = UploadedFile::fake()->image(
+            'logo-sekolah.png',
+            500,
+            500
+        );
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'logo' => $logo,
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        $this->assertNotNull(
+            $this->school->logo_path
+        );
+
+        Storage::disk('public')
+            ->assertExists(
+                $this->school->logo_path
+            );
+
+        $this->assertStringStartsWith(
+            "schools/{$this->school->id}/branding/",
+            $this->school->logo_path
+        );
+    }
+
+    public function test_superadmin_can_upload_school_favicon(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $favicon = UploadedFile::fake()->image(
+            'favicon.png',
+            64,
+            64
+        );
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'favicon' => $favicon,
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        $this->assertNotNull(
+            $this->school->favicon_path
+        );
+
+        Storage::disk('public')
+            ->assertExists(
+                $this->school->favicon_path
+            );
+
+        $this->assertStringStartsWith(
+            "schools/{$this->school->id}/branding/",
+            $this->school->favicon_path
+        );
+    }
+
+    public function test_replacing_logo_deletes_old_logo_file(): void
+    {
+        Storage::fake('public');
+
+        $oldPath =
+            "schools/{$this->school->id}/branding/old-logo.png";
+
+        Storage::disk('public')->put(
+            $oldPath,
+            'old-logo'
+        );
+
+        $this->school->update([
+            'logo_path' => $oldPath,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $newLogo = UploadedFile::fake()->image(
+            'new-logo.png',
+            600,
+            600
+        );
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'logo' => $newLogo,
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        Storage::disk('public')
+            ->assertMissing($oldPath);
+
+        Storage::disk('public')
+            ->assertExists(
+                $this->school->logo_path
+            );
+
+        $this->assertNotSame(
+            $oldPath,
+            $this->school->logo_path
+        );
+    }
+
+    public function test_replacing_favicon_deletes_old_favicon_file(): void
+    {
+        Storage::fake('public');
+
+        $oldPath =
+            "schools/{$this->school->id}/branding/old-favicon.png";
+
+        Storage::disk('public')->put(
+            $oldPath,
+            'old-favicon'
+        );
+
+        $this->school->update([
+            'favicon_path' => $oldPath,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $newFavicon = UploadedFile::fake()->image(
+            'new-favicon.png',
+            64,
+            64
+        );
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'favicon' => $newFavicon,
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        Storage::disk('public')
+            ->assertMissing($oldPath);
+
+        Storage::disk('public')
+            ->assertExists(
+                $this->school->favicon_path
+            );
+
+        $this->assertNotSame(
+            $oldPath,
+            $this->school->favicon_path
+        );
+    }
+
+    public function test_superadmin_can_remove_school_logo(): void
+    {
+        Storage::fake('public');
+
+        $path =
+            "schools/{$this->school->id}/branding/logo.png";
+
+        Storage::disk('public')->put(
+            $path,
+            'logo'
+        );
+
+        $this->school->update([
+            'logo_path' => $path,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'remove_logo' => '1',
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        $this->assertNull(
+            $this->school->logo_path
+        );
+
+        Storage::disk('public')
+            ->assertMissing($path);
+    }
+
+    public function test_superadmin_can_remove_school_favicon(): void
+    {
+        Storage::fake('public');
+
+        $path =
+            "schools/{$this->school->id}/branding/favicon.png";
+
+        Storage::disk('public')->put(
+            $path,
+            'favicon'
+        );
+
+        $this->school->update([
+            'favicon_path' => $path,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'remove_favicon' => '1',
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        $this->assertNull(
+            $this->school->favicon_path
+        );
+
+        Storage::disk('public')
+            ->assertMissing($path);
+    }
+
+    public function test_existing_branding_is_preserved_when_no_branding_change_is_requested(): void
+    {
+        Storage::fake('public');
+
+        $logoPath =
+            "schools/{$this->school->id}/branding/logo.png";
+
+        $faviconPath =
+            "schools/{$this->school->id}/branding/favicon.png";
+
+        Storage::disk('public')->put(
+            $logoPath,
+            'logo'
+        );
+
+        Storage::disk('public')->put(
+            $faviconPath,
+            'favicon'
+        );
+
+        $this->school->update([
+            'logo_path' => $logoPath,
+            'favicon_path' => $faviconPath,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'name' =>
+                        'SMK PROFILE TANPA UBAH BRANDING',
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        $this->assertSame(
+            $logoPath,
+            $this->school->logo_path
+        );
+
+        $this->assertSame(
+            $faviconPath,
+            $this->school->favicon_path
+        );
+
+        Storage::disk('public')
+            ->assertExists($logoPath);
+
+        Storage::disk('public')
+            ->assertExists($faviconPath);
+    }
+
+    public function test_invalid_logo_format_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $file = UploadedFile::fake()->create(
+            'logo.svg',
+            10,
+            'image/svg+xml'
+        );
+
+        $this->actingAs($user)
+            ->from(
+                route('admin.school-profile.edit')
+            )
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'logo' => $file,
+                ])
+            )
+            ->assertRedirect(
+                route('admin.school-profile.edit')
+            )
+            ->assertSessionHasErrors('logo');
+
+        $this->school->refresh();
+
+        $this->assertNull(
+            $this->school->logo_path
+        );
+    }
+
+    public function test_oversized_logo_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $file = UploadedFile::fake()->create(
+            'logo.png',
+            2049,
+            'image/png'
+        );
+
+        $this->actingAs($user)
+            ->from(
+                route('admin.school-profile.edit')
+            )
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'logo' => $file,
+                ])
+            )
+            ->assertRedirect(
+                route('admin.school-profile.edit')
+            )
+            ->assertSessionHasErrors('logo');
+    }
+
+    public function test_oversized_favicon_is_rejected(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $file = UploadedFile::fake()->create(
+            'favicon.png',
+            513,
+            'image/png'
+        );
+
+        $this->actingAs($user)
+            ->from(
+                route('admin.school-profile.edit')
+            )
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'favicon' => $file,
+                ])
+            )
+            ->assertRedirect(
+                route('admin.school-profile.edit')
+            )
+            ->assertSessionHasErrors('favicon');
+    }
+
+    public function test_branding_paths_are_recorded_in_activity_log(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $logo = UploadedFile::fake()->image(
+            'logo.png',
+            500,
+            500
+        );
+
+        $favicon = UploadedFile::fake()->image(
+            'favicon.png',
+            64,
+            64
+        );
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.school-profile.update'),
+                $this->validPayload([
+                    'logo' => $logo,
+                    'favicon' => $favicon,
+                ])
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->school->refresh();
+
+        $log = ActivityLog::query()
+            ->where(
+                'action',
+                'UPDATE_SCHOOL_PROFILE'
+            )
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertNull(
+            $log->metadata['old']['logo_path']
+        );
+
+        $this->assertNull(
+            $log->metadata['old']['favicon_path']
+        );
+
+        $this->assertSame(
+            $this->school->logo_path,
+            $log->metadata['new']['logo_path']
+        );
+
+        $this->assertSame(
+            $this->school->favicon_path,
+            $log->metadata['new']['favicon_path']
+        );
+    }
+
+    public function test_internal_layout_renders_school_logo(): void
+    {
+        $logoPath =
+            "schools/{$this->school->id}/branding/logo.png";
+
+        $this->school->update([
+            'logo_path' => $logoPath,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(
+                asset('storage/'.$logoPath),
+                false
+            )
+            ->assertSee(
+                'alt="Logo '.$this->school->name.'"',
+                false
+            );
+    }
+
+    public function test_internal_layout_renders_school_favicon(): void
+    {
+        $faviconPath =
+            "schools/{$this->school->id}/branding/favicon.png";
+
+        $this->school->update([
+            'favicon_path' => $faviconPath,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee(
+                asset('storage/'.$faviconPath),
+                false
+            );
     }
 
     private function validPayload(

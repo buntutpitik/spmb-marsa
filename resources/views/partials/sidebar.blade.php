@@ -4,9 +4,19 @@
 >
     <div class="flex h-20 items-center justify-between border-b border-slate-100 px-6">
         <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
-            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white shadow-sm">
-                SM
-            </div>
+            @if ($activePeriod?->school?->logo_path)
+                <div class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm">
+                    <img
+                        src="{{ asset('storage/'.$activePeriod->school->logo_path) }}"
+                        alt="Logo {{ $activePeriod->school->name }}"
+                        class="h-full w-full object-contain"
+                    >
+                </div>
+            @else
+                <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white shadow-sm">
+                    SM
+                </div>
+            @endif
 
             <div>
                 <div class="text-base font-bold tracking-tight text-slate-900">
