@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateSchoolProfileRequest;
 use App\Models\ActivityLog;
-use App\Models\PpdbPeriod;
 use App\Models\School;
+use App\Services\PeriodContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +15,11 @@ use Throwable;
 
 class SchoolProfileController extends Controller
 {
+    public function __construct(
+        protected PeriodContext $periodContext
+    ) {
+    }
+
     public function edit(): View
     {
         $school = $this->resolveSchool();
@@ -275,13 +280,12 @@ class SchoolProfileController extends Controller
 
     private function resolveSchool(): School
     {
-        $activePeriod = PpdbPeriod::query()
-            ->with('school')
-            ->where('is_active', true)
-            ->where('status', 'OPEN')
-            ->whereNull('archived_at')
-            ->orderByDesc('year_start')
-            ->first();
+        $activePeriod = $this->periodContext
+            ->resolveActivePeriod();
+
+        if ($activePeriod) {
+            $activePeriod->loadMissing('school');
+        }
 
         if ($activePeriod?->school) {
             return $activePeriod->school;
