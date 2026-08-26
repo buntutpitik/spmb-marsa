@@ -27,3 +27,4 @@ Homestead.yaml
 Thumbs.db
 legacy/*.sqlite3
 legacy/*.db
+backups/*.sql
