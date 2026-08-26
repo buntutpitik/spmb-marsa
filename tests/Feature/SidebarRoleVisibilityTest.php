@@ -77,6 +77,7 @@ class SidebarRoleVisibilityTest extends TestCase
                 ->assertSee('Daftar Ulang')
                 ->assertSee('Rekap')
                 ->assertSee('Analitik')
+                ->assertSee('Data Historis')
                 ->assertSee('Laporan')
                 ->assertSee('WhatsApp');
         }

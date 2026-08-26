@@ -171,6 +171,23 @@
                     </a>
 
                     <a
+                        href="{{ route('admin.historical.index') }}"
+                        class="{{ request()->routeIs('admin.historical.*')
+                            ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'
+                            : 'sidebar-link' }}"
+                    >
+                        <span
+                            class="{{ request()->routeIs('admin.historical.*')
+                                ? 'flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-100'
+                                : 'sidebar-icon' }}"
+                        >
+                            <i data-lucide="archive" class="h-4 w-4"></i>
+                        </span>
+
+                        Data Historis
+                    </a>
+
+                    <a
                         href="{{ route('admin.reports.index') }}"
                         class="{{ request()->routeIs('admin.reports.*')
                             ? 'flex items-center gap-3 rounded-xl bg-emerald-50 px-3 py-2.5 text-sm font-semibold text-emerald-700'

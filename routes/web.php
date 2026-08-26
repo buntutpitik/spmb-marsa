@@ -33,6 +33,7 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\PpdbPeriodController;
 use App\Http\Controllers\Admin\SchoolProfileController;
 use App\Http\Controllers\Admin\MajorController;
+use App\Http\Controllers\Admin\HistoricalDataController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicRegistrationController;
@@ -134,6 +135,17 @@ Route::prefix('admin')
         Route::middleware(
             'role:SUPERADMIN,ADMIN,PANITIA,BENDAHARA'
         )->group(function () {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Data Historis
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/data-historis',
+                [HistoricalDataController::class, 'index']
+            )->name('historical.index');
 
             /*
              * Penerimaan
