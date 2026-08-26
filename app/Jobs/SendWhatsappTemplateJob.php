@@ -6,6 +6,7 @@ use App\Models\WhatsappLog;
 use App\Services\WhatsappService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use RuntimeException;
 use Throwable;
 
@@ -27,6 +28,17 @@ class SendWhatsappTemplateJob implements ShouldQueue
         public string $languageCode = 'id',
         public array $bodyParameters = []
     ) {
+    }
+
+    public function middleware(): array
+    {
+        return [
+            (new WithoutOverlapping(
+                'whatsapp-log:' . $this->whatsappLogId
+            ))
+                ->releaseAfter(10)
+                ->expireAfter(120),
+        ];
     }
 
     public function handle(

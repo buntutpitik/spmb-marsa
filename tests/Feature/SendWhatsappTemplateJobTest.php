@@ -6,6 +6,7 @@ use App\Jobs\SendWhatsappTemplateJob;
 use App\Models\WhatsappLog;
 use App\Services\WhatsappService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Tests\TestCase;
 
 class SendWhatsappTemplateJobTest extends TestCase
@@ -138,6 +139,25 @@ class SendWhatsappTemplateJobTest extends TestCase
 
         $this->assertNotNull(
             $log->failed_at
+        );
+    }
+
+    public function test_job_prevents_overlapping_same_whatsapp_log(): void
+    {
+        $job = new SendWhatsappTemplateJob(
+            123,
+            'registration_success',
+            'id',
+            []
+        );
+
+        $middleware = $job->middleware();
+
+        $this->assertCount(1, $middleware);
+
+        $this->assertInstanceOf(
+            WithoutOverlapping::class,
+            $middleware[0]
         );
     }
 }
