@@ -80,10 +80,8 @@ class MajorController extends Controller
     public function store(
         StoreMajorRequest $request
     ): RedirectResponse {
-        $period = PpdbPeriod::query()
-            ->findOrFail(
-                $request->integer('period_id')
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $schoolId = $request->integer(
             'school_id'
@@ -205,10 +203,8 @@ class MajorController extends Controller
         UpdateMajorRequest $request,
         Major $major
     ): RedirectResponse {
-        $period = PpdbPeriod::query()
-            ->findOrFail(
-                $request->integer('period_id')
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $this->ensureSameSchool(
             $major,
@@ -312,10 +308,8 @@ class MajorController extends Controller
             ],
         ]);
 
-        $period = PpdbPeriod::query()
-            ->findOrFail(
-                $validated['period_id']
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $this->ensureSameSchool(
             $major,
@@ -387,10 +381,8 @@ class MajorController extends Controller
         UpdatePeriodMajorRequest $request,
         Major $major
     ): RedirectResponse {
-        $period = PpdbPeriod::query()
-            ->findOrFail(
-                $request->integer('period_id')
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $this->ensureSameSchool(
             $major,

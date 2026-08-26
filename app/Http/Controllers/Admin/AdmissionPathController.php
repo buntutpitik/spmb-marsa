@@ -58,10 +58,8 @@ class AdmissionPathController extends Controller
     public function store(
         StoreAdmissionPathRequest $request
     ): RedirectResponse {
-        $period = PpdbPeriod::query()
-            ->findOrFail(
-                $request->integer('period_id')
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $admissionPath = DB::transaction(
             function () use (
@@ -163,10 +161,8 @@ class AdmissionPathController extends Controller
         UpdateAdmissionPathRequest $request,
         AdmissionPath $admissionPath
     ): RedirectResponse {
-        $period = PpdbPeriod::query()
-            ->findOrFail(
-                $request->integer('period_id')
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $this->ensureSamePeriod(
             $admissionPath,
@@ -287,10 +283,8 @@ class AdmissionPathController extends Controller
             ],
         ]);
 
-        $period = PpdbPeriod::query()
-            ->findOrFail(
-                $validated['period_id']
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $this->ensureSamePeriod(
             $admissionPath,
