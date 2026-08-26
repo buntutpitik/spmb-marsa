@@ -59,6 +59,15 @@ class ReliefOptionController extends Controller
     ): RedirectResponse {
         $validated = $request->validated();
 
+        /*
+         * Resolve periode sebelum mutation apa pun.
+         *
+         * Ini penting supaya archived period menghasilkan
+         * 404 sebelum master ReliefOption dibuat.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
+
         $option = ReliefOption::create([
             'name' => trim($validated['name']),
             'slug' => Str::slug($validated['name']),
@@ -66,10 +75,6 @@ class ReliefOptionController extends Controller
             'is_active' => true,
             'sort_order' => $validated['sort_order'],
         ]);
-
-        $period = PpdbPeriod::findOrFail(
-            $validated['period_id']
-        );
 
         $period->reliefOptions()->syncWithoutDetaching([
             $option->id => [
@@ -120,6 +125,12 @@ class ReliefOptionController extends Controller
     ): RedirectResponse {
         $validated = $request->validated();
 
+        /*
+         * Resolve period sebelum master atau pivot dimutasi.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
+
         $old = $reliefOption->only([
             'name',
             'slug',
@@ -127,10 +138,6 @@ class ReliefOptionController extends Controller
             'is_active',
             'sort_order',
         ]);
-
-        $period = PpdbPeriod::findOrFail(
-            $validated['period_id']
-        );
 
         $existing = $period->reliefOptions()
             ->where(
@@ -217,6 +224,13 @@ class ReliefOptionController extends Controller
             ],
         ]);
 
+        /*
+         * Master global tetap harus dimutasi dari period
+         * context yang masih selectable / non-archived.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
+
         $oldStatus = (bool) $reliefOption->is_active;
 
         $reliefOption->update([
@@ -231,7 +245,7 @@ class ReliefOptionController extends Controller
                 'Status master Keringanan / Prestasi diperbarui.',
             'metadata' => [
                 'relief_option_id' => $reliefOption->id,
-                'period_id' => (int) $validated['period_id'],
+                'period_id' => $period->id,
                 'old' => [
                     'is_active' => $oldStatus,
                 ],
@@ -247,7 +261,7 @@ class ReliefOptionController extends Controller
 
         return redirect()
             ->route('admin.relief-options.index', [
-                'period_id' => $validated['period_id'],
+                'period_id' => $period->id,
             ])
             ->with(
                 'success',
@@ -267,9 +281,12 @@ class ReliefOptionController extends Controller
             ],
         ]);
 
-        $period = PpdbPeriod::findOrFail(
-            $validated['period_id']
-        );
+        /*
+         * Resolve melalui canonical PeriodContext agar
+         * archived period tidak dapat dimutasi.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
 
         $existing = $period->reliefOptions()
             ->where(

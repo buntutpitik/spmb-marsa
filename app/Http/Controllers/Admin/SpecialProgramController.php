@@ -59,6 +59,17 @@ class SpecialProgramController extends Controller
     ): RedirectResponse {
         $validated = $request->validated();
 
+        /*
+         * Resolve periode sebelum mutation apa pun dilakukan.
+         *
+         * PeriodContext memastikan:
+         * - period_id valid;
+         * - periode bukan archived;
+         * - fallback ke periode aktif tetap konsisten.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
+
         $program = SpecialProgram::create([
             'name' => trim($validated['name']),
             'slug' => Str::slug($validated['name']),
@@ -66,10 +77,6 @@ class SpecialProgramController extends Controller
             'is_active' => true,
             'sort_order' => $validated['sort_order'],
         ]);
-
-        $period = PpdbPeriod::findOrFail(
-            $validated['period_id']
-        );
 
         $period->specialPrograms()->syncWithoutDetaching([
             $program->id => [
@@ -119,6 +126,12 @@ class SpecialProgramController extends Controller
     ): RedirectResponse {
         $validated = $request->validated();
 
+        /*
+         * Resolve period sebelum master maupun pivot dimutasi.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
+
         $old = $specialProgram->only([
             'name',
             'slug',
@@ -126,10 +139,6 @@ class SpecialProgramController extends Controller
             'is_active',
             'sort_order',
         ]);
-
-        $period = PpdbPeriod::findOrFail(
-            $validated['period_id']
-        );
 
         $existing = $period->specialPrograms()
             ->where(
@@ -215,6 +224,13 @@ class SpecialProgramController extends Controller
             ],
         ]);
 
+        /*
+         * Jangan izinkan mutation master dilakukan dari
+         * context periode yang sudah archived.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
+
         $oldStatus = (bool) $specialProgram->is_active;
 
         $specialProgram->update([
@@ -229,7 +245,7 @@ class SpecialProgramController extends Controller
                 'Status master Program Khusus diperbarui.',
             'metadata' => [
                 'special_program_id' => $specialProgram->id,
-                'period_id' => (int) $validated['period_id'],
+                'period_id' => $period->id,
                 'old' => [
                     'is_active' => $oldStatus,
                 ],
@@ -245,7 +261,7 @@ class SpecialProgramController extends Controller
 
         return redirect()
             ->route('admin.special-programs.index', [
-                'period_id' => $validated['period_id'],
+                'period_id' => $period->id,
             ])
             ->with(
                 'success',
@@ -265,9 +281,12 @@ class SpecialProgramController extends Controller
             ],
         ]);
 
-        $period = PpdbPeriod::findOrFail(
-            $validated['period_id']
-        );
+        /*
+         * Resolve melalui PeriodContext agar archived period
+         * tidak dapat dimutasi.
+         */
+        $period = $this->periodContext
+            ->resolveAdminPeriod($request);
 
         $existing = $period->specialPrograms()
             ->where(
