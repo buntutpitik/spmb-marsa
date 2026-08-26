@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class ReliefOptionController extends Controller
 {
@@ -68,46 +69,54 @@ class ReliefOptionController extends Controller
         $period = $this->periodContext
             ->resolveAdminPeriod($request);
 
-        $option = ReliefOption::create([
-            'name' => trim($validated['name']),
-            'slug' => Str::slug($validated['name']),
-            'description' => $validated['description'] ?? null,
-            'is_active' => true,
-            'sort_order' => $validated['sort_order'],
-        ]);
-
-        $period->reliefOptions()->syncWithoutDetaching([
-            $option->id => [
+        $option = DB::transaction(function () use (
+            $request,
+            $validated,
+            $period
+        ) {
+            $option = ReliefOption::create([
+                'name' => trim($validated['name']),
+                'slug' => Str::slug($validated['name']),
+                'description' => $validated['description'] ?? null,
                 'is_active' => true,
                 'sort_order' => $validated['sort_order'],
-            ],
-        ]);
+            ]);
 
-        ActivityLog::create([
-            'user_id' => $request->user()?->id,
-            'registration_id' => null,
-            'action' => 'CREATE_RELIEF_OPTION',
-            'description' =>
-                'Keringanan / Prestasi ditambahkan.',
-            'metadata' => [
-                'relief_option_id' => $option->id,
-                'period_id' => $period->id,
-                'new' => $option->only([
-                    'name',
-                    'slug',
-                    'description',
-                    'is_active',
-                    'sort_order',
-                ]),
-                'period' => [
+            $period->reliefOptions()->syncWithoutDetaching([
+                $option->id => [
                     'is_active' => true,
                     'sort_order' => $validated['sort_order'],
                 ],
-            ],
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'created_at' => now(),
-        ]);
+            ]);
+
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => null,
+                'action' => 'CREATE_RELIEF_OPTION',
+                'description' =>
+                    'Keringanan / Prestasi ditambahkan.',
+                'metadata' => [
+                    'relief_option_id' => $option->id,
+                    'period_id' => $period->id,
+                    'new' => $option->only([
+                        'name',
+                        'slug',
+                        'description',
+                        'is_active',
+                        'sort_order',
+                    ]),
+                    'period' => [
+                        'is_active' => true,
+                        'sort_order' => $validated['sort_order'],
+                    ],
+                ],
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
+
+            return $option;
+        });
 
         return redirect()
             ->route('admin.relief-options.index', [
@@ -153,54 +162,64 @@ class ReliefOptionController extends Controller
             ]
             : null;
 
-        $reliefOption->update([
-            'name' => trim($validated['name']),
-            'slug' => Str::slug($validated['name']),
-            'description' => $validated['description'] ?? null,
-            'sort_order' => $validated['sort_order'],
-        ]);
+        DB::transaction(function () use (
+            $request,
+            $validated,
+            $period,
+            $reliefOption,
+            $existing,
+            $old,
+            $oldPivot
+        ) {
+            $reliefOption->update([
+                'name' => trim($validated['name']),
+                'slug' => Str::slug($validated['name']),
+                'description' => $validated['description'] ?? null,
+                'sort_order' => $validated['sort_order'],
+            ]);
 
-        if ($existing) {
-            $period->reliefOptions()->updateExistingPivot(
-                $reliefOption->id,
-                [
-                    'sort_order' => $validated['sort_order'],
-                ]
-            );
-        }
-
-        ActivityLog::create([
-            'user_id' => $request->user()?->id,
-            'registration_id' => null,
-            'action' => 'UPDATE_RELIEF_OPTION',
-            'description' =>
-                'Keringanan / Prestasi diperbarui.',
-            'metadata' => [
-                'relief_option_id' => $reliefOption->id,
-                'period_id' => $period->id,
-                'old' => $old,
-                'new' => $reliefOption
-                    ->fresh()
-                    ->only([
-                        'name',
-                        'slug',
-                        'description',
-                        'is_active',
-                        'sort_order',
-                    ]),
-                'period_old' => $oldPivot,
-                'period_new' => $existing
-                    ? [
-                        'is_active' => $oldPivot['is_active'],
-                        'sort_order' =>
-                            (int) $validated['sort_order'],
+            if ($existing) {
+                $period->reliefOptions()->updateExistingPivot(
+                    $reliefOption->id,
+                    [
+                        'sort_order' => $validated['sort_order'],
                     ]
-                    : null,
-            ],
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'created_at' => now(),
-        ]);
+                );
+            }
+
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => null,
+                'action' => 'UPDATE_RELIEF_OPTION',
+                'description' =>
+                    'Keringanan / Prestasi diperbarui.',
+                'metadata' => [
+                    'relief_option_id' => $reliefOption->id,
+                    'period_id' => $period->id,
+                    'old' => $old,
+                    'new' => $reliefOption
+                        ->fresh()
+                        ->only([
+                            'name',
+                            'slug',
+                            'description',
+                            'is_active',
+                            'sort_order',
+                        ]),
+                    'period_old' => $oldPivot,
+                    'period_new' => $existing
+                        ? [
+                            'is_active' => $oldPivot['is_active'],
+                            'sort_order' =>
+                                (int) $validated['sort_order'],
+                        ]
+                        : null,
+                ],
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
+        });
 
         return redirect()
             ->route('admin.relief-options.index', [
@@ -233,31 +252,38 @@ class ReliefOptionController extends Controller
 
         $oldStatus = (bool) $reliefOption->is_active;
 
-        $reliefOption->update([
-            'is_active' => ! $oldStatus,
-        ]);
+        DB::transaction(function () use (
+            $request,
+            $period,
+            $reliefOption,
+            $oldStatus
+        ) {
+            $reliefOption->update([
+                'is_active' => ! $oldStatus,
+            ]);
 
-        ActivityLog::create([
-            'user_id' => $request->user()?->id,
-            'registration_id' => null,
-            'action' => 'TOGGLE_RELIEF_OPTION',
-            'description' =>
-                'Status master Keringanan / Prestasi diperbarui.',
-            'metadata' => [
-                'relief_option_id' => $reliefOption->id,
-                'period_id' => $period->id,
-                'old' => [
-                    'is_active' => $oldStatus,
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => null,
+                'action' => 'TOGGLE_RELIEF_OPTION',
+                'description' =>
+                    'Status master Keringanan / Prestasi diperbarui.',
+                'metadata' => [
+                    'relief_option_id' => $reliefOption->id,
+                    'period_id' => $period->id,
+                    'old' => [
+                        'is_active' => $oldStatus,
+                    ],
+                    'new' => [
+                        'is_active' =>
+                            (bool) $reliefOption->fresh()->is_active,
+                    ],
                 ],
-                'new' => [
-                    'is_active' =>
-                        (bool) $reliefOption->fresh()->is_active,
-                ],
-            ],
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'created_at' => now(),
-        ]);
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
+        });
 
         return redirect()
             ->route('admin.relief-options.index', [
@@ -299,47 +325,55 @@ class ReliefOptionController extends Controller
             ? (bool) $existing->pivot->is_active
             : null;
 
-        if (! $existing) {
-            $period->reliefOptions()->attach(
-                $reliefOption->id,
-                [
-                    'is_active' => true,
-                    'sort_order' => $reliefOption->sort_order,
-                ]
-            );
+        DB::transaction(function () use (
+            $request,
+            $period,
+            $reliefOption,
+            $existing,
+            $oldStatus
+        ) {
+            if (! $existing) {
+                $period->reliefOptions()->attach(
+                    $reliefOption->id,
+                    [
+                        'is_active' => true,
+                        'sort_order' => $reliefOption->sort_order,
+                    ]
+                );
 
-            $newStatus = true;
-        } else {
-            $newStatus = ! $oldStatus;
+                $newStatus = true;
+            } else {
+                $newStatus = ! $oldStatus;
 
-            $period->reliefOptions()->updateExistingPivot(
-                $reliefOption->id,
-                [
-                    'is_active' => $newStatus,
-                ]
-            );
-        }
+                $period->reliefOptions()->updateExistingPivot(
+                    $reliefOption->id,
+                    [
+                        'is_active' => $newStatus,
+                    ]
+                );
+            }
 
-        ActivityLog::create([
-            'user_id' => $request->user()?->id,
-            'registration_id' => null,
-            'action' => 'TOGGLE_PERIOD_RELIEF_OPTION',
-            'description' =>
-                'Ketersediaan Keringanan / Prestasi pada periode diperbarui.',
-            'metadata' => [
-                'relief_option_id' => $reliefOption->id,
-                'period_id' => $period->id,
-                'old' => [
-                    'is_active' => $oldStatus,
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => null,
+                'action' => 'TOGGLE_PERIOD_RELIEF_OPTION',
+                'description' =>
+                    'Ketersediaan Keringanan / Prestasi pada periode diperbarui.',
+                'metadata' => [
+                    'relief_option_id' => $reliefOption->id,
+                    'period_id' => $period->id,
+                    'old' => [
+                        'is_active' => $oldStatus,
+                    ],
+                    'new' => [
+                        'is_active' => $newStatus,
+                    ],
                 ],
-                'new' => [
-                    'is_active' => $newStatus,
-                ],
-            ],
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'created_at' => now(),
-        ]);
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
+        });
 
         return redirect()
             ->route('admin.relief-options.index', [
