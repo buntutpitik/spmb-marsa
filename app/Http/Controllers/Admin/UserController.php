@@ -11,6 +11,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UserController extends Controller
 {
@@ -116,24 +117,28 @@ class UserController extends Controller
     public function store(
         StoreUserRequest $request
     ): RedirectResponse {
-        $user = User::query()->create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'role' => $request->validated('role'),
-            'password' => $request->validated('password'),
-            'is_active' => true,
-        ]);
+        $user = DB::transaction(function () use ($request) {
+            $user = User::query()->create([
+                'name' => $request->validated('name'),
+                'email' => $request->validated('email'),
+                'role' => $request->validated('role'),
+                'password' => $request->validated('password'),
+                'is_active' => true,
+            ]);
 
-        $this->log(
-            request: $request,
-            action: 'CREATE_USER',
-            description: 'User baru dibuat.',
-            target: $user,
-            metadata: [
-                'role' => $user->role,
-                'email' => $user->email,
-            ]
-        );
+            $this->log(
+                request: $request,
+                action: 'CREATE_USER',
+                description: 'User baru dibuat.',
+                target: $user,
+                metadata: [
+                    'role' => $user->role,
+                    'email' => $user->email,
+                ]
+            );
+
+            return $user;
+        });
 
         return redirect()
             ->route('admin.users.index')
@@ -182,26 +187,32 @@ class UserController extends Controller
             'role' => $user->role,
         ];
 
-        $user->update([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'role' => $request->validated('role'),
-        ]);
+        DB::transaction(function () use (
+            $request,
+            $user,
+            $old
+        ) {
+            $user->update([
+                'name' => $request->validated('name'),
+                'email' => $request->validated('email'),
+                'role' => $request->validated('role'),
+            ]);
 
-        $this->log(
-            request: $request,
-            action: 'UPDATE_USER',
-            description: 'Data user diperbarui.',
-            target: $user,
-            metadata: [
-                'old' => $old,
-                'new' => [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                ],
-            ]
-        );
+            $this->log(
+                request: $request,
+                action: 'UPDATE_USER',
+                description: 'Data user diperbarui.',
+                target: $user,
+                metadata: [
+                    'old' => $old,
+                    'new' => [
+                        'name' => $user->name,
+                        'email' => $user->email,
+                        'role' => $user->role,
+                    ],
+                ]
+            );
+        });
 
         return redirect()
             ->route('admin.users.index')
@@ -244,22 +255,28 @@ class UserController extends Controller
 
         $oldStatus = $user->is_active;
 
-        $user->update([
-            'is_active' => ! $user->is_active,
-        ]);
+        DB::transaction(function () use (
+            $request,
+            $user,
+            $oldStatus
+        ) {
+            $user->update([
+                'is_active' => ! $user->is_active,
+            ]);
 
-        $this->log(
-            request: $request,
-            action: 'TOGGLE_USER_ACTIVE',
-            description: $user->is_active
-                ? 'User diaktifkan.'
-                : 'User dinonaktifkan.',
-            target: $user,
-            metadata: [
-                'from_is_active' => $oldStatus,
-                'to_is_active' => $user->is_active,
-            ]
-        );
+            $this->log(
+                request: $request,
+                action: 'TOGGLE_USER_ACTIVE',
+                description: $user->is_active
+                    ? 'User diaktifkan.'
+                    : 'User dinonaktifkan.',
+                target: $user,
+                metadata: [
+                    'from_is_active' => $oldStatus,
+                    'to_is_active' => $user->is_active,
+                ]
+            );
+        });
 
         return redirect()
             ->route('admin.users.index')
@@ -275,16 +292,21 @@ class UserController extends Controller
         ResetUserPasswordRequest $request,
         User $user
     ): RedirectResponse {
-        $user->update([
-            'password' => $request->validated('password'),
-        ]);
+        DB::transaction(function () use (
+            $request,
+            $user
+        ) {
+            $user->update([
+                'password' => $request->validated('password'),
+            ]);
 
-        $this->log(
-            request: $request,
-            action: 'RESET_USER_PASSWORD',
-            description: 'Password user direset.',
-            target: $user
-        );
+            $this->log(
+                request: $request,
+                action: 'RESET_USER_PASSWORD',
+                description: 'Password user direset.',
+                target: $user
+            );
+        });
 
         return redirect()
             ->route('admin.users.index')
