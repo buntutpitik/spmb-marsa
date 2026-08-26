@@ -3,7 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Models\OriginSchool;
-use App\Models\PpdbPeriod;
+use App\Services\PeriodContext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -466,14 +466,10 @@ class StorePublicRegistrationRequest extends FormRequest
                     return;
                 }
 
-                $period = PpdbPeriod::query()
-                    ->whereKey(
-                        $this->integer('period_id')
-                    )
-                    ->where('is_active', true)
-                    ->where('status', 'OPEN')
-                    ->whereNull('archived_at')
-                    ->first();
+                $period = app(PeriodContext::class)
+                ->resolveActivePeriod(
+                    $this->integer('period_id')
+                );
 
                 if (! $period) {
                     $validator->errors()->add(

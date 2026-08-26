@@ -3,20 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Models\ActivityLog;
-use App\Models\PpdbPeriod;
+use App\Services\PeriodContext;
 use App\Models\Registration;
 use Illuminate\Contracts\View\View;
 
 class DashboardController extends Controller
 {
+    public function __construct(
+        protected PeriodContext $periodContext
+    ) {
+    }
+
     public function index(): View
     {
-        $activePeriod = PpdbPeriod::query()
-            ->where('is_active', true)
-            ->where('status', 'OPEN')
-            ->whereNull('archived_at')
-            ->orderByDesc('year_start')
-            ->first();
+        $activePeriod = $this->periodContext
+            ->resolveActivePeriod();
 
         $stats = [
             'total' => 0,

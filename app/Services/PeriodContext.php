@@ -45,16 +45,38 @@ class PeriodContext
                 ->first();
     }
 
+    public function resolveActivePeriod(
+        ?int $periodId = null
+    ): ?PpdbPeriod {
+        $query = PpdbPeriod::query()
+            ->whereNull('archived_at')
+            ->where('is_active', true)
+            ->where('status', 'OPEN');
+
+        if ($periodId !== null) {
+            $query->whereKey($periodId);
+        }
+
+        return $query
+            ->orderByDesc('year_start')
+            ->first();
+    }
+
     public function resolveRegistrationPeriod(
         Request $request,
         Registration $registration
     ): PpdbPeriod {
         $requestedPeriodId = $request->query('period_id');
 
-        if ($requestedPeriodId === null || $requestedPeriodId === '') {
+        if (
+            $requestedPeriodId === null
+            || $requestedPeriodId === ''
+        ) {
             return PpdbPeriod::query()
                 ->whereNull('archived_at')
-                ->findOrFail($registration->period_id);
+                ->findOrFail(
+                    $registration->period_id
+                );
         }
 
         $period = PpdbPeriod::query()
@@ -62,7 +84,8 @@ class PeriodContext
             ->findOrFail($requestedPeriodId);
 
         abort_unless(
-            (int) $registration->period_id === (int) $period->id,
+            (int) $registration->period_id
+                === (int) $period->id,
             404
         );
 

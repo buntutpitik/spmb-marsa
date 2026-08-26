@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Models\PpdbPeriod;
+use App\Services\PeriodContext;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -48,12 +48,8 @@ class AppServiceProvider extends ServiceProvider
         View::composer(
             'layouts.app',
             function ($view): void {
-                $activePeriod = PpdbPeriod::query()
-                    ->where('is_active', true)
-                    ->where('status', 'OPEN')
-                    ->whereNull('archived_at')
-                    ->orderByDesc('year_start')
-                    ->first();
+                $activePeriod = app(PeriodContext::class)
+                    ->resolveActivePeriod();
 
                 $view->with(
                     'activePeriod',

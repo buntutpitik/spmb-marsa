@@ -6,7 +6,6 @@ use App\Models\ActivityLog;
 use App\Models\Major;
 use App\Models\OriginSchool;
 use App\Models\PeriodMajor;
-use App\Models\PpdbPeriod;
 use App\Models\Registration;
 use App\Models\RegistrationStatusHistory;
 use App\Models\User;
@@ -20,7 +19,8 @@ class RegistrationService
     public function __construct(
         protected RegistrationNumberService $numberService,
         protected WhatsappNotificationService $notificationService,
-        protected AdmissionPathResolver $admissionPathResolver
+        protected AdmissionPathResolver $admissionPathResolver,
+        protected PeriodContext $periodContext
     ) {
     }
 
@@ -41,24 +41,19 @@ class RegistrationService
              * 1. Periode dan jurusan.
              * ---------------------------------------------------------
              */
-            $period = PpdbPeriod::query()
-                ->findOrFail($data['period_id']);
+            $period = $this->periodContext
+            ->resolveActivePeriod(
+                (int) $data['period_id']
+            );
 
-            $major = Major::query()
-                ->findOrFail($data['major_id']);
-
-            /*
-             * Periode harus aktif dan OPEN.
-             */
-            if (
-                ! $period->is_active
-                || $period->status !== 'OPEN'
-                || $period->archived_at !== null
-            ) {
+            if (! $period) {
                 throw new InvalidArgumentException(
                     'Periode SPMB tidak aktif atau tidak dibuka.'
                 );
             }
+
+            $major = Major::query()
+                ->findOrFail($data['major_id']);
 
             /*
              * ---------------------------------------------------------

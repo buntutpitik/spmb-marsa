@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePublicRegistrationRequest;
 use App\Models\OriginSchool;
-use App\Models\PpdbPeriod;
+use App\Services\PeriodContext;
 use App\Models\Registration;
 use App\Services\AdmissionPathResolver;
 use App\Services\RegistrationService;
@@ -16,17 +16,15 @@ class PublicRegistrationController extends Controller
 {
     public function __construct(
         protected RegistrationService $registrationService,
-        protected AdmissionPathResolver $admissionPathResolver
+        protected AdmissionPathResolver $admissionPathResolver,
+        protected PeriodContext $periodContext
     ) {
     }
 
     public function create(): View
     {
-        $period = PpdbPeriod::query()
-            ->where('is_active', true)
-            ->where('status', 'OPEN')
-            ->whereNull('archived_at')
-            ->first();
+        $period = $this->periodContext
+            ->resolveActivePeriod();
 
         $majors = collect();
         $reliefOptions = collect();
