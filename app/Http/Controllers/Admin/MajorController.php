@@ -11,6 +11,7 @@ use App\Models\Major;
 use App\Models\PeriodMajor;
 use App\Models\PpdbPeriod;
 use App\Models\School;
+use App\Services\PeriodContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,6 +20,11 @@ use Illuminate\Validation\ValidationException;
 
 class MajorController extends Controller
 {
+    public function __construct(
+        protected PeriodContext $periodContext
+    ) {
+    }
+
     public function index(Request $request): View
     {
         $periods = PpdbPeriod::query()
@@ -27,20 +33,8 @@ class MajorController extends Controller
             ->orderByDesc('year_start')
             ->get();
 
-        $selectedPeriod = null;
-
-        if ($request->filled('period_id')) {
-            $selectedPeriod = $periods->firstWhere(
-                'id',
-                (int) $request->input('period_id')
-            );
-        }
-
-        if (! $selectedPeriod) {
-            $selectedPeriod = $periods
-                ->firstWhere('is_active', true)
-                ?? $periods->first();
-        }
+        $selectedPeriod = $this->periodContext
+            ->resolveAdminPeriod($request);
 
         $school = $selectedPeriod?->school;
 

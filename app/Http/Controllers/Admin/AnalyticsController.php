@@ -5,12 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
+use App\Services\PeriodContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AnalyticsController extends Controller
 {
+    public function __construct(
+        protected PeriodContext $periodContext
+    ) {
+    }
+
     public function index(Request $request): View
     {
         $periods = PpdbPeriod::query()
@@ -18,20 +24,8 @@ class AnalyticsController extends Controller
             ->orderByDesc('year_start')
             ->get();
 
-        $selectedPeriod = null;
-
-        if ($request->filled('period_id')) {
-            $selectedPeriod = $periods->firstWhere(
-                'id',
-                $request->integer('period_id')
-            );
-        }
-
-        if (! $selectedPeriod) {
-            $selectedPeriod = $periods
-                ->firstWhere('is_active', true)
-                ?? $periods->first();
-        }
+        $selectedPeriod = $this->periodContext
+            ->resolveAdminPeriod($request);
 
         $summary = [
             'TOTAL' => 0,

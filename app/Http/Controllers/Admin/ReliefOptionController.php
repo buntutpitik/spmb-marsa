@@ -8,6 +8,7 @@ use App\Http\Requests\Admin\UpdateReliefOptionRequest;
 use App\Models\ActivityLog;
 use App\Models\PpdbPeriod;
 use App\Models\ReliefOption;
+use App\Services\PeriodContext;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,11 @@ use Illuminate\Support\Str;
 
 class ReliefOptionController extends Controller
 {
+    public function __construct(
+        protected PeriodContext $periodContext
+    ) {
+    }
+
     public function index(Request $request): View
     {
         $periods = PpdbPeriod::query()
@@ -22,20 +28,8 @@ class ReliefOptionController extends Controller
             ->orderByDesc('year_start')
             ->get();
 
-        $selectedPeriod = null;
-
-        if ($request->filled('period_id')) {
-            $selectedPeriod = $periods->firstWhere(
-                'id',
-                (int) $request->input('period_id')
-            );
-        }
-
-        if (! $selectedPeriod) {
-            $selectedPeriod = $periods
-                ->firstWhere('is_active', true)
-                ?? $periods->first();
-        }
+        $selectedPeriod = $this->periodContext
+            ->resolveAdminPeriod($request);
 
         $reliefOptions = ReliefOption::query()
             ->orderBy('sort_order')
