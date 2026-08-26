@@ -3,23 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\PpdbPeriod;
 use App\Models\Registration;
+use App\Services\PeriodContext;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class RegistrationPdfController extends Controller
 {
+    public function __construct(
+        protected PeriodContext $periodContext
+    ) {
+    }
+
     public function download(
         Request $request
     ): Response {
-        $period = PpdbPeriod::query()
-            ->with('school')
-            ->whereNull('archived_at')
-            ->findOrFail(
-                $request->integer('period_id')
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
+
+        $period->load('school');
 
         $registrations = Registration::query()
             ->with([

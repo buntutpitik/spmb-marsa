@@ -4,21 +4,23 @@ namespace App\Http\Controllers\Admin;
 
 use App\Exports\RegistrationsExport;
 use App\Http\Controllers\Controller;
-use App\Models\PpdbPeriod;
+use App\Services\PeriodContext;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class RegistrationExportController extends Controller
 {
+    public function __construct(
+        protected PeriodContext $periodContext
+    ) {
+    }
+
     public function excel(
         Request $request
     ): BinaryFileResponse {
-        $period = PpdbPeriod::query()
-            ->whereNull('archived_at')
-            ->findOrFail(
-                $request->integer('period_id')
-            );
+        $period = $this->periodContext
+            ->resolveExplicitPeriod($request);
 
         $filename =
             'data-pendaftar-'

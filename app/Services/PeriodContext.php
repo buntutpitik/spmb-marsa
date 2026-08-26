@@ -8,6 +8,21 @@ use Illuminate\Http\Request;
 
 class PeriodContext
 {
+    public function resolveExplicitPeriod(
+        Request $request
+    ): PpdbPeriod {
+        abort_unless(
+            $request->filled('period_id'),
+            404
+        );
+
+        return PpdbPeriod::query()
+            ->whereNull('archived_at')
+            ->findOrFail(
+                $request->integer('period_id')
+            );
+    }
+
     public function resolveAdminPeriod(
         Request $request
     ): ?PpdbPeriod {
