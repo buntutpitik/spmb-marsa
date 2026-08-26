@@ -145,10 +145,10 @@ class AdminReenrollmentPaymentTest extends TestCase
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect(
-                route(
-                    'admin.registrations.show',
-                    $registration
-                )
+                route('admin.registrations.show', [
+                    'registration' => $registration,
+                    'period_id' => $registration->period_id,
+                ])
             );
 
         $this->assertDatabaseHas(
@@ -215,10 +215,10 @@ class AdminReenrollmentPaymentTest extends TestCase
         $response
             ->assertSessionHasNoErrors()
             ->assertRedirect(
-                route(
-                    'admin.registrations.show',
-                    $registration
-                )
+                route('admin.registrations.show', [
+                    'registration' => $registration,
+                    'period_id' => $registration->period_id,
+                ])
             );
 
         $registration->refresh();
@@ -516,10 +516,10 @@ class AdminReenrollmentPaymentTest extends TestCase
             )
             ->assertSessionHasNoErrors()
             ->assertRedirect(
-                route(
-                    'admin.registrations.show',
-                    $registration
-                )
+                route('admin.registrations.show', [
+                    'registration' => $registration,
+                    'period_id' => $registration->period_id,
+                ])
             );
 
         $registration->refresh();

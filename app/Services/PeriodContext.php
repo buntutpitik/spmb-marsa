@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\PpdbPeriod;
+use App\Models\Registration;
 use Illuminate\Http\Request;
 
 class PeriodContext
@@ -27,5 +28,29 @@ class PeriodContext
                 ->whereNull('archived_at')
                 ->orderByDesc('year_start')
                 ->first();
+    }
+
+    public function resolveRegistrationPeriod(
+        Request $request,
+        Registration $registration
+    ): PpdbPeriod {
+        $requestedPeriodId = $request->query('period_id');
+
+        if ($requestedPeriodId === null || $requestedPeriodId === '') {
+            return PpdbPeriod::query()
+                ->whereNull('archived_at')
+                ->findOrFail($registration->period_id);
+        }
+
+        $period = PpdbPeriod::query()
+            ->whereNull('archived_at')
+            ->findOrFail($requestedPeriodId);
+
+        abort_unless(
+            (int) $registration->period_id === (int) $period->id,
+            404
+        );
+
+        return $period;
     }
 }

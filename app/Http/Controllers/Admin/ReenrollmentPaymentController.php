@@ -7,12 +7,14 @@ use App\Http\Requests\Admin\StoreReenrollmentPaymentRequest;
 use App\Models\Registration;
 use App\Services\ReenrollmentPaymentService;
 use Illuminate\Http\RedirectResponse;
+use App\Services\PeriodContext;
 use InvalidArgumentException;
 
 class ReenrollmentPaymentController extends Controller
 {
     public function __construct(
-        protected ReenrollmentPaymentService $paymentService
+        protected ReenrollmentPaymentService $paymentService,
+        protected PeriodContext $periodContext
     ) {
     }
 
@@ -20,6 +22,11 @@ class ReenrollmentPaymentController extends Controller
         StoreReenrollmentPaymentRequest $request,
         Registration $registration
     ): RedirectResponse {
+        $period = $this->periodContext
+        ->resolveRegistrationPeriod(
+            $request,
+            $registration
+        );
         try {
             $payment = $this->paymentService->addPayment(
                 $registration,
@@ -69,7 +76,10 @@ class ReenrollmentPaymentController extends Controller
         return redirect()
             ->route(
                 'admin.registrations.show',
-                $registration
+                [
+                    'registration' => $registration,
+                    'period_id' => $period->id,
+                ]
             )
             ->with(
                 'success',

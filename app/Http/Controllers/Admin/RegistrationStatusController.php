@@ -7,12 +7,14 @@ use App\Http\Requests\Admin\ChangeRegistrationStatusRequest;
 use App\Models\Registration;
 use App\Services\RegistrationStatusService;
 use Illuminate\Http\RedirectResponse;
+use App\Services\PeriodContext;
 use InvalidArgumentException;
 
 class RegistrationStatusController extends Controller
 {
     public function __construct(
-        protected RegistrationStatusService $statusService
+        protected RegistrationStatusService $statusService,
+        protected PeriodContext $periodContext
     ) {
     }
 
@@ -20,6 +22,11 @@ class RegistrationStatusController extends Controller
         ChangeRegistrationStatusRequest $request,
         Registration $registration
     ): RedirectResponse {
+        $period = $this->periodContext
+        ->resolveRegistrationPeriod(
+            $request,
+            $registration
+        );
         try {
             $this->statusService->change(
                 $registration,
@@ -35,7 +42,10 @@ class RegistrationStatusController extends Controller
             return redirect()
                 ->route(
                     'admin.registrations.show',
-                    $registration
+                    [
+                        'registration' => $registration,
+                        'period_id' => $period->id,
+                    ]
                 )
                 ->withErrors([
                     'status' => $exception->getMessage(),

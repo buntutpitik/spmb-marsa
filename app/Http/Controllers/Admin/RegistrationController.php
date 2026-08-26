@@ -150,8 +150,17 @@ class RegistrationController extends Controller
     }
 
     public function show(
+        Request $request,
         Registration $registration
     ): View {
+        $selectedPeriod = $this->periodContext
+            ->resolveAdminPeriod($request);
+
+        abort_unless(
+            $selectedPeriod
+            && $registration->period_id === $selectedPeriod->id,
+            404
+        );
         $registration->load([
             'period',
             'major',
@@ -171,6 +180,7 @@ class RegistrationController extends Controller
 
         return view('admin.registrations.show', [
             'registration' => $registration,
+            'selectedPeriod' => $selectedPeriod,
         ]);
     }
 }

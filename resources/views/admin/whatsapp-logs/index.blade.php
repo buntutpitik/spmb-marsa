@@ -372,7 +372,10 @@
                                     @if ($log->registration)
 
                                         <a
-                                            href="{{ route('admin.registrations.show', $log->registration) }}"
+                                            href="{{ route('admin.registrations.show', [
+                                                'registration' => $log->registration,
+                                                'period_id' => $selectedPeriod->id,
+                                            ]) }}"
                                             class="font-semibold text-slate-800 transition hover:text-emerald-600"
                                         >
                                             {{ $log->registration->full_name }}

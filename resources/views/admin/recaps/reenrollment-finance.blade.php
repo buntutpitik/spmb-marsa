@@ -396,7 +396,10 @@
                                         <a
                                             href="{{ route(
                                                 'admin.registrations.show',
-                                                $registration
+                                                [
+                                                    'registration' => $registration,
+                                                    'period_id' => $selectedPeriod->id,
+                                                ]
                                             ) }}"
                                             class="inline-flex rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
                                         >

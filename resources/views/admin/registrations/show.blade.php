@@ -323,7 +323,10 @@
                                         method="POST"
                                         action="{{ route(
                                             'admin.registrations.reenrollment-payments.store',
-                                            $registration
+                                            [
+                                                'registration' => $registration,
+                                                'period_id' => $registration->period_id,
+                                            ]
                                         ) }}"
                                     >
                                         @csrf
@@ -603,7 +606,10 @@
                             method="POST"
                             action="{{ route(
                                 'admin.registrations.status.update',
-                                $registration
+                                [
+                                    'registration' => $registration,
+                                    'period_id' => $registration->period_id,
+                                ]
                             ) }}"
                         >
                             @csrf

@@ -96,7 +96,12 @@
                         </button>
 
                         <a
-                            href="{{ route('admin.registrations.index') }}"
+                            href="{{ route(
+                                'admin.registrations.index',
+                                $selectedPeriod
+                                    ? ['period_id' => $selectedPeriod->id]
+                                    : []
+                            ) }}"
                             class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
                         >
                             Reset
@@ -439,7 +444,10 @@
                                     <td class="px-6 py-4 text-right">
 
                                         <a
-                                            href="{{ route('admin.registrations.show', $registration) }}"
+                                            href="{{ route('admin.registrations.show', [
+                                                'registration' => $registration,
+                                                'period_id' => $selectedPeriod->id,
+                                            ]) }}"
                                             class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
                                         >
                                             <i
