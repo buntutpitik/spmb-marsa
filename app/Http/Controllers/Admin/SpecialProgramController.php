@@ -3,13 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreSpecialProgramRequest;
+use App\Http\Requests\Admin\UpdateSpecialProgramRequest;
+use App\Models\ActivityLog;
 use App\Models\PpdbPeriod;
 use App\Models\SpecialProgram;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class SpecialProgramController extends Controller
 {
@@ -58,35 +60,10 @@ class SpecialProgramController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'period_id' => [
-                'required',
-                'integer',
-                'exists:ppdb_periods,id',
-            ],
-
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('special_programs', 'name'),
-            ],
-
-            'description' => [
-                'nullable',
-                'string',
-                'max:1000',
-            ],
-
-            'sort_order' => [
-                'required',
-                'integer',
-                'min:0',
-                'max:9999',
-            ],
-        ]);
+    public function store(
+        StoreSpecialProgramRequest $request
+    ): RedirectResponse {
+        $validated = $request->validated();
 
         $program = SpecialProgram::create([
             'name' => trim($validated['name']),
@@ -107,6 +84,31 @@ class SpecialProgramController extends Controller
             ],
         ]);
 
+        ActivityLog::create([
+            'user_id' => $request->user()?->id,
+            'registration_id' => null,
+            'action' => 'CREATE_SPECIAL_PROGRAM',
+            'description' => 'Program Khusus ditambahkan.',
+            'metadata' => [
+                'special_program_id' => $program->id,
+                'period_id' => $period->id,
+                'new' => $program->only([
+                    'name',
+                    'slug',
+                    'description',
+                    'is_active',
+                    'sort_order',
+                ]),
+                'period' => [
+                    'is_active' => true,
+                    'sort_order' => $validated['sort_order'],
+                ],
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
+
         return redirect()
             ->route('admin.special-programs.index', [
                 'period_id' => $period->id,
@@ -118,37 +120,36 @@ class SpecialProgramController extends Controller
     }
 
     public function update(
-        Request $request,
+        UpdateSpecialProgramRequest $request,
         SpecialProgram $specialProgram
     ): RedirectResponse {
-        $validated = $request->validate([
-            'period_id' => [
-                'required',
-                'integer',
-                'exists:ppdb_periods,id',
-            ],
+        $validated = $request->validated();
 
-            'name' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('special_programs', 'name')
-                    ->ignore($specialProgram->id),
-            ],
-
-            'description' => [
-                'nullable',
-                'string',
-                'max:1000',
-            ],
-
-            'sort_order' => [
-                'required',
-                'integer',
-                'min:0',
-                'max:9999',
-            ],
+        $old = $specialProgram->only([
+            'name',
+            'slug',
+            'description',
+            'is_active',
+            'sort_order',
         ]);
+
+        $period = PpdbPeriod::findOrFail(
+            $validated['period_id']
+        );
+
+        $existing = $period->specialPrograms()
+            ->where(
+                'special_programs.id',
+                $specialProgram->id
+            )
+            ->first();
+
+        $oldPivot = $existing
+            ? [
+                'is_active' => (bool) $existing->pivot->is_active,
+                'sort_order' => (int) $existing->pivot->sort_order,
+            ]
+            : null;
 
         $specialProgram->update([
             'name' => trim($validated['name']),
@@ -157,18 +158,7 @@ class SpecialProgramController extends Controller
             'sort_order' => $validated['sort_order'],
         ]);
 
-        $period = PpdbPeriod::findOrFail(
-            $validated['period_id']
-        );
-
-        if (
-            $period->specialPrograms()
-                ->where(
-                    'special_programs.id',
-                    $specialProgram->id
-                )
-                ->exists()
-        ) {
+        if ($existing) {
             $period->specialPrograms()->updateExistingPivot(
                 $specialProgram->id,
                 [
@@ -176,6 +166,38 @@ class SpecialProgramController extends Controller
                 ]
             );
         }
+
+        ActivityLog::create([
+            'user_id' => $request->user()?->id,
+            'registration_id' => null,
+            'action' => 'UPDATE_SPECIAL_PROGRAM',
+            'description' => 'Program Khusus diperbarui.',
+            'metadata' => [
+                'special_program_id' => $specialProgram->id,
+                'period_id' => $period->id,
+                'old' => $old,
+                'new' => $specialProgram
+                    ->fresh()
+                    ->only([
+                        'name',
+                        'slug',
+                        'description',
+                        'is_active',
+                        'sort_order',
+                    ]),
+                'period_old' => $oldPivot,
+                'period_new' => $existing
+                    ? [
+                        'is_active' => $oldPivot['is_active'],
+                        'sort_order' =>
+                            (int) $validated['sort_order'],
+                    ]
+                    : null,
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
 
         return redirect()
             ->route('admin.special-programs.index', [
@@ -191,7 +213,7 @@ class SpecialProgramController extends Controller
         Request $request,
         SpecialProgram $specialProgram
     ): RedirectResponse {
-        $request->validate([
+        $validated = $request->validate([
             'period_id' => [
                 'required',
                 'integer',
@@ -199,13 +221,37 @@ class SpecialProgramController extends Controller
             ],
         ]);
 
+        $oldStatus = (bool) $specialProgram->is_active;
+
         $specialProgram->update([
-            'is_active' => ! $specialProgram->is_active,
+            'is_active' => ! $oldStatus,
+        ]);
+
+        ActivityLog::create([
+            'user_id' => $request->user()?->id,
+            'registration_id' => null,
+            'action' => 'TOGGLE_SPECIAL_PROGRAM',
+            'description' =>
+                'Status master Program Khusus diperbarui.',
+            'metadata' => [
+                'special_program_id' => $specialProgram->id,
+                'period_id' => (int) $validated['period_id'],
+                'old' => [
+                    'is_active' => $oldStatus,
+                ],
+                'new' => [
+                    'is_active' =>
+                        (bool) $specialProgram->fresh()->is_active,
+                ],
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
         ]);
 
         return redirect()
             ->route('admin.special-programs.index', [
-                'period_id' => $request->integer('period_id'),
+                'period_id' => $validated['period_id'],
             ])
             ->with(
                 'success',
@@ -236,6 +282,10 @@ class SpecialProgramController extends Controller
             )
             ->first();
 
+        $oldStatus = $existing
+            ? (bool) $existing->pivot->is_active
+            : null;
+
         if (! $existing) {
             $period->specialPrograms()->attach(
                 $specialProgram->id,
@@ -244,14 +294,39 @@ class SpecialProgramController extends Controller
                     'sort_order' => $specialProgram->sort_order,
                 ]
             );
+
+            $newStatus = true;
         } else {
+            $newStatus = ! $oldStatus;
+
             $period->specialPrograms()->updateExistingPivot(
                 $specialProgram->id,
                 [
-                    'is_active' => ! (bool) $existing->pivot->is_active,
+                    'is_active' => $newStatus,
                 ]
             );
         }
+
+        ActivityLog::create([
+            'user_id' => $request->user()?->id,
+            'registration_id' => null,
+            'action' => 'TOGGLE_PERIOD_SPECIAL_PROGRAM',
+            'description' =>
+                'Ketersediaan Program Khusus pada periode diperbarui.',
+            'metadata' => [
+                'special_program_id' => $specialProgram->id,
+                'period_id' => $period->id,
+                'old' => [
+                    'is_active' => $oldStatus,
+                ],
+                'new' => [
+                    'is_active' => $newStatus,
+                ],
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'created_at' => now(),
+        ]);
 
         return redirect()
             ->route('admin.special-programs.index', [

@@ -33,7 +33,14 @@ class AdminRegistrationOptionsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->actingAs($superadmin);
+        $this->actingAs($superadmin)
+            ->withServerVariables([
+                'REMOTE_ADDR' =>
+                    '203.0.113.80',
+
+                'HTTP_USER_AGENT' =>
+                    'SPMB-MARSA-Registration-Options-Audit-Test/1.0',
+            ]);
 
         $now = now();
 
@@ -450,5 +457,175 @@ class AdminRegistrationOptionsTest extends TestCase
         $this->assertFalse(
             $routeNames->contains('admin.special-programs.destroy')
         );
+
+                /*
+                * ---------------------------------------------------------
+                * 10. Audit trail seluruh mutation.
+                * ---------------------------------------------------------
+                */
+                $expectedActions = [
+                    'CREATE_RELIEF_OPTION' => 1,
+                    'UPDATE_RELIEF_OPTION' => 1,
+                    'TOGGLE_PERIOD_RELIEF_OPTION' => 2,
+                    'TOGGLE_RELIEF_OPTION' => 2,
+
+                    'CREATE_SPECIAL_PROGRAM' => 1,
+                    'UPDATE_SPECIAL_PROGRAM' => 1,
+                    'TOGGLE_PERIOD_SPECIAL_PROGRAM' => 2,
+                    'TOGGLE_SPECIAL_PROGRAM' => 2,
+                ];
+
+                foreach ($expectedActions as $action => $count) {
+                    $this->assertSame(
+                        $count,
+                        DB::table('activity_logs')
+                            ->where('user_id', $superadmin->id)
+                            ->where('action', $action)
+                            ->count(),
+                        "Jumlah audit log {$action} tidak sesuai."
+                    );
+                }
+
+                $this->assertDatabaseHas('activity_logs', [
+                    'user_id' => $superadmin->id,
+                    'action' => 'CREATE_RELIEF_OPTION',
+                ]);
+
+                $this->assertDatabaseHas('activity_logs', [
+                    'user_id' => $superadmin->id,
+                    'action' => 'UPDATE_RELIEF_OPTION',
+                ]);
+
+                $this->assertDatabaseHas('activity_logs', [
+                    'user_id' => $superadmin->id,
+                    'action' => 'CREATE_SPECIAL_PROGRAM',
+                ]);
+
+                $this->assertDatabaseHas('activity_logs', [
+                    'user_id' => $superadmin->id,
+                    'action' => 'UPDATE_SPECIAL_PROGRAM',
+                ]);
+
+                $this->assertSame(
+                    12,
+                    DB::table('activity_logs')
+                        ->where('user_id', $superadmin->id)
+                        ->whereIn(
+                            'action',
+                            array_keys($expectedActions)
+                        )
+                        ->count()
+                );
+
+                        /*
+                        * ---------------------------------------------------------
+                        * 11. Audit context detail.
+                        * ---------------------------------------------------------
+                        */
+                        $reliefUpdateLog = DB::table('activity_logs')
+                            ->where('user_id', $superadmin->id)
+                            ->where('action', 'UPDATE_RELIEF_OPTION')
+                            ->latest('id')
+                            ->first();
+
+                        $this->assertNotNull($reliefUpdateLog);
+
+                        $this->assertSame(
+                            '203.0.113.80',
+                            $reliefUpdateLog->ip_address
+                        );
+
+                        $this->assertSame(
+                            'SPMB-MARSA-Registration-Options-Audit-Test/1.0',
+                            $reliefUpdateLog->user_agent
+                        );
+
+                        $reliefMetadata = json_decode(
+                            $reliefUpdateLog->metadata,
+                            true
+                        );
+
+                        $this->assertSame(
+                            (int) $reliefId,
+                            (int) $reliefMetadata['relief_option_id']
+                        );
+
+                        $this->assertSame(
+                            (int) $periodId,
+                            (int) $reliefMetadata['period_id']
+                        );
+
+                        $this->assertSame(
+                            'TEST ADMIN KERINGANAN',
+                            $reliefMetadata['old']['name']
+                        );
+
+                        $this->assertSame(
+                            'TEST ADMIN KERINGANAN EDIT',
+                            $reliefMetadata['new']['name']
+                        );
+
+                        $this->assertSame(
+                            10,
+                            (int) $reliefMetadata['period_old']['sort_order']
+                        );
+
+                        $this->assertSame(
+                            11,
+                            (int) $reliefMetadata['period_new']['sort_order']
+                        );
+
+                        $programUpdateLog = DB::table('activity_logs')
+                            ->where('user_id', $superadmin->id)
+                            ->where('action', 'UPDATE_SPECIAL_PROGRAM')
+                            ->latest('id')
+                            ->first();
+
+                        $this->assertNotNull($programUpdateLog);
+
+                        $this->assertSame(
+                            '203.0.113.80',
+                            $programUpdateLog->ip_address
+                        );
+
+                        $this->assertSame(
+                            'SPMB-MARSA-Registration-Options-Audit-Test/1.0',
+                            $programUpdateLog->user_agent
+                        );
+
+                        $programMetadata = json_decode(
+                            $programUpdateLog->metadata,
+                            true
+                        );
+
+                        $this->assertSame(
+                            (int) $programId,
+                            (int) $programMetadata['special_program_id']
+                        );
+
+                        $this->assertSame(
+                            (int) $periodId,
+                            (int) $programMetadata['period_id']
+                        );
+
+                        $this->assertSame(
+                            'TEST ADMIN PROGRAM',
+                            $programMetadata['old']['name']
+                        );
+
+                        $this->assertSame(
+                            'TEST ADMIN PROGRAM EDIT',
+                            $programMetadata['new']['name']
+                        );
+
+                        $this->assertSame(
+                            20,
+                            (int) $programMetadata['period_old']['sort_order']
+                        );
+
+                        $this->assertSame(
+                            21,
+                            (int) $programMetadata['period_new']['sort_order']
+                        );
     }
 }
