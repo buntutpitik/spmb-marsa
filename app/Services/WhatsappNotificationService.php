@@ -32,21 +32,29 @@ class WhatsappNotificationService
             );
         }
 
-        $log = WhatsappLog::create([
-            'registration_id' => $registration->id,
-            'phone' => $registration->whatsapp,
-            'message_type' => strtoupper($event),
-            'message' => $message ?? $event,
-            'status' => 'PENDING',
-            'attempt_count' => 0,
-        ]);
+        $messageType = strtoupper($event);
 
-        SendWhatsappTemplateJob::dispatch(
-            $log->id,
-            $templateName,
-            $languageCode,
-            $bodyParameters
-        )->afterCommit();
+        $log = WhatsappLog::query()->firstOrCreate(
+            [
+                'registration_id' => $registration->id,
+                'message_type' => $messageType,
+            ],
+            [
+                'phone' => $registration->whatsapp,
+                'message' => $message ?? $event,
+                'status' => 'PENDING',
+                'attempt_count' => 0,
+            ]
+        );
+
+        if ($log->wasRecentlyCreated) {
+            SendWhatsappTemplateJob::dispatch(
+                $log->id,
+                $templateName,
+                $languageCode,
+                $bodyParameters
+            )->afterCommit();
+        }
 
         return $log;
     }

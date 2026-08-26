@@ -100,4 +100,44 @@ class SendWhatsappTemplateJobTest extends TestCase
             $job->backoff
         );
     }
+
+    public function test_failed_marks_log_as_terminal_failed(): void
+    {
+        $log = WhatsappLog::create([
+            'phone' => '081234567890',
+            'message_type' => 'REGISTRATION_SUCCESS',
+            'message' => 'Notifikasi pendaftaran berhasil.',
+            'status' => 'PENDING',
+            'attempt_count' => 3,
+        ]);
+
+        $job = new SendWhatsappTemplateJob(
+            $log->id,
+            'registration_success',
+            'id',
+            []
+        );
+
+        $job->failed(
+            new \RuntimeException(
+                'Queue exhausted.'
+            )
+        );
+
+        $log->refresh();
+
+        $this->assertSame(
+            'FAILED',
+            $log->status
+        );
+
+        $this->assertSame(
+            'Queue exhausted.',
+            $log->error_message
+        );
+
+        $this->assertNotNull(
+            $log->failed_at
+        );
+    }
 }
