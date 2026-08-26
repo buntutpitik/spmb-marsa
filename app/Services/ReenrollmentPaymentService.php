@@ -52,6 +52,16 @@ class ReenrollmentPaymentService
                 ->lockForUpdate()
                 ->findOrFail($registration->id);
 
+            if (
+                ! $registration->period
+                || $registration->period->status !== 'OPEN'
+                || ! $registration->period->is_active
+            ) {
+                throw new InvalidArgumentException(
+                    'Periode SPMB tidak aktif atau tidak dibuka.'
+                );
+            }
+
             if ($registration->status !== 'ACCEPTED') {
                 throw new InvalidArgumentException(
                     'Pembayaran daftar ulang hanya dapat dilakukan untuk pendaftar berstatus ACCEPTED.'

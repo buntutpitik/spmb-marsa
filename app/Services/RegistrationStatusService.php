@@ -61,6 +61,18 @@ class RegistrationStatusService
                 ->lockForUpdate()
                 ->findOrFail($registration->id);
 
+            $registration->loadMissing('period');
+
+            if (
+                ! $registration->period
+                || $registration->period->status !== 'OPEN'
+                || ! $registration->period->is_active
+            ) {
+                throw new InvalidArgumentException(
+                    'Periode SPMB tidak aktif atau tidak dibuka.'
+                );
+            }
+
             $oldStatus = $registration->status;
 
             if ($oldStatus === $newStatus) {

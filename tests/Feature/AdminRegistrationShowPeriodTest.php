@@ -134,6 +134,42 @@ class AdminRegistrationShowPeriodTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_historical_registration_is_rendered_in_read_only_mode(): void
+    {
+        $registration = $this->makeRegistration(
+            $this->historicalPeriod
+        );
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.registrations.show', [
+                'registration' => $registration,
+                'period_id' => $this->historicalPeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Data Historis — Mode Baca Saja')
+            ->assertSee(
+                'Periode '.$this->historicalPeriod->name.' telah ditutup.'
+            )
+            ->assertDontSee('Aksi Pendaftaran')
+            ->assertDontSee('Input Pembayaran');
+    }
+
+    public function test_active_registration_still_shows_operational_actions(): void
+    {
+        $registration = $this->makeRegistration(
+            $this->activePeriod
+        );
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.registrations.show', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertDontSee('Data Historis — Mode Baca Saja')
+            ->assertSee('Aksi Pendaftaran');
+    }
+
     private function makePeriod(
         string $name,
         int $yearStart,

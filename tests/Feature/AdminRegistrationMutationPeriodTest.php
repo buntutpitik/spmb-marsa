@@ -205,7 +205,7 @@ class AdminRegistrationMutationPeriodTest extends TestCase
         ]);
     }
 
-    public function test_status_mutation_without_period_id_remains_backward_compatible(): void
+    public function test_status_mutation_on_historical_period_is_rejected_and_does_not_change_data(): void
     {
         $registration = $this->makeRegistration(
             $this->historicalPeriod,
@@ -213,7 +213,7 @@ class AdminRegistrationMutationPeriodTest extends TestCase
             'REGISTERED'
         );
 
-        $this->actingAs($this->admin)
+        $response = $this->actingAs($this->admin)
             ->patch(
                 route(
                     'admin.registrations.status.update',
@@ -221,9 +221,54 @@ class AdminRegistrationMutationPeriodTest extends TestCase
                 ),
                 [
                     'status' => 'ACCEPTED',
+                    'notes' => 'Historical period must be read-only.',
                 ]
-            )
-            ->assertSessionHasNoErrors();
+            );
+
+        $response->assertSessionHasErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'status' => 'REGISTERED',
+        ]);
+
+        $this->assertDatabaseMissing(
+            'registration_status_histories',
+            [
+                'registration_id' => $registration->id,
+                'to_status' => 'ACCEPTED',
+            ]
+        );
+    }
+
+    public function test_payment_on_historical_period_is_rejected_and_does_not_create_payment(): void
+    {
+        $registration = $this->makeRegistration(
+            $this->historicalPeriod,
+            $this->historicalPath,
+            'ACCEPTED'
+        );
+
+        $response = $this->actingAs($this->admin)
+            ->post(
+                route(
+                    'admin.registrations.reenrollment-payments.store',
+                    $registration
+                ),
+                [
+                    'amount' => 100000,
+                    'payment_method' => 'CASH',
+                ]
+            );
+
+        $response->assertSessionHasErrors();
+
+        $this->assertDatabaseMissing(
+            'reenrollment_payments',
+            [
+                'registration_id' => $registration->id,
+            ]
+        );
 
         $this->assertDatabaseHas('registrations', [
             'id' => $registration->id,
@@ -308,6 +353,7 @@ class AdminRegistrationMutationPeriodTest extends TestCase
             'birth_date' => '2010-01-01',
             'gender' => 'L',
             'religion' => 'ISLAM',
+
             'origin_school' =>
                 'SMP MUTATION PERIOD TEST',
 

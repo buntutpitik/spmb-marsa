@@ -19,6 +19,10 @@
             'WITHDRAWN' => 'bg-amber-50 text-amber-700',
             default => 'bg-slate-100 text-slate-700',
         };
+
+        $isReadOnlyPeriod =
+            $selectedPeriod->status !== 'OPEN'
+            || ! $selectedPeriod->is_active;
     @endphp
 
     <div class="space-y-8">
@@ -77,8 +81,39 @@
             </div>
         @endif
 
+        @if ($isReadOnlyPeriod)
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+                <div class="flex items-start gap-3">
+                    <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700">
+                        <i
+                            data-lucide="archive"
+                            class="h-5 w-5"
+                        ></i>
+                    </div>
+
+                    <div>
+                        <div class="font-bold text-amber-900">
+                            Data Historis — Mode Baca Saja
+                        </div>
+
+                        <p class="mt-1 text-sm leading-6 text-amber-800">
+                            Periode {{ $selectedPeriod->name }} telah ditutup.
+                            Data ditampilkan sebagai arsip dan tidak dapat diubah.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         {{-- Aksi Pendaftaran --}}
-        @if (in_array($registration->status, ['REGISTERED', 'ACCEPTED'], true))
+        @if (
+            ! $isReadOnlyPeriod
+            && in_array(
+                $registration->status,
+                ['REGISTERED', 'ACCEPTED'],
+                true
+            )
+        )
 
             <section
                 x-data="{
