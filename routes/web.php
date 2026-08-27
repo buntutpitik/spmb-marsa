@@ -38,6 +38,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Admin\AdmissionPathController;
+use App\Http\Controllers\Admin\ComparisonController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -286,6 +287,17 @@ Route::prefix('admin')
                 '/pendaftaran/{registration}/status',
                 [RegistrationStatusController::class, 'update']
             )->name('registrations.status.update');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Perbandingan Antar Tahun
+            |--------------------------------------------------------------------------
+            */
+
+            Route::get(
+                '/perbandingan',
+                [ComparisonController::class, 'index']
+            )->name('comparison.index');
         });
 
         /*
