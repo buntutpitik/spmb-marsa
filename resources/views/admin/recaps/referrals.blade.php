@@ -43,7 +43,7 @@
                             )
                         >
                             {{ $period->name }}
-                            {{ $period->is_active ? '— Aktif' : '' }}
+                            {{ $period->is_active ? '(Aktif)' : '' }}
                         </option>
 
                     @endforeach

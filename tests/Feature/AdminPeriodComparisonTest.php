@@ -247,6 +247,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'status',
             ]))
             ->assertOk()
             ->assertSee('Status')
@@ -287,6 +288,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'status',
             ]));
 
         $response
@@ -366,6 +368,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'major',
             ]))
             ->assertOk()
             ->assertSee('Jurusan')
@@ -429,6 +432,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'major',
             ]));
 
         $response
@@ -475,6 +479,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'gender',
             ]))
             ->assertOk()
             ->assertSee('Gender')
@@ -506,6 +511,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'gender',
             ]));
 
         $response
@@ -577,6 +583,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'admission-path',
             ]))
             ->assertOk()
             ->assertSee('Jalur Pendaftaran')
@@ -639,6 +646,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'admission-path',
             ]));
 
         $response
@@ -685,6 +693,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'data-source',
             ]))
             ->assertOk()
             ->assertSee('Asal Data Pendaftaran')
@@ -718,6 +727,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'data-source',
             ]));
 
         $response
@@ -762,6 +772,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'origin-school',
             ]))
             ->assertOk()
             ->assertSee('Sekolah Asal')
@@ -794,6 +805,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'origin-school',
             ]));
 
         $response
@@ -840,6 +852,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'referral',
             ]))
             ->assertOk()
             ->assertSee('Referral')
@@ -872,6 +885,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'referral',
             ]));
 
         $response
@@ -921,6 +935,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'trend',
             ]))
             ->assertOk()
             ->assertSee('Tren Pendaftaran')
@@ -972,6 +987,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'trend',
             ]));
 
         $response
@@ -1016,6 +1032,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'finance',
             ]))
             ->assertOk()
             ->assertSee('Daftar Ulang & Keuangan', false)
@@ -1049,6 +1066,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'finance',
             ]));
 
         $response
@@ -1131,6 +1149,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'finance',
             ]));
 
         $response
@@ -1168,6 +1187,7 @@ class AdminPeriodComparisonTest extends TestCase
             ->get(route('admin.comparison.index', [
                 'period_a' => $this->periodA->id,
                 'period_b' => $this->periodB->id,
+                'section' => 'trend',
             ]))
             ->assertOk()
             ->assertSee('Tren Sejak Pendaftaran Dibuka');

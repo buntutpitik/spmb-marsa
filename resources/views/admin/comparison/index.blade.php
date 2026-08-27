@@ -23,6 +23,12 @@
             action="{{ route('admin.comparison.index') }}"
             class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
         >
+            <input
+                type="hidden"
+                name="section"
+                value="{{ $section }}"
+            >
+
             <div class="grid gap-5 md:grid-cols-2">
 
                 <div>
@@ -51,6 +57,7 @@
                                 )
                             >
                                 {{ $period->name }}
+                                {{ $period->is_active ? '(Aktif)' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -82,6 +89,7 @@
                                 )
                             >
                                 {{ $period->name }}
+                                {{ $period->is_active ? '(Aktif)' : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -120,6 +128,85 @@
         @endif
 
         @if ($periodA && $periodB && $comparison)
+            @php
+                $comparisonSections = [
+                    [
+                        'key' => 'summary',
+                        'label' => 'Ringkasan',
+                        'icon' => 'layout-dashboard',
+                    ],
+                    [
+                        'key' => 'status',
+                        'label' => 'Status',
+                        'icon' => 'list-checks',
+                    ],
+                    [
+                        'key' => 'major',
+                        'label' => 'Jurusan',
+                        'icon' => 'graduation-cap',
+                    ],
+                    [
+                        'key' => 'gender',
+                        'label' => 'Gender',
+                        'icon' => 'users',
+                    ],
+                    [
+                        'key' => 'admission-path',
+                        'label' => 'Jalur Pendaftaran',
+                        'icon' => 'route',
+                    ],
+                    [
+                        'key' => 'data-source',
+                        'label' => 'Asal Data',
+                        'icon' => 'database',
+                    ],
+                    [
+                        'key' => 'origin-school',
+                        'label' => 'Sekolah Asal',
+                        'icon' => 'school',
+                    ],
+                    [
+                        'key' => 'referral',
+                        'label' => 'Referral / Pembawa',
+                        'icon' => 'users-round',
+                    ],
+                    [
+                        'key' => 'trend',
+                        'label' => 'Tren Pendaftaran',
+                        'icon' => 'chart-no-axes-combined',
+                    ],
+                    [
+                        'key' => 'finance',
+                        'label' => 'Daftar Ulang & Keuangan',
+                        'icon' => 'wallet-cards',
+                    ],
+                ];
+            @endphp
+
+            <div class="flex flex-wrap gap-2">
+                @foreach ($comparisonSections as $item)
+                    <a
+                        href="{{ route('admin.comparison.index', [
+                            'period_a' => $periodA->id,
+                            'period_b' => $periodB->id,
+                            'section' => $item['key'],
+                        ]) }}"
+                        class="{{ $section === $item['key']
+                            ? 'inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white'
+                            : 'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50' }}"
+                    >
+                        <i
+                            data-lucide="{{ $item['icon'] }}"
+                            class="h-4 w-4"
+                        ></i>
+
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
+        @if ($periodA && $periodB && $comparison && $section === 'summary')
 
             <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -191,6 +278,10 @@
                 </div>
 
             </section>
+
+        @endif
+
+        @if ($periodA && $periodB && $comparison && $section === 'status')
 
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
@@ -305,7 +396,7 @@
 
         @endif
 
-        @if (! empty($comparison['major_breakdown']))
+        @if ($periodA && $periodB && $comparison && $section === 'major' && ! empty($comparison['major_breakdown']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -403,7 +494,7 @@
             </section>
         @endif
 
-        @if (!empty($comparison['gender_breakdown']))
+        @if ($periodA && $periodB && $comparison && $section === 'gender' && ! empty($comparison['gender_breakdown']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -492,7 +583,7 @@
             </section>
         @endif
 
-        @if (! empty($comparison['admission_path_breakdown']))
+        @if ($periodA && $periodB && $comparison && $section === 'admission-path' && ! empty($comparison['admission_path_breakdown']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -581,7 +672,7 @@
             </section>
         @endif
 
-        @if (! empty($comparison['data_source_breakdown']))
+        @if ($periodA && $periodB && $comparison && $section === 'data-source' && ! empty($comparison['data_source_breakdown']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -709,7 +800,7 @@
             </section>
         @endif
 
-        @if (! empty($comparison['origin_school_breakdown']))
+        @if ($periodA && $periodB && $comparison && $section === 'origin-school' && ! empty($comparison['origin_school_breakdown']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -798,7 +889,7 @@
             </section>
         @endif
 
-        @if (! empty($comparison['referral_breakdown']))
+        @if ($periodA && $periodB && $comparison && $section === 'referral' && ! empty($comparison['referral_breakdown']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -891,7 +982,7 @@
             </section>
         @endif
 
-        @if (! empty($comparison['monthly_registration_trend']))
+        @if ($periodA && $periodB && $comparison && $section === 'trend' && ! empty($comparison['monthly_registration_trend']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -955,7 +1046,7 @@
             </section>
         @endif
 
-        @if (! empty($comparison['registration_day_trend']))
+        @if ($periodA && $periodB && $comparison && $section === 'trend' && ! empty($comparison['registration_day_trend']))
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
                     <h2 class="text-lg font-bold text-slate-900">
@@ -1037,7 +1128,7 @@
             </section>
         @endif
 
-        @if (! empty($comparison['reenrollment_finance']))
+        @if ($periodA && $periodB && $comparison && $section === 'finance' && ! empty($comparison['reenrollment_finance']))
             @php
                 $finance = $comparison['reenrollment_finance'];
             @endphp

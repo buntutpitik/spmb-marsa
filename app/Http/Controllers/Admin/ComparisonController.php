@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\PeriodComparisonExport;
 use App\Http\Controllers\Controller;
 use App\Models\PpdbPeriod;
 use App\Services\PeriodComparisonService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
-use App\Exports\PeriodComparisonExport;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ComparisonController extends Controller
@@ -23,6 +23,25 @@ class ComparisonController extends Controller
             ->whereNull('archived_at')
             ->orderBy('year_start')
             ->get();
+
+        $sections = [
+            'summary',
+            'status',
+            'major',
+            'gender',
+            'admission-path',
+            'data-source',
+            'origin-school',
+            'referral',
+            'trend',
+            'finance',
+        ];
+
+        $section = $request->string('section')->toString();
+
+        if (! in_array($section, $sections, true)) {
+            $section = 'summary';
+        }
 
         $periodA = null;
         $periodB = null;
@@ -55,7 +74,6 @@ class ComparisonController extends Controller
             );
         }
 
-
         if ($periodA && $periodB) {
             $comparison = $this->comparisonService
                 ->compare(
@@ -69,6 +87,7 @@ class ComparisonController extends Controller
             'periodA' => $periodA,
             'periodB' => $periodB,
             'comparison' => $comparison,
+            'section' => $section,
         ]);
     }
 
