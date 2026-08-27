@@ -30,6 +30,7 @@ class DashboardController extends Controller
 
         $latestRegistrations = collect();
         $latestActivities = collect();
+        $dailyTrend = collect();
 
         if ($activePeriod) {
             $baseQuery = Registration::query()
@@ -56,6 +57,27 @@ class DashboardController extends Controller
             $stats['withdrawn'] = (clone $baseQuery)
                 ->where('status', 'WITHDRAWN')
                 ->count();
+
+            $trendStart = now()
+                ->copy()
+                ->subDays(29)
+                ->startOfDay();
+
+            $dailyTrend = Registration::query()
+                ->where('period_id', $activePeriod->id)
+                ->whereNotNull('registered_at')
+                ->where('registered_at', '>=', $trendStart)
+                ->selectRaw(
+                    'DATE(registered_at) as registration_date'
+                )
+                ->selectRaw(
+                    'COUNT(*) as total'
+                )
+                ->groupByRaw(
+                    'DATE(registered_at)'
+                )
+                ->orderBy('registration_date')
+                ->get();
 
             $latestRegistrations = Registration::query()
                 ->with([
@@ -86,6 +108,7 @@ class DashboardController extends Controller
             'stats' => $stats,
             'latestRegistrations' => $latestRegistrations,
             'latestActivities' => $latestActivities,
+            'dailyTrend' => $dailyTrend,
         ]);
     }
 }

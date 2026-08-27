@@ -190,29 +190,69 @@
 
                 </div>
 
-                <div class="flex min-h-[340px] items-center justify-center p-6">
+                @php
+                    $maxDaily = max(
+                        1,
+                        (int) ($dailyTrend->max('total') ?? 1)
+                    );
+                @endphp
 
-                    <div class="max-w-sm text-center">
+                @if ($dailyTrend->isEmpty())
+                    <div class="flex min-h-[340px] items-center justify-center p-6">
+                        <div class="max-w-sm text-center">
+                            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
+                                <i
+                                    data-lucide="chart-no-axes-combined"
+                                    class="h-7 w-7"
+                                ></i>
+                            </div>
 
-                        <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-                            <i
-                                data-lucide="chart-no-axes-combined"
-                                class="h-7 w-7"
-                            ></i>
+                            <h3 class="mt-5 font-semibold text-slate-800">
+                                Belum ada data tren
+                            </h3>
+
+                            <p class="mt-2 text-sm leading-6 text-slate-500">
+                                Belum ada pendaftaran pada 30 hari terakhir
+                                untuk periode aktif.
+                            </p>
                         </div>
-
-                        <h3 class="mt-5 font-semibold text-slate-800">
-                            Grafik akan tersedia
-                        </h3>
-
-                        <p class="mt-2 text-sm leading-6 text-slate-500">
-                            Grafik pendaftaran akan ditampilkan setelah modul
-                            analitik periode aktif diselesaikan.
-                        </p>
-
                     </div>
+                @else
+                    <div class="space-y-4 p-6">
+                        @foreach ($dailyTrend as $row)
+                            @php
+                                $dailyWidth = min(
+                                    100,
+                                    max(
+                                        4,
+                                        ((int) $row->total / $maxDaily) * 100
+                                    )
+                                );
+                            @endphp
 
-                </div>
+                            <div>
+                                <div class="mb-2 flex items-center justify-between gap-4">
+                                    <div class="text-sm font-medium text-slate-600">
+                                        {{ \Illuminate\Support\Carbon::parse(
+                                            $row->registration_date
+                                        )->format('d/m/Y') }}
+                                    </div>
+
+                                    <div class="text-sm font-bold text-slate-900">
+                                        {{ (int) $row->total }}
+                                    </div>
+                                </div>
+
+                                <div class="h-2.5 overflow-hidden rounded-full bg-slate-100">
+                                    <div
+                                        class="h-full rounded-full bg-emerald-500 transition-all"
+                                        style="width: {{ $dailyWidth }}%"
+                                    ></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
 
             </section>
 

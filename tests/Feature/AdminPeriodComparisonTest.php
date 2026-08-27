@@ -1152,6 +1152,115 @@ class AdminPeriodComparisonTest extends TestCase
             ->assertSee('50.000');
     }
 
+    public function test_comparison_includes_registration_day_trend(): void
+    {
+        $this->periodA->update([
+            'registration_open' => '2026-01-07',
+            'registration_close' => '2026-01-20',
+        ]);
+
+        $this->periodB->update([
+            'registration_open' => '2027-01-01',
+            'registration_close' => '2027-01-20',
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.comparison.index', [
+                'period_a' => $this->periodA->id,
+                'period_b' => $this->periodB->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Tren Sejak Pendaftaran Dibuka');
+    }
+
+    public function test_registration_day_trend_aligns_periods_by_day_since_opening(): void
+    {
+        $this->periodA->update([
+            'registration_open' => '2026-01-07',
+            'registration_close' => '2026-01-20',
+        ]);
+
+        $this->periodB->update([
+            'registration_open' => '2027-01-01',
+            'registration_close' => '2027-01-20',
+        ]);
+
+        $this->makeRegistrationAt(
+            $this->periodA,
+            '2026-01-07 08:00:00',
+            'DAYA1'
+        );
+
+        $this->makeRegistrationAt(
+            $this->periodA,
+            '2026-01-07 09:00:00',
+            'DAYA2'
+        );
+
+        $this->makeRegistrationAt(
+            $this->periodA,
+            '2026-01-08 08:00:00',
+            'DAYA3'
+        );
+
+        $this->makeRegistrationAt(
+            $this->periodB,
+            '2027-01-01 08:00:00',
+            'DAYB1'
+        );
+
+        $this->makeRegistrationAt(
+            $this->periodB,
+            '2027-01-02 08:00:00',
+            'DAYB2'
+        );
+
+        $this->makeRegistrationAt(
+            $this->periodB,
+            '2027-01-02 09:00:00',
+            'DAYB3'
+        );
+
+        $this->makeRegistrationAt(
+            $this->periodB,
+            '2027-01-02 10:00:00',
+            'DAYB4'
+        );
+
+        $comparison = app(
+            \App\Services\PeriodComparisonService::class
+        )->compare(
+            $this->periodA->fresh(),
+            $this->periodB->fresh()
+        );
+
+        $trend = collect(
+            $comparison['registration_day_trend']
+        )->keyBy('day');
+
+        $this->assertSame(2, $trend[1]['count_a']);
+        $this->assertSame(1, $trend[1]['count_b']);
+
+        $this->assertSame(2, $trend[1]['cumulative_a']);
+        $this->assertSame(1, $trend[1]['cumulative_b']);
+
+        $this->assertSame(
+            -1,
+            $trend[1]['cumulative_delta']
+        );
+
+        $this->assertSame(1, $trend[2]['count_a']);
+        $this->assertSame(3, $trend[2]['count_b']);
+
+        $this->assertSame(3, $trend[2]['cumulative_a']);
+        $this->assertSame(4, $trend[2]['cumulative_b']);
+
+        $this->assertSame(
+            1,
+            $trend[2]['cumulative_delta']
+        );
+    }
+
     private function makePeriod(
         string $name,
         int $yearStart,

@@ -6,6 +6,7 @@ use App\Models\Major;
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
 use App\Models\ReenrollmentPayment;
+use Carbon\Carbon;
 
 class PeriodComparisonService
 {
@@ -105,6 +106,11 @@ class PeriodComparisonService
             ),
 
             'monthly_registration_trend' => $this->monthlyRegistrationTrend(
+                $periodA,
+                $periodB
+            ),
+
+            'registration_day_trend' => $this->registrationDayTrend(
                 $periodA,
                 $periodB
             ),
@@ -667,6 +673,94 @@ class PeriodComparisonService
             })
             ->values()
             ->all();
+    }
+
+    private function registrationDayTrend(
+        PpdbPeriod $periodA,
+        PpdbPeriod $periodB
+    ): array {
+        if (
+            ! $periodA->registration_open ||
+            ! $periodB->registration_open
+        ) {
+            return [];
+        }
+
+        $openA = Carbon::parse($periodA->registration_open)->startOfDay();
+        $openB = Carbon::parse($periodB->registration_open)->startOfDay();
+
+        $closeA = $periodA->registration_close
+            ? Carbon::parse($periodA->registration_close)->startOfDay()
+            : $openA;
+
+        $closeB = $periodB->registration_close
+            ? Carbon::parse($periodB->registration_close)->startOfDay()
+            : $openB;
+
+        $durationA = $openA->diffInDays($closeA) + 1;
+        $durationB = $openB->diffInDays($closeB) + 1;
+
+        $maxDays = max($durationA, $durationB);
+
+        $countsA = Registration::query()
+            ->where('period_id', $periodA->id)
+            ->whereNotNull('registered_at')
+            ->get(['registered_at'])
+            ->map(function (Registration $registration) use ($openA) {
+                $registeredAt = Carbon::parse(
+                    $registration->registered_at
+                )->startOfDay();
+
+                return $openA->diffInDays($registeredAt, false) + 1;
+            })
+            ->filter(
+                fn (int $day) =>
+                    $day >= 1 &&
+                    $day <= $durationA
+            )
+            ->countBy();
+
+        $countsB = Registration::query()
+            ->where('period_id', $periodB->id)
+            ->whereNotNull('registered_at')
+            ->get(['registered_at'])
+            ->map(function (Registration $registration) use ($openB) {
+                $registeredAt = Carbon::parse(
+                    $registration->registered_at
+                )->startOfDay();
+
+                return $openB->diffInDays($registeredAt, false) + 1;
+            })
+            ->filter(
+                fn (int $day) =>
+                    $day >= 1 &&
+                    $day <= $durationB
+            )
+            ->countBy();
+
+        $cumulativeA = 0;
+        $cumulativeB = 0;
+        $result = [];
+
+        for ($day = 1; $day <= $maxDays; $day++) {
+            $countA = (int) ($countsA[$day] ?? 0);
+            $countB = (int) ($countsB[$day] ?? 0);
+
+            $cumulativeA += $countA;
+            $cumulativeB += $countB;
+
+            $result[] = [
+                'day' => $day,
+                'count_a' => $countA,
+                'count_b' => $countB,
+                'delta' => $countB - $countA,
+                'cumulative_a' => $cumulativeA,
+                'cumulative_b' => $cumulativeB,
+                'cumulative_delta' => $cumulativeB - $cumulativeA,
+            ];
+        }
+
+        return $result;
     }
 
     private function reenrollmentFinance(

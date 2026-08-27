@@ -955,6 +955,88 @@
             </section>
         @endif
 
+        @if (! empty($comparison['registration_day_trend']))
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5">
+                    <h2 class="text-lg font-bold text-slate-900">
+                        Tren Sejak Pendaftaran Dibuka
+                    </h2>
+
+                    <p class="mt-1 text-sm text-slate-500">
+                        Membandingkan perkembangan pendaftar berdasarkan hari ke-
+                        sejak pendaftaran masing-masing periode dibuka.
+                    </p>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-slate-200">
+                        <thead class="bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    Hari
+                                </th>
+
+                                <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    {{ $comparison['period_a']->name }}
+                                </th>
+
+                                <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    {{ $comparison['period_b']->name }}
+                                </th>
+
+                                <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    Kumulatif A
+                                </th>
+
+                                <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    Kumulatif B
+                                </th>
+
+                                <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                    Δ Kumulatif
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody class="divide-y divide-slate-100 bg-white">
+                            @foreach ($comparison['registration_day_trend'] as $row)
+                                <tr>
+                                    <td class="whitespace-nowrap px-6 py-4 text-sm font-semibold text-slate-800">
+                                        Hari ke-{{ $row['day'] }}
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-slate-700">
+                                        {{ $row['count_a'] }}
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm text-slate-700">
+                                        {{ $row['count_b'] }}
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-slate-800">
+                                        {{ $row['cumulative_a'] }}
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold text-slate-800">
+                                        {{ $row['cumulative_b'] }}
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-semibold
+                                        {{ $row['cumulative_delta'] > 0
+                                            ? 'text-emerald-600'
+                                            : ($row['cumulative_delta'] < 0
+                                                ? 'text-red-600'
+                                                : 'text-slate-600') }}">
+                                        {{ ($row['cumulative_delta'] >= 0 ? '+' : '') . $row['cumulative_delta'] }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        @endif
+
         @if (! empty($comparison['reenrollment_finance']))
             @php
                 $finance = $comparison['reenrollment_finance'];

@@ -475,4 +475,197 @@ class DashboardTest extends TestCase
             'status' => 'WITHDRAWN',
         ]);
     }
+
+    public function test_dashboard_shows_registration_trend_for_active_period(): void
+    {
+        $school = \App\Models\School::query()->create([
+            'name' => 'SMK TEST TREND',
+            'npsn' => '12345678',
+        ]);
+
+        $period = \App\Models\PpdbPeriod::query()->create([
+            'school_id' => $school->id,
+            'name' => '2027/2028',
+            'year_start' => 2027,
+            'year_end' => 2028,
+            'registration_open' => '2027-01-01',
+            'registration_close' => '2027-06-30',
+            'status' => 'OPEN',
+            'is_active' => true,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2027,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 250000,
+        ]);
+
+        $user = \App\Models\User::factory()->create([
+            'role' => 'SUPERADMIN',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Tren Pendaftaran')
+            ->assertSee('30 Hari')
+            ->assertDontSee('Grafik akan tersedia');
+    }
+
+    public function test_dashboard_trend_ignores_old_period_and_older_than_thirty_days(): void
+    {
+        Carbon::setTestNow(
+            Carbon::parse(
+                '2027-02-15 10:00:00',
+                config('app.timezone')
+            )
+        );
+
+        $now = now();
+
+        $admin = User::factory()->create([
+            'role' => 'SUPERADMIN',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($admin);
+
+        $schoolId = DB::table('schools')->insertGetId([
+            'name' => 'SMK TEST TREND FILTER',
+            'npsn' => '77777777',
+            'city' => 'Kebumen',
+            'province' => 'Jawa Tengah',
+            'postal_code' => '54311',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $oldPeriodId = DB::table('ppdb_periods')->insertGetId([
+            'school_id' => $schoolId,
+            'name' => '2026/2027',
+            'year_start' => 2026,
+            'year_end' => 2027,
+            'registration_open' => '2026-01-01',
+            'registration_close' => '2026-06-30',
+            'status' => 'CLOSED',
+            'is_active' => false,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2026,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 250000,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $activePeriodId = DB::table('ppdb_periods')->insertGetId([
+            'school_id' => $schoolId,
+            'name' => '2027/2028',
+            'year_start' => 2027,
+            'year_end' => 2028,
+            'registration_open' => '2027-01-01',
+            'registration_close' => '2027-06-30',
+            'status' => 'OPEN',
+            'is_active' => true,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2027,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 250000,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $majorId = DB::table('majors')->insertGetId([
+            'school_id' => $schoolId,
+            'name' => 'Rekayasa Perangkat Lunak',
+            'code' => 'RPL',
+            'is_active' => true,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $admissionPathOldId = DB::table('admission_paths')->insertGetId([
+            'period_id' => $oldPeriodId,
+            'name' => 'UMUM',
+            'code' => 'UMUM-OLD',
+            'description' => null,
+            'is_active' => true,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        $admissionPathActiveId = DB::table('admission_paths')->insertGetId([
+            'period_id' => $activePeriodId,
+            'name' => 'UMUM',
+            'code' => 'UMUM-ACTIVE',
+            'description' => null,
+            'is_active' => true,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        DB::table('registrations')->insert([
+            [
+                'period_id' => $activePeriodId,
+                'admission_path_id' => $admissionPathActiveId,
+                'major_id' => $majorId,
+                'registration_number' => 'TREND-ACTIVE-001',
+                'nik' => '3300000000000001',
+                'full_name' => 'ACTIVE TREND',
+                'whatsapp' => '081200000001',
+                'data_source' => 'ADMIN',
+                'status' => 'REGISTERED',
+                'registered_at' => '2027-02-14 08:00:00',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'period_id' => $activePeriodId,
+                'admission_path_id' => $admissionPathActiveId,
+                'major_id' => $majorId,
+                'registration_number' => 'TREND-OLD-001',
+                'nik' => '3300000000000002',
+                'full_name' => 'OLDER THAN THIRTY DAYS',
+                'whatsapp' => '081200000002',
+                'data_source' => 'ADMIN',
+                'status' => 'REGISTERED',
+                'registered_at' => '2027-01-01 08:00:00',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'period_id' => $oldPeriodId,
+                'admission_path_id' => $admissionPathOldId,
+                'major_id' => $majorId,
+                'registration_number' => 'TREND-HIST-001',
+                'nik' => '3300000000000003',
+                'full_name' => 'HISTORICAL TREND',
+                'whatsapp' => '081200000003',
+                'data_source' => 'ADMIN',
+                'status' => 'REGISTERED',
+                'registered_at' => '2027-02-14 08:00:00',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
+
+        $response = $this->get(route('dashboard'));
+
+        $response->assertOk();
+
+        $dailyTrend = $response->viewData('dailyTrend');
+
+        $this->assertCount(1, $dailyTrend);
+
+        $this->assertSame(
+            '2027-02-14',
+            (string) $dailyTrend->first()->registration_date
+        );
+
+        $this->assertSame(
+            1,
+            (int) $dailyTrend->first()->total
+        );
+    }
 }
