@@ -14,6 +14,7 @@ use App\Exports\Sheets\PeriodComparisonSummarySheet;
 use App\Exports\Sheets\PeriodComparisonTrendSheet;
 use Maatwebsite\Excel\Concerns\Export;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
+use App\Exports\Sheets\PeriodComparisonRegistrationDayTrendSheet;
 
 class PeriodComparisonExport implements Export, WithMultipleSheets
 {
@@ -34,6 +35,9 @@ class PeriodComparisonExport implements Export, WithMultipleSheets
             new PeriodComparisonOriginSchoolSheet($this->comparison),
             new PeriodComparisonReferralSheet($this->comparison),
             new PeriodComparisonTrendSheet($this->comparison),
+            new PeriodComparisonRegistrationDayTrendSheet(
+                $this->comparison
+            ),
             new PeriodComparisonFinanceSheet($this->comparison),
         ];
     }

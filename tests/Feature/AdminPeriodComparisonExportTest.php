@@ -136,8 +136,114 @@ class AdminPeriodComparisonExportTest extends TestCase
             'Sekolah Asal',
             'Referral',
             'Tren Pendaftaran',
+            'Tren Hari Pendaftaran',
             'Daftar Ulang & Keuangan',
         ], $titles);
+    }
+
+    public function test_registration_day_trend_sheet_contains_expected_columns(): void
+    {
+        $this->periodA->update([
+            'registration_open' => '2026-01-07',
+            'registration_close' => '2026-01-20',
+        ]);
+
+        $this->periodB->update([
+            'registration_open' => '2027-01-01',
+            'registration_close' => '2027-01-20',
+        ]);
+
+        $comparison = app(PeriodComparisonService::class)->compare(
+            $this->periodA->fresh(),
+            $this->periodB->fresh()
+        );
+
+        $export = new PeriodComparisonExport($comparison);
+
+        $sheet = collect($export->sheets())
+            ->first(
+                fn ($sheet) =>
+                    $sheet->title() === 'Tren Hari Pendaftaran'
+            );
+
+        $this->assertNotNull($sheet);
+
+        $rows = $sheet->array();
+
+        $this->assertSame([
+            'Hari',
+            '2026/2027',
+            '2027/2028',
+            'Selisih',
+            'Kumulatif A',
+            'Kumulatif B',
+            'Delta Kumulatif',
+        ], $rows[0]);
+    }
+
+    public function test_registration_day_trend_sheet_contains_correct_numeric_values(): void
+    {
+        $this->periodA->update([
+            'registration_open' => '2026-01-07',
+            'registration_close' => '2026-01-20',
+        ]);
+
+        $this->periodB->update([
+            'registration_open' => '2027-01-01',
+            'registration_close' => '2027-01-20',
+        ]);
+
+        $comparison = [
+            'period_a' => $this->periodA->fresh(),
+            'period_b' => $this->periodB->fresh(),
+
+            'registration_day_trend' => [
+                [
+                    'day' => 1,
+                    'count_a' => 2,
+                    'count_b' => 1,
+                    'delta' => -1,
+                    'cumulative_a' => 2,
+                    'cumulative_b' => 1,
+                    'cumulative_delta' => -1,
+                ],
+                [
+                    'day' => 2,
+                    'count_a' => 1,
+                    'count_b' => 3,
+                    'delta' => 2,
+                    'cumulative_a' => 3,
+                    'cumulative_b' => 4,
+                    'cumulative_delta' => 1,
+                ],
+            ],
+        ];
+
+        $sheet = new \App\Exports\Sheets\PeriodComparisonRegistrationDayTrendSheet(
+            $comparison
+        );
+
+        $rows = $sheet->array();
+
+        $this->assertSame([
+            'Hari ke-1',
+            2,
+            1,
+            -1,
+            2,
+            1,
+            -1,
+        ], $rows[1]);
+
+        $this->assertSame([
+            'Hari ke-2',
+            1,
+            3,
+            2,
+            3,
+            4,
+            1,
+        ], $rows[2]);
     }
 
     public function test_data_source_sheet_contains_labels_and_self_service_rate(): void
