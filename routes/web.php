@@ -300,6 +300,11 @@ Route::prefix('admin')
             )->name('comparison.index');
         });
 
+        Route::get(
+                '/perbandingan/export',
+                [ComparisonController::class, 'export']
+            )->name('comparison.export');
+
         /*
         |--------------------------------------------------------------------------
         | Keuangan Daftar Ulang

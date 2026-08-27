@@ -106,6 +106,19 @@
             </div>
         </form>
 
+        @if ($periodA && $periodB)
+            <a
+                href="{{ route('admin.comparison.export', [
+                    'period_a' => $periodA->id,
+                    'period_b' => $periodB->id,
+                ]) }}"
+                class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+            >
+                <i data-lucide="file-spreadsheet" class="h-4 w-4"></i>
+                Export Excel
+            </a>
+        @endif
+
         @if ($periodA && $periodB && $comparison)
 
             <section class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

@@ -7,6 +7,8 @@ use App\Models\PpdbPeriod;
 use App\Services\PeriodComparisonService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use App\Exports\PeriodComparisonExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ComparisonController extends Controller
 {
@@ -68,5 +70,46 @@ class ComparisonController extends Controller
             'periodB' => $periodB,
             'comparison' => $comparison,
         ]);
+    }
+
+    public function export(
+        Request $request,
+        PeriodComparisonService $comparisonService
+    ) {
+        $validated = $request->validate([
+            'period_a' => [
+                'required',
+                'integer',
+                'exists:ppdb_periods,id',
+            ],
+            'period_b' => [
+                'required',
+                'integer',
+                'exists:ppdb_periods,id',
+                'different:period_a',
+            ],
+        ]);
+
+        $periodA = PpdbPeriod::query()
+            ->findOrFail($validated['period_a']);
+
+        $periodB = PpdbPeriod::query()
+            ->findOrFail($validated['period_b']);
+
+        $comparison = $comparisonService->compare(
+            $periodA,
+            $periodB
+        );
+
+        $filename = sprintf(
+            'perbandingan-spmb-%s-vs-%s.xlsx',
+            str_replace('/', '-', $periodA->name),
+            str_replace('/', '-', $periodB->name)
+        );
+
+        return Excel::download(
+            new PeriodComparisonExport($comparison),
+            $filename
+        );
     }
 }
