@@ -27,7 +27,6 @@ class PublicRegistrationController extends Controller
             ->resolveActivePeriod();
 
         $majors = collect();
-        $reliefOptions = collect();
         $specialPrograms = collect();
         $activePath = null;
         $originSchools = OriginSchool::query()
@@ -42,13 +41,6 @@ class PublicRegistrationController extends Controller
                 ->where('majors.is_active', true)
                 ->orderBy('majors.sort_order')
                 ->orderBy('majors.name')
-                ->get();
-
-            $reliefOptions = $period->reliefOptions()
-                ->wherePivot('is_active', true)
-                ->where('relief_options.is_active', true)
-                ->orderByPivot('sort_order')
-                ->orderBy('relief_options.name')
                 ->get();
 
             $specialPrograms = $period->specialPrograms()
@@ -71,7 +63,6 @@ class PublicRegistrationController extends Controller
         return view('public.registration.create', [
             'period' => $period,
             'majors' => $majors,
-            'reliefOptions' => $reliefOptions,
             'specialPrograms' => $specialPrograms,
             'activePath' => $activePath,
             'originSchools' => $originSchools,

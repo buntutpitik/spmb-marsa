@@ -149,30 +149,6 @@
 
                     </div>
 
-                    {{-- Relief Options --}}
-                    @if ($registration->reliefOptions->isNotEmpty())
-
-                        <div class="mt-8">
-
-                            <h3 class="font-bold text-slate-900">
-                                Keringanan
-                            </h3>
-
-                            <div class="mt-3 flex flex-wrap gap-2">
-
-                                @foreach ($registration->reliefOptions as $option)
-
-                                    <span class="inline-flex rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
-                                        {{ $option->name }}
-                                    </span>
-
-                                @endforeach
-
-                            </div>
-
-                        </div>
-
-                    @endif
 
                     {{-- Special Programs --}}
                     @if ($registration->specialPrograms->isNotEmpty())
@@ -233,6 +209,16 @@
 
                     {{-- Actions --}}
                     <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+
+                        <a
+                            href="{{ route(
+                                'registration.card',
+                                $registration->public_token
+                            ) }}"
+                            class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                        >
+                            Cetak Kartu Pendaftaran
+                        </a>
 
                         <a
                             href="{{ route('registration.create') }}"

@@ -40,6 +40,8 @@ use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Admin\AdmissionPathController;
 use App\Http\Controllers\Admin\ComparisonController;
 use App\Http\Controllers\Admin\ReenrollmentPaymentReceiptController;
+use App\Http\Controllers\PublicRegistrationCardController;
+use App\Http\Controllers\Admin\RegistrationCardController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -90,6 +92,10 @@ Route::get(
     [PublicRegistrationController::class, 'success']
 )->name('registration.success');
 
+Route::get(
+    '/pendaftaran/kartu/{publicToken}',
+    [PublicRegistrationCardController::class, 'download']
+)->name('registration.card');
 /*
 |--------------------------------------------------------------------------
 | Internal Dashboard
@@ -286,6 +292,11 @@ Route::prefix('admin')
                 '/pendaftaran/{registration}',
                 [RegistrationController::class, 'show']
             )->name('registrations.show');
+
+            Route::get(
+                '/pendaftaran/{registration}/kartu',
+                [RegistrationCardController::class, 'download']
+            )->name('registrations.card');
 
             /*
              * Perubahan status / penerimaan.
