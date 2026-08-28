@@ -2,12 +2,17 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateRegistrationRequest;
+use App\Models\ActivityLog;
+use App\Models\OriginSchool;
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
 use App\Services\PeriodContext;
+use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 
 class RegistrationController extends Controller
 {
@@ -182,5 +187,280 @@ class RegistrationController extends Controller
             'registration' => $registration,
             'selectedPeriod' => $selectedPeriod,
         ]);
+    }
+
+    public function edit(
+        Request $request,
+        Registration $registration
+    ): View {
+        $selectedPeriod = $this->periodContext
+            ->resolveAdminPeriod($request);
+
+        abort_unless(
+            $selectedPeriod
+            && $registration->period_id === $selectedPeriod->id,
+            404
+        );
+
+        /*
+        * Periode historis / CLOSED selalu read-only.
+        */
+        abort_unless(
+            $selectedPeriod->status === 'OPEN'
+            && $selectedPeriod->is_active,
+            404
+        );
+
+        $registration->load([
+            'period',
+            'major',
+            'admissionPath',
+            'reliefOptions',
+            'specialPrograms',
+        ]);
+
+        $majors = $selectedPeriod->majors()
+            ->where('majors.is_active', true)
+            ->wherePivot('is_active', true)
+            ->orderBy('majors.sort_order')
+            ->orderBy('majors.name')
+            ->get();
+
+        $admissionPaths = $selectedPeriod
+            ->admissionPaths()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $reliefOptions = $selectedPeriod
+            ->reliefOptions()
+            ->where('relief_options.is_active', true)
+            ->wherePivot('is_active', true)
+            ->orderBy('period_relief_options.sort_order')
+            ->orderBy('relief_options.name')
+            ->get();
+
+        $specialPrograms = $selectedPeriod
+            ->specialPrograms()
+            ->where('special_programs.is_active', true)
+            ->wherePivot('is_active', true)
+            ->orderBy('period_special_programs.sort_order')
+            ->orderBy('special_programs.name')
+            ->get();
+
+        $originSchools = OriginSchool::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.registrations.edit', [
+            'registration' => $registration,
+            'selectedPeriod' => $selectedPeriod,
+            'majors' => $majors,
+            'admissionPaths' => $admissionPaths,
+            'reliefOptions' => $reliefOptions,
+            'specialPrograms' => $specialPrograms,
+            'originSchools' => $originSchools,
+        ]);
+    }
+
+    public function update(
+        UpdateRegistrationRequest $request,
+        Registration $registration
+    ): RedirectResponse {
+        $selectedPeriod = $this->periodContext
+            ->resolveAdminPeriod($request);
+
+        abort_unless(
+            $selectedPeriod
+            && $registration->period_id === $selectedPeriod->id,
+            404
+        );
+
+        abort_unless(
+            $selectedPeriod->status === 'OPEN'
+            && $selectedPeriod->is_active,
+            404
+        );
+
+        $validated = $request->validated();
+
+        /*
+        * Validasi relasi terhadap PERIODE yang sedang diedit.
+        *
+        * exists:id saja tidak cukup karena ID dari periode lain
+        * tidak boleh disisipkan melalui manipulated request.
+        */
+        $majorValid = $selectedPeriod->majors()
+            ->where('majors.id', $validated['major_id'])
+            ->where('majors.is_active', true)
+            ->wherePivot('is_active', true)
+            ->exists();
+
+        abort_unless($majorValid, 422);
+
+        $admissionPathValid = $selectedPeriod
+            ->admissionPaths()
+            ->whereKey($validated['admission_path_id'])
+            ->where('is_active', true)
+            ->exists();
+
+        abort_unless($admissionPathValid, 422);
+
+        $reliefIds = collect(
+            $validated['relief_options'] ?? []
+        )
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($reliefIds->isNotEmpty()) {
+            $validReliefIds = $selectedPeriod
+                ->reliefOptions()
+                ->where('relief_options.is_active', true)
+                ->wherePivot('is_active', true)
+                ->whereIn(
+                    'relief_options.id',
+                    $reliefIds->all()
+                )
+                ->pluck('relief_options.id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            abort_unless(
+                $validReliefIds->count() === $reliefIds->count(),
+                422
+            );
+        }
+
+        $specialProgramIds = collect(
+            $validated['special_programs'] ?? []
+        )
+            ->map(fn ($id) => (int) $id)
+            ->unique()
+            ->values();
+
+        if ($specialProgramIds->isNotEmpty()) {
+            $validSpecialProgramIds = $selectedPeriod
+                ->specialPrograms()
+                ->where('special_programs.is_active', true)
+                ->wherePivot('is_active', true)
+                ->whereIn(
+                    'special_programs.id',
+                    $specialProgramIds->all()
+                )
+                ->pluck('special_programs.id')
+                ->map(fn ($id) => (int) $id)
+                ->unique()
+                ->values();
+
+            abort_unless(
+                $validSpecialProgramIds->count()
+                    === $specialProgramIds->count(),
+                422
+            );
+        }
+
+        DB::transaction(function () use (
+            $request,
+            $registration,
+            $validated,
+            $reliefIds,
+            $specialProgramIds
+        ): void {
+            $before = $registration->only([
+                'nik',
+                'nisn',
+                'full_name',
+                'birth_place',
+                'birth_date',
+                'gender',
+                'religion',
+                'origin_school',
+                'hamlet',
+                'rt',
+                'rw',
+                'village',
+                'district',
+                'city',
+                'province',
+                'postal_code',
+                'father_name',
+                'mother_name',
+                'father_job',
+                'mother_job',
+                'whatsapp',
+                'graduation_score',
+                'admission_path_id',
+                'major_id',
+                'referrer_name',
+                'referrer_source',
+                'notes',
+            ]);
+
+            unset(
+                $validated['relief_options'],
+                $validated['special_programs']
+            );
+
+            $registration->update($validated);
+
+            $registration->reliefOptions()
+                ->sync($reliefIds->all());
+
+            $registration->specialPrograms()
+                ->sync($specialProgramIds->all());
+
+            $registration->refresh();
+
+            $after = $registration->only(
+                array_keys($before)
+            );
+
+            $changes = [];
+
+            foreach ($before as $field => $oldValue) {
+                $newValue = $after[$field] ?? null;
+
+                if ((string) $oldValue !== (string) $newValue) {
+                    $changes[$field] = [
+                        'before' => $oldValue,
+                        'after' => $newValue,
+                    ];
+                }
+            }
+
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => $registration->id,
+                'action' => 'UPDATE_REGISTRATION',
+                'description' => 'Data pendaftar diperbarui.',
+                'metadata' => [
+                    'registration_number' =>
+                        $registration->registration_number,
+
+                    'changes' => $changes,
+                ],
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'created_at' => now(),
+            ]);
+        });
+
+        return redirect()
+            ->route(
+                'admin.registrations.show',
+                [
+                    'registration' => $registration,
+                    'period_id' => $selectedPeriod->id,
+                ]
+            )
+            ->with(
+                'success',
+                'Data pendaftar berhasil diperbarui.'
+            );
     }
 }

@@ -273,6 +273,16 @@ Route::prefix('admin')
             )->name('registrations.index');
 
             Route::get(
+                '/pendaftaran/{registration}/edit',
+                [RegistrationController::class, 'edit']
+            )->name('registrations.edit');
+
+            Route::put(
+                '/pendaftaran/{registration}',
+                [RegistrationController::class, 'update']
+            )->name('registrations.update');
+
+            Route::get(
                 '/pendaftaran/{registration}',
                 [RegistrationController::class, 'show']
             )->name('registrations.show');

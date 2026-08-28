@@ -56,9 +56,28 @@
 
             </div>
 
-            <span class="inline-flex self-start rounded-full px-3 py-1.5 text-sm font-semibold lg:self-auto {{ $statusClass }}">
-                {{ $statusLabel }}
-            </span>
+            <div class="flex flex-wrap items-center gap-3 lg:justify-end">
+                <span class="inline-flex rounded-full px-3 py-1.5 text-sm font-semibold {{ $statusClass }}">
+                    {{ $statusLabel }}
+                </span>
+
+                @if (! $isReadOnlyPeriod)
+                    <a
+                        href="{{ route('admin.registrations.edit', [
+                            'registration' => $registration,
+                            'period_id' => $selectedPeriod->id,
+                        ]) }}"
+                        class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                    >
+                        <i
+                            data-lucide="pencil"
+                            class="h-4 w-4"
+                        ></i>
+
+                        Edit Data
+                    </a>
+                @endif
+            </div>
 
         </div>
 
