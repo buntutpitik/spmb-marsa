@@ -210,24 +210,8 @@ class StorePublicRegistrationRequest extends FormRequest
             ],
 
             /*
-             * Keringanan / Prestasi:
-             * opsional dan boleh memilih lebih dari satu.
-             */
-
-            'relief_options' => [
-                'nullable',
-                'array',
-            ],
-
-            'relief_options.*' => [
-                'integer',
-                'distinct',
-                'exists:relief_options,id',
-            ],
-
-            /*
-             * Program Khusus:
-             * opsional dan boleh memilih lebih dari satu.
+             * Program Khusus tetap boleh dipilih oleh calon siswa
+             * melalui formulir publik.
              */
 
             'special_programs' => [
@@ -241,17 +225,17 @@ class StorePublicRegistrationRequest extends FormRequest
                 'exists:special_programs,id',
             ],
 
-            'referrer_name' => [
-                'nullable',
-                'string',
-                'max:150',
-            ],
-
-            'referrer_source' => [
-                'nullable',
-                'string',
-                'max:150',
-            ],
+            /*
+             * relief_options, referrer_name, dan referrer_source
+             * sengaja TIDAK divalidasi pada request publik.
+             *
+             * Ketiganya merupakan data internal yang akan dikelola
+             * oleh petugas/admin setelah calon siswa datang ke sekolah.
+             *
+             * Karena controller menggunakan $request->validated(),
+             * field tersebut tidak akan diteruskan ke RegistrationService
+             * walaupun disisipkan secara manual melalui request publik.
+             */
 
             'notes' => [
                 'nullable',
@@ -323,18 +307,6 @@ class StorePublicRegistrationRequest extends FormRequest
 
             'graduation_score.max' =>
                 'Nilai kelulusan maksimal 100.',
-
-            'relief_options.array' =>
-                'Pilihan keringanan tidak valid.',
-
-            'relief_options.*.integer' =>
-                'Pilihan keringanan tidak valid.',
-
-            'relief_options.*.distinct' =>
-                'Pilihan keringanan tidak boleh duplikat.',
-
-            'relief_options.*.exists' =>
-                'Pilihan keringanan tidak ditemukan.',
 
             'special_programs.array' =>
                 'Pilihan Program Khusus tidak valid.',
@@ -467,9 +439,9 @@ class StorePublicRegistrationRequest extends FormRequest
                 }
 
                 $period = app(PeriodContext::class)
-                ->resolveActivePeriod(
-                    $this->integer('period_id')
-                );
+                    ->resolveActivePeriod(
+                        $this->integer('period_id')
+                    );
 
                 if (! $period) {
                     $validator->errors()->add(
@@ -478,72 +450,6 @@ class StorePublicRegistrationRequest extends FormRequest
                     );
 
                     return;
-                }
-
-                /*
-                 * ---------------------------------------------------------
-                 * Validasi Keringanan / Prestasi.
-                 * ---------------------------------------------------------
-                 *
-                 * ID harus:
-                 * - tersedia pada periode,
-                 * - aktif di master,
-                 * - aktif di pivot periode.
-                 */
-
-                $selectedReliefIds = collect(
-                    $this->input(
-                        'relief_options',
-                        []
-                    )
-                )
-                    ->map(
-                        fn ($id) => (int) $id
-                    )
-                    ->unique()
-                    ->values();
-
-                if (
-                    $selectedReliefIds
-                        ->isNotEmpty()
-                ) {
-                    $validReliefIds =
-                        $period->reliefOptions()
-                            ->where(
-                                'relief_options.is_active',
-                                true
-                            )
-                            ->wherePivot(
-                                'is_active',
-                                true
-                            )
-                            ->whereIn(
-                                'relief_options.id',
-                                $selectedReliefIds
-                                    ->all()
-                            )
-                            ->pluck(
-                                'relief_options.id'
-                            )
-                            ->map(
-                                fn ($id) =>
-                                    (int) $id
-                            )
-                            ->unique()
-                            ->values();
-
-                    if (
-                        $validReliefIds->count()
-                        !==
-                        $selectedReliefIds->count()
-                    ) {
-                        $validator
-                            ->errors()
-                            ->add(
-                                'relief_options',
-                                'Salah satu pilihan keringanan tidak tersedia pada periode SPMB ini.'
-                            );
-                    }
                 }
 
                 /*

@@ -793,7 +793,7 @@
                         </div>
                     </section>
 
-                    {{-- Section 5 --}}
+                                        {{-- Section 5 --}}
                     <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                         <div class="border-b border-slate-100 px-6 py-5">
@@ -810,7 +810,7 @@
                                     </h3>
 
                                     <p class="mt-1 text-sm text-slate-500">
-                                        Informasi tambahan, keringanan, dan program khusus.
+                                        Informasi tambahan dan program khusus.
                                     </p>
                                 </div>
 
@@ -819,7 +819,7 @@
 
                         <div class="grid gap-6 p-6 md:grid-cols-2">
 
-                            <div>
+                            <div class="md:col-span-2">
                                 <label class="mb-2 block text-sm font-semibold text-slate-700">
                                     Nilai Kelulusan
                                 </label>
@@ -833,114 +833,6 @@
                                     max="100"
                                     class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
                                 >
-                            </div>
-
-                            <div>
-                                <label class="mb-2 block text-sm font-semibold text-slate-700">
-                                    Nama Pembawa / Referal
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="referrer_name"
-                                    value="{{ old('referrer_name') }}"
-                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                                >
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label class="mb-2 block text-sm font-semibold text-slate-700">
-                                    Asal Referal
-                                </label>
-
-                                <input
-                                    type="text"
-                                    name="referrer_source"
-                                    value="{{ old('referrer_source') }}"
-                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-100"
-                                >
-                            </div>
-
-                            {{-- Keringanan --}}
-                            <div class="md:col-span-2">
-
-                                <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
-
-                                    <div class="mb-4">
-
-                                        <h4 class="font-semibold text-slate-900">
-                                            Keringanan / Prestasi
-                                        </h4>
-
-                                        <p class="mt-1 text-xs leading-5 text-slate-500">
-                                            Pilih keringanan atau prestasi yang sesuai. Anda boleh memilih lebih dari satu.
-                                        </p>
-
-                                    </div>
-
-                                    @if ($reliefOptions->isNotEmpty())
-
-                                        <div class="grid gap-3 md:grid-cols-2">
-
-                                            @foreach ($reliefOptions as $option)
-
-                                                <label
-                                                    for="relief-option-{{ $option->id }}"
-                                                    class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-blue-300 hover:bg-blue-50/40"
-                                                >
-
-                                                    <input
-                                                        id="relief-option-{{ $option->id }}"
-                                                        type="checkbox"
-                                                        name="relief_options[]"
-                                                        value="{{ $option->id }}"
-                                                        @checked(
-                                                            in_array(
-                                                                $option->id,
-                                                                array_map(
-                                                                    'intval',
-                                                                    old('relief_options', [])
-                                                                ),
-                                                                true
-                                                            )
-                                                        )
-                                                        class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                                    >
-
-                                                    <span class="text-sm leading-5 text-slate-700">
-                                                        {{ $option->name }}
-                                                    </span>
-
-                                                </label>
-
-                                            @endforeach
-
-                                        </div>
-
-                                    @else
-
-                                        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
-                                            <p class="text-sm text-slate-500">
-                                                Belum ada pilihan keringanan untuk periode ini.
-                                            </p>
-                                        </div>
-
-                                    @endif
-
-                                    @error('relief_options')
-                                        <p class="mt-3 text-xs text-red-600">
-                                            {{ $message }}
-                                        </p>
-                                    @enderror
-
-                                    @error('relief_options.*')
-                                        <p class="mt-3 text-xs text-red-600">
-                                            {{ $message }}
-                                        </p>
-                                    @enderror
-
-                                </div>
-
                             </div>
 
                             {{-- Program Khusus --}}

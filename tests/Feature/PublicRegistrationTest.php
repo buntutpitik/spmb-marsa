@@ -2,16 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\SendWhatsappTemplateJob;
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
-use App\Jobs\SendWhatsappTemplateJob;
 use App\Models\WhatsappLog;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
-
 
 class PublicRegistrationTest extends TestCase
 {
@@ -200,6 +199,10 @@ class PublicRegistrationTest extends TestCase
         /*
          * =========================================================
          * 9. Buat 2 master Keringanan.
+         *
+         * Keringanan sengaja tetap dibuat dan dihubungkan ke periode
+         * untuk membuktikan bahwa data tersebut tidak otomatis
+         * tersimpan dari pendaftaran PUBLIC.
          * =========================================================
          */
         $reliefYatimId = DB::table('relief_options')->insertGetId([
@@ -320,6 +323,9 @@ class PublicRegistrationTest extends TestCase
          * -> RegistrationService
          * -> AdmissionPathResolver
          * -> database
+         *
+         * Referral dan Keringanan sengaja ikut disisipkan untuk
+         * membuktikan endpoint PUBLIC mengabaikannya.
          * =========================================================
          */
         $response = $this
@@ -333,61 +339,68 @@ class PublicRegistrationTest extends TestCase
             ->post(
                 route('registration.store'),
                 [
-                'period_id' => $periodId,
-                'major_id' => $majorId,
+                    'period_id' => $periodId,
+                    'major_id' => $majorId,
 
-                'nik' => '3399999999999999',
-                'nisn' => '9999999999',
+                    'nik' => '3399999999999999',
+                    'nisn' => '9999999999',
 
-                'full_name' => 'TEST FEATURE SPMB MARSA',
+                    'full_name' => 'TEST FEATURE SPMB MARSA',
 
-                'birth_place' => 'Kebumen',
-                'birth_date' => '2009-02-15',
+                    'birth_place' => 'Kebumen',
+                    'birth_date' => '2009-02-15',
 
-                'gender' => 'L',
-                'religion' => 'Islam',
+                    'gender' => 'L',
+                    'religion' => 'Islam',
 
-                /*
-                 * Asal sekolah sekarang menggunakan master.
-                 */
-                'origin_school_id' => (string) $originSchoolId,
-                'origin_school_other' => null,
+                    /*
+                     * Asal sekolah sekarang menggunakan master.
+                     */
+                    'origin_school_id' => (string) $originSchoolId,
+                    'origin_school_other' => null,
 
-                'hamlet' => 'Test',
-                'rt' => '001',
-                'rw' => '002',
-                'village' => 'Desa Test',
-                'district' => 'Kebumen',
-                'city' => 'Kebumen',
-                'province' => 'Jawa Tengah',
-                'postal_code' => '54311',
+                    'hamlet' => 'Test',
+                    'rt' => '001',
+                    'rw' => '002',
+                    'village' => 'Desa Test',
+                    'district' => 'Kebumen',
+                    'city' => 'Kebumen',
+                    'province' => 'Jawa Tengah',
+                    'postal_code' => '54311',
 
-                'father_name' => 'AYAH FEATURE TEST',
-                'father_job' => 'Wiraswasta',
+                    'father_name' => 'AYAH FEATURE TEST',
+                    'father_job' => 'Wiraswasta',
 
-                'mother_name' => 'IBU FEATURE TEST',
-                'mother_job' => 'Ibu Rumah Tangga',
+                    'mother_name' => 'IBU FEATURE TEST',
+                    'mother_job' => 'Ibu Rumah Tangga',
 
-                'whatsapp' => '081299999999',
+                    'whatsapp' => '081299999999',
 
-                'graduation_score' => 90,
+                    'graduation_score' => 90,
 
-                'referrer_name' => 'FEATURE TEST',
-                'referrer_source' => 'TEST',
+                    /*
+                     * Data internal yang tidak boleh diterima
+                     * dari endpoint PUBLIC.
+                     */
+                    'referrer_name' => 'FEATURE TEST',
+                    'referrer_source' => 'TEST',
 
-                'relief_options' => [
-                    $reliefYatimId,
-                    $reliefAlumniId,
-                ],
+                    'relief_options' => [
+                        $reliefYatimId,
+                        $reliefAlumniId,
+                    ],
 
-                'special_programs' => [
-                    $kkoId,
-                    $pondokId,
-                ],
+                    /*
+                     * Program Khusus tetap boleh dipilih siswa.
+                     */
+                    'special_programs' => [
+                        $kkoId,
+                        $pondokId,
+                    ],
 
-                'notes' => 'Automated feature test SPMB MARSA.',
-            ]
-        );
+                    'notes' => 'Automated feature test SPMB MARSA.',
+                ]
+            );
 
         /*
          * =========================================================
@@ -537,32 +550,46 @@ class PublicRegistrationTest extends TestCase
 
         /*
          * =========================================================
-         * 20. Validasi Keringanan.
+         * 20. Referral dari PUBLIC harus diabaikan.
          * =========================================================
          */
-        $savedReliefIds = $registration
-            ->reliefOptions
-            ->pluck('id')
-            ->sort()
-            ->values()
-            ->all();
+        $this->assertNull(
+            $registration->referrer_name
+        );
 
-        $expectedReliefIds = collect([
-            $reliefYatimId,
-            $reliefAlumniId,
-        ])
-            ->sort()
-            ->values()
-            ->all();
-
-        $this->assertSame(
-            $expectedReliefIds,
-            $savedReliefIds
+        $this->assertNull(
+            $registration->referrer_source
         );
 
         /*
          * =========================================================
-         * 21. Validasi Program Khusus.
+         * 21. Keringanan dari PUBLIC harus diabaikan.
+         * =========================================================
+         */
+        $this->assertCount(
+            0,
+            $registration->reliefOptions
+        );
+
+        $this->assertDatabaseMissing(
+            'registration_relief_options',
+            [
+                'registration_id' => $registration->id,
+                'relief_option_id' => $reliefYatimId,
+            ]
+        );
+
+        $this->assertDatabaseMissing(
+            'registration_relief_options',
+            [
+                'registration_id' => $registration->id,
+                'relief_option_id' => $reliefAlumniId,
+            ]
+        );
+
+        /*
+         * =========================================================
+         * 22. Program Khusus tetap harus tersimpan.
          * =========================================================
          */
         $savedProgramIds = $registration
@@ -583,27 +610,6 @@ class PublicRegistrationTest extends TestCase
         $this->assertSame(
             $expectedProgramIds,
             $savedProgramIds
-        );
-
-        /*
-         * =========================================================
-         * 22. Pivot Keringanan harus benar.
-         * =========================================================
-         */
-        $this->assertDatabaseHas(
-            'registration_relief_options',
-            [
-                'registration_id' => $registration->id,
-                'relief_option_id' => $reliefYatimId,
-            ]
-        );
-
-        $this->assertDatabaseHas(
-            'registration_relief_options',
-            [
-                'registration_id' => $registration->id,
-                'relief_option_id' => $reliefAlumniId,
-            ]
         );
 
         /*
@@ -661,6 +667,9 @@ class PublicRegistrationTest extends TestCase
         /*
          * =========================================================
          * 26. Halaman success harus bisa dibuka.
+         *
+         * Program Khusus tetap ditampilkan.
+         * Keringanan internal tidak ditampilkan.
          * =========================================================
          */
         $successResponse = $this->get(
@@ -681,8 +690,8 @@ class PublicRegistrationTest extends TestCase
             ->assertSee('TEST FEATURE SPMB MARSA')
             ->assertSee('Khusus')
             ->assertSee('TKRO')
-            ->assertSee('Yatim')
-            ->assertSee('Anak Alumni')
+            ->assertDontSee('Yatim')
+            ->assertDontSee('Anak Alumni')
             ->assertSee('Kelas Khusus Olahraga (KKO)')
             ->assertSee('Pondok Pesantren');
     }

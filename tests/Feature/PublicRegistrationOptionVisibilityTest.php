@@ -18,7 +18,7 @@ class PublicRegistrationOptionVisibilityTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_public_form_only_shows_active_relief_options_and_special_programs_for_current_period(): void
+    public function test_public_form_hides_all_relief_options_and_only_shows_active_special_programs_for_current_period(): void
     {
         /*
          * =========================================================
@@ -134,14 +134,15 @@ class PublicRegistrationOptionVisibilityTest extends TestCase
          * =========================================================
          * 6. KERINGANAN
          *
+         * Semua variasi sengaja dibuat untuk memastikan bahwa
+         * Keringanan sama sekali tidak tersedia pada form PUBLIC,
+         * terlepas dari status master maupun pivot periodenya.
+         *
          * A = master aktif + periode aktif
-         *     => HARUS tampil
-         *
          * B = master aktif + periode nonaktif
-         *     => TIDAK boleh tampil
-         *
          * C = master nonaktif + periode aktif
-         *     => TIDAK boleh tampil
+         *
+         * SEMUANYA => TIDAK boleh tampil di PUBLIC.
          * =========================================================
          */
         $reliefVisibleId = DB::table('relief_options')->insertGetId([
@@ -294,22 +295,39 @@ class PublicRegistrationOptionVisibilityTest extends TestCase
         /*
          * =========================================================
          * 9. Keringanan visibility.
+         *
+         * Semua Keringanan merupakan data internal.
+         * Tidak boleh ada satu pun pada form PUBLIC.
          * =========================================================
          */
-
-        // Master aktif + periode aktif => tampil.
-        $response->assertSee(
+        $response->assertDontSee(
             'TEST KERINGANAN TAMPIL'
         );
 
-        // Master aktif + periode nonaktif => tidak tampil.
         $response->assertDontSee(
             'TEST KERINGANAN NONAKTIF PERIODE'
         );
 
-        // Master nonaktif + periode aktif => tidak tampil.
         $response->assertDontSee(
             'TEST KERINGANAN NONAKTIF MASTER'
+        );
+
+        $response->assertDontSee(
+            'name="relief_options[]"',
+            false
+        );
+
+        /*
+         * Referral juga merupakan data internal.
+         */
+        $response->assertDontSee(
+            'name="referrer_name"',
+            false
+        );
+
+        $response->assertDontSee(
+            'name="referrer_source"',
+            false
         );
 
         /*
@@ -331,6 +349,14 @@ class PublicRegistrationOptionVisibilityTest extends TestCase
         // Master nonaktif + periode aktif => tidak tampil.
         $response->assertDontSee(
             'TEST PROGRAM NONAKTIF MASTER'
+        );
+
+        /*
+         * Field Program Khusus harus tetap tersedia di PUBLIC.
+         */
+        $response->assertSee(
+            'name="special_programs[]"',
+            false
         );
     }
 }

@@ -283,7 +283,7 @@ class AdminRegistrationOptionsTest extends TestCase
 
         $this->get(route('registration.create'))
             ->assertOk()
-            ->assertSee('TEST ADMIN KERINGANAN EDIT');
+            ->assertDontSee('TEST ADMIN KERINGANAN EDIT');
 
         /*
          * ---------------------------------------------------------
