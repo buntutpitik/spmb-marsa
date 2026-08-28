@@ -20,6 +20,25 @@
                 </p>
             </div>
 
+            @if (
+                $selectedPeriod
+                && $selectedPeriod->is_active
+                && $selectedPeriod->status === 'OPEN'
+            )
+                <a
+                    href="{{ route('admin.registrations.create', [
+                        'period_id' => $selectedPeriod->id,
+                    ]) }}"
+                    class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+                >
+                    <i
+                        data-lucide="user-plus"
+                        class="h-4 w-4"
+                    ></i>
+
+                    Tambah Pendaftar
+                </a>
+            @endif
             @if ($selectedPeriod)
                 <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
 
@@ -139,7 +158,7 @@
                                     )
                                 >
                                     {{ $period->name }}
-                                    {{ $period->is_active ? '— Aktif' : '' }}
+                                    {{ $period->is_active ? '- Aktif' : '' }}
                                 </option>
 
                             @endforeach

@@ -9,6 +9,8 @@ use App\Models\PpdbPeriod;
 use App\Models\Registration;
 use App\Services\PeriodContext;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\CreateRegistrationRequest;
+use App\Services\RegistrationService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +19,8 @@ use Illuminate\Support\Facades\DB;
 class RegistrationController extends Controller
 {
     public function __construct(
-        protected PeriodContext $periodContext
+        protected PeriodContext $periodContext,
+        protected RegistrationService $registrationService
     ) {
     }
 
@@ -189,6 +192,75 @@ class RegistrationController extends Controller
         ]);
     }
 
+    public function create(Request $request): View
+    {
+        $selectedPeriod = $this->periodContext
+            ->resolveAdminPeriod($request);
+
+        /*
+        * Tambah pendaftar hanya diperbolehkan pada
+        * periode aktif yang berstatus OPEN.
+        *
+        * Berbeda dengan PUBLIC:
+        * tanggal registration_open / registration_close
+        * tidak digunakan sebagai pembatas input petugas.
+        */
+        abort_unless(
+            $selectedPeriod
+            && $selectedPeriod->is_active
+            && $selectedPeriod->status === 'OPEN',
+            404
+        );
+
+        $majors = $selectedPeriod
+            ->majors()
+            ->wherePivot('is_active', true)
+            ->where('majors.is_active', true)
+            ->orderBy('majors.name')
+            ->get();
+
+        $admissionPaths = $selectedPeriod
+            ->admissionPaths()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $originSchools = OriginSchool::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $reliefOptions = $selectedPeriod
+            ->reliefOptions()
+            ->wherePivot('is_active', true)
+            ->where('relief_options.is_active', true)
+            ->orderBy('period_relief_options.sort_order')
+            ->orderBy('relief_options.name')
+            ->get();
+
+        $specialPrograms = $selectedPeriod
+            ->specialPrograms()
+            ->wherePivot('is_active', true)
+            ->where('special_programs.is_active', true)
+            ->orderBy('period_special_programs.sort_order')
+            ->orderBy('special_programs.name')
+            ->get();
+
+        return view(
+            'admin.registrations.create',
+            compact(
+                'selectedPeriod',
+                'majors',
+                'admissionPaths',
+                'originSchools',
+                'reliefOptions',
+                'specialPrograms'
+            )
+        );
+    }
+
     public function edit(
         Request $request,
         Registration $registration
@@ -264,6 +336,53 @@ class RegistrationController extends Controller
             'specialPrograms' => $specialPrograms,
             'originSchools' => $originSchools,
         ]);
+    }
+
+    public function store(
+        CreateRegistrationRequest $request
+    ): RedirectResponse {
+        /*
+        * POST create tidak mempercayai period_id dari browser.
+        *
+        * Pendaftaran baru selalu masuk ke periode
+        * aktif + OPEN yang ditentukan server.
+        */
+        $selectedPeriod = $this->periodContext
+            ->resolveActivePeriod();
+
+        abort_unless(
+            $selectedPeriod
+            && $selectedPeriod->is_active
+            && $selectedPeriod->status === 'OPEN',
+            404
+        );
+
+        $data = $request->validated();
+
+        $data['period_id'] = $selectedPeriod->id;
+
+        $registration = $this->registrationService->create(
+            $data,
+            $request->user(),
+            null,
+            [
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]
+        );
+
+        return redirect()
+            ->route(
+                'admin.registrations.show',
+                [
+                    'registration' => $registration,
+                    'period_id' => $selectedPeriod->id,
+                ]
+            )
+            ->with(
+                'success',
+                'Pendaftar berhasil ditambahkan.'
+            );
     }
 
     public function update(
