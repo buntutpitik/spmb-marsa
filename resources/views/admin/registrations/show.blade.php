@@ -1113,6 +1113,18 @@
                                     <th class="px-6 py-3.5">
                                         Catatan
                                     </th>
+
+                                    @if (
+                                        auth()->user()?->hasRole(
+                                            'SUPERADMIN',
+                                            'ADMIN',
+                                            'BENDAHARA'
+                                        )
+                                    )
+                                        <th class="px-6 py-3.5 text-right">
+                                            Bukti
+                                        </th>
+                                    @endif
                                 </tr>
 
                             </thead>
@@ -1152,6 +1164,36 @@
                                         <td class="px-6 py-4 text-sm text-slate-500">
                                             {{ $payment->notes ?: '-' }}
                                         </td>
+
+                                        @if (
+                                            auth()->user()?->hasRole(
+                                                'SUPERADMIN',
+                                                'ADMIN',
+                                                'BENDAHARA'
+                                            )
+                                        )
+                                            <td class="whitespace-nowrap px-6 py-4 text-right">
+                                                <a
+                                                    href="{{ route(
+                                                        'admin.registrations.reenrollment-payments.receipt',
+                                                        [
+                                                            'registration' => $registration,
+                                                            'payment' => $payment,
+                                                        ]
+                                                    ) }}"
+                                                    target="_blank"
+                                                    rel="noopener"
+                                                    class="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                                >
+                                                    <i
+                                                        data-lucide="printer"
+                                                        class="h-4 w-4"
+                                                    ></i>
+
+                                                    Cetak Bukti
+                                                </a>
+                                            </td>
+                                        @endif
 
                                     </tr>
 

@@ -39,6 +39,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PublicRegistrationController;
 use App\Http\Controllers\Admin\AdmissionPathController;
 use App\Http\Controllers\Admin\ComparisonController;
+use App\Http\Controllers\Admin\ReenrollmentPaymentReceiptController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -326,6 +327,11 @@ Route::prefix('admin')
                 '/pendaftaran/{registration}/pembayaran-daftar-ulang',
                 [ReenrollmentPaymentController::class, 'store']
             )->name('registrations.reenrollment-payments.store');
+
+            Route::get(
+                '/pendaftaran/{registration}/pembayaran-daftar-ulang/{payment}/bukti',
+                [ReenrollmentPaymentReceiptController::class, 'download']
+            )->name('registrations.reenrollment-payments.receipt');
 
             Route::get(
                 '/rekap/keuangan-daftar-ulang',
