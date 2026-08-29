@@ -14,27 +14,67 @@
     <div class="min-h-screen">
 
         {{-- Header --}}
-        <header class="border-b border-slate-200 bg-white">
-            <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+            <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
 
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
-                        SPMB Online
-                    </p>
+                <a
+                    href="{{ route('home') }}"
+                    class="flex min-w-0 items-center gap-3"
+                >
+                    @if ($registration->period->school?->logo_path)
+                        <img
+                            src="{{ asset('storage/'.$registration->period->school->logo_path) }}"
+                            alt="{{ $registration->period->school->name }}"
+                            class="h-10 w-10 shrink-0 rounded-xl object-contain"
+                        >
+                    @endif
 
-                    <h1 class="mt-1 text-xl font-bold text-slate-900">
-                        {{ config('app.name') }}
-                    </h1>
-                </div>
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
+                            SPMB Online
+                        </p>
 
-                <div class="hidden text-right sm:block">
-                    <p class="text-xs text-slate-500">
-                        Periode
-                    </p>
+                        <p class="truncate text-sm font-bold text-slate-900 sm:text-base">
+                            {{ $registration->period->school?->name ?? config('app.name') }}
+                        </p>
+                    </div>
+                </a>
 
-                    <p class="font-semibold text-slate-900">
-                        {{ $registration->period->name }}
-                    </p>
+                <div class="flex shrink-0 items-center gap-3">
+                    <div class="hidden text-right md:block">
+                        <p class="text-[11px] text-slate-500">
+                            Periode
+                        </p>
+
+                        <p class="text-sm font-semibold text-slate-900">
+                            {{ $registration->period->name }}
+                        </p>
+                    </div>
+
+                    <a
+                        href="{{ route('home') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:px-4 sm:text-sm"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            aria-hidden="true"
+                        >
+                            <path d="M19 12H5"></path>
+                            <path d="m12 19-7-7 7-7"></path>
+                        </svg>
+
+                        <span class="hidden sm:inline">
+                            Kembali ke Beranda
+                        </span>
+
+                        <span class="sm:hidden">
+                            Beranda
+                        </span>
+                    </a>
                 </div>
 
             </div>
@@ -194,10 +234,15 @@
 
                             <div>
                                 <h3 class="text-sm font-semibold text-amber-900">
-                                    Simpan informasi pendaftaran Anda
+                                    Simpan akses pendaftaran Anda
                                 </h3>
 
                                 <p class="mt-1 text-sm leading-6 text-amber-800">
+                                    Gunakan halaman ini untuk membuka status dan kartu pendaftaran Anda.
+                                    Simpan nomor pendaftaran dan jangan membagikan tautan akses pendaftaran kepada orang lain.
+                                </p>
+
+                                <p class="mt-2 text-sm leading-6 text-amber-800">
                                     Tahap berikutnya adalah wawancara bersama orang tua/wali.
                                     Silakan datang ke Sekretariat SPMB MARSA pada jam kerja.
                                 </p>
@@ -231,10 +276,10 @@
                         </a>
 
                         <a
-                            href="{{ route('registration.create') }}"
+                            href="{{ route('home') }}"
                             class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                         >
-                            Kembali ke Form Pendaftaran
+                            Kembali ke Beranda
                         </a>
 
                     </div>
