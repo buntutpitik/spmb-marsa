@@ -19,29 +19,71 @@
     <div class="min-h-screen">
 
         {{-- Header --}}
-        <header class="border-b border-slate-200 bg-white">
-            <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">
-                        SPMB Online
-                    </p>
+        <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/95 backdrop-blur">
+            <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
 
-                    <h1 class="mt-1 text-xl font-bold text-slate-900">
-                        {{ config('app.name') }}
-                    </h1>
-                </div>
+                <a
+                    href="{{ route('home') }}"
+                    class="flex min-w-0 items-center gap-3"
+                >
+                    @if ($period?->school?->logo_path)
+                        <img
+                            src="{{ asset('storage/'.$period->school->logo_path) }}"
+                            alt="{{ $period->school->name }}"
+                            class="h-10 w-10 shrink-0 rounded-xl object-contain"
+                        >
+                    @endif
 
-                @if ($period)
-                    <div class="hidden text-right sm:block">
-                        <p class="text-xs text-slate-500">
-                            Periode Aktif
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-blue-600">
+                            SPMB Online
                         </p>
 
-                        <p class="font-semibold text-slate-900">
-                            {{ $period->name }}
+                        <p class="truncate text-sm font-bold text-slate-900 sm:text-base">
+                            {{ $period?->school?->name ?? config('app.name') }}
                         </p>
                     </div>
-                @endif
+                </a>
+
+                <div class="flex shrink-0 items-center gap-3">
+                    @if ($period)
+                        <div class="hidden text-right md:block">
+                            <p class="text-[11px] text-slate-500">
+                                Periode Aktif
+                            </p>
+
+                            <p class="text-sm font-semibold text-slate-900">
+                                {{ $period->name }}
+                            </p>
+                        </div>
+                    @endif
+
+                    <a
+                        href="{{ route('home') }}"
+                        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 sm:px-4 sm:text-sm"
+                    >
+                        <svg
+                            class="h-4 w-4"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            aria-hidden="true"
+                        >
+                            <path d="M19 12H5"></path>
+                            <path d="m12 19-7-7 7-7"></path>
+                        </svg>
+
+                        <span class="hidden sm:inline">
+                            Kembali ke Beranda
+                        </span>
+
+                        <span class="sm:hidden">
+                            Beranda
+                        </span>
+                    </a>
+                </div>
+
             </div>
         </header>
 
@@ -61,6 +103,42 @@
                     ditentukan otomatis oleh sistem berdasarkan tanggal pendaftaran.
                 </p>
             </div>
+
+            @if ($period && $activePath)
+                <div class="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-100 px-5 py-4 sm:px-6">
+                        <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                            <p class="text-sm font-semibold text-slate-900">
+                                Lengkapi 5 bagian formulir
+                            </p>
+
+                            <p class="text-xs text-slate-500">
+                                Tanda <span class="font-bold text-red-500">*</span> wajib diisi
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-px bg-slate-200 sm:grid-cols-5">
+                        @foreach ([
+                            ['1', 'Pilihan'],
+                            ['2', 'Identitas'],
+                            ['3', 'Alamat'],
+                            ['4', 'Orang Tua'],
+                            ['5', 'Tambahan'],
+                        ] as [$number, $label])
+                            <div class="flex items-center gap-3 bg-white px-4 py-3">
+                                <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-xs font-bold text-blue-700">
+                                    {{ $number }}
+                                </span>
+
+                                <span class="text-xs font-medium text-slate-600">
+                                    {{ $label }}
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
             @if (! $period)
 
@@ -125,7 +203,11 @@
             @else
 
                 @if ($errors->any())
-                    <div class="mb-6 rounded-2xl border border-red-200 bg-red-50 p-5">
+                    <div
+                        class="mb-6 rounded-2xl border border-red-200 bg-red-50 p-5"
+                        role="alert"
+                        aria-live="polite"
+                    >
                         <div class="flex gap-3">
 
                             <div class="mt-0.5 text-red-600">
@@ -144,10 +226,14 @@
 
                             <div>
                                 <h3 class="font-semibold text-red-800">
-                                    Periksa kembali data yang Anda masukkan.
+                                    Ada data yang belum benar.
                                 </h3>
 
-                                <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700">
+                                <p class="mt-1 text-sm leading-6 text-red-700">
+                                    Periksa kembali bagian yang ditandai sebelum mengirim pendaftaran.
+                                </p>
+
+                                <ul class="mt-3 list-disc space-y-1 pl-5 text-sm text-red-700">
                                     @foreach ($errors->all() as $error)
                                         <li>{{ $error }}</li>
                                     @endforeach
@@ -162,9 +248,12 @@
                     action="{{ route('registration.store') }}"
                     class="space-y-6"
                     x-data="{
-                        originSchool: @js((string) old('origin_school_id', ''))
+                        originSchool: @js((string) old('origin_school_id', '')),
+                        submitting: false
                     }"
+                    @submit="submitting = true"
                 >
+
                     @csrf
 
                     <input
@@ -945,16 +1034,47 @@
                                     Pastikan data sudah benar
                                 </h3>
 
-                                <p class="mt-1 text-sm text-slate-500">
-                                    Data akan disimpan setelah tombol kirim ditekan.
+                                <p class="mt-2 text-xs leading-5 text-slate-400">
+                                    Setelah berhasil, Anda akan diarahkan ke halaman bukti pendaftaran.
+                                    Jangan menutup halaman saat data sedang dikirim.
                                 </p>
                             </div>
 
                             <button
                                 type="submit"
-                                class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200"
+                                :disabled="submitting"
+                                class="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                Kirim Pendaftaran
+                                <svg
+                                    x-show="submitting"
+                                    x-cloak
+                                    class="h-4 w-4 animate-spin"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    aria-hidden="true"
+                                >
+                                    <circle
+                                        class="opacity-25"
+                                        cx="12"
+                                        cy="12"
+                                        r="9"
+                                        stroke="currentColor"
+                                        stroke-width="3"
+                                    ></circle>
+                                    <path
+                                        class="opacity-75"
+                                        fill="currentColor"
+                                        d="M12 3a9 9 0 0 1 9 9h-3a6 6 0 0 0-6-6V3Z"
+                                    ></path>
+                                </svg>
+
+                                <span x-show="! submitting">
+                                    Kirim Pendaftaran
+                                </span>
+
+                                <span x-show="submitting" x-cloak>
+                                    Mengirim...
+                                </span>
                             </button>
 
                         </div>
