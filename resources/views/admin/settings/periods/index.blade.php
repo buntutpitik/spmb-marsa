@@ -44,6 +44,12 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if ($errors->any())
         <div class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             <div class="font-semibold">Terdapat data yang perlu diperbaiki.</div>
@@ -112,29 +118,41 @@
                             <p class="mt-2 text-sm text-slate-500">{{ $period->school?->name ?? 'Sekolah tidak tersedia' }}</p>
                         </div>
 
-                        <button type="button"
-                            @click="openEdit(@js([
-                                'id'=>$period->id,
-                                'name'=>$period->name,
-                                'year_start'=>$period->year_start,
-                                'year_end'=>$period->year_end,
-                                'registration_open'=>$period->registration_open?->format('Y-m-d'),
-                                'registration_close'=>$period->registration_close?->format('Y-m-d'),
-                                'status'=>$period->status,
-                                'is_active'=>$period->is_active,
-                                'principal_name'=>$period->principal_name,
-                                'principal_nip'=>$period->principal_nip,
-                                'number_prefix'=>$period->number_prefix,
-                                'number_year'=>$period->number_year,
-                                'number_digits'=>$period->number_digits,
-                                'include_major_code'=>$period->include_major_code,
-                                'default_reenroll_fee'=>$period->default_reenroll_fee,
-                                'notes'=>$period->notes,
-                            ]))"
-                            class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50">
-                            <i data-lucide="pencil" class="h-4 w-4"></i>
-                            Edit
-                        </button>
+                        @if ($period->isReadOnly())
+                            <div
+                                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-400"
+                                title="Periode yang sudah ditutup bersifat read-only"
+                            >
+                                <i data-lucide="lock" class="h-4 w-4"></i>
+                                Read-only
+                            </div>
+                        @else
+                            <button
+                                type="button"
+                                @click="openEdit(@js([
+                                    'id'=>$period->id,
+                                    'name'=>$period->name,
+                                    'year_start'=>$period->year_start,
+                                    'year_end'=>$period->year_end,
+                                    'registration_open'=>$period->registration_open?->format('Y-m-d'),
+                                    'registration_close'=>$period->registration_close?->format('Y-m-d'),
+                                    'status'=>$period->status,
+                                    'is_active'=>$period->is_active,
+                                    'principal_name'=>$period->principal_name,
+                                    'principal_nip'=>$period->principal_nip,
+                                    'number_prefix'=>$period->number_prefix,
+                                    'number_year'=>$period->number_year,
+                                    'number_digits'=>$period->number_digits,
+                                    'include_major_code'=>$period->include_major_code,
+                                    'default_reenroll_fee'=>$period->default_reenroll_fee,
+                                    'notes'=>$period->notes,
+                                ]))"
+                                class="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+                            >
+                                <i data-lucide="pencil" class="h-4 w-4"></i>
+                                Edit
+                            </button>
+                        @endif
                     </div>
 
                     <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">

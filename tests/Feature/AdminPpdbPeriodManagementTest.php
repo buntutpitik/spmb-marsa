@@ -390,6 +390,61 @@ class AdminPpdbPeriodManagementTest extends TestCase
         );
     }
 
+    public function test_closed_period_is_read_only(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $response = $this->actingAs($user)
+            ->put(
+                route(
+                    'admin.periods.update',
+                    $this->period
+                ),
+                $this->validPayload([
+                    'name' => 'HISTORI DIUBAH',
+                    'status' => 'OPEN',
+                    'is_active' => '1',
+                    'default_reenroll_fee' => 999999,
+                ])
+            );
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas(
+                'error',
+                'Periode yang sudah ditutup bersifat read-only dan tidak dapat diubah.'
+            )
+            ->assertRedirect(
+                route('admin.periods.index')
+            );
+
+        $this->period->refresh();
+
+        $this->assertSame(
+            '2027/2028',
+            $this->period->name
+        );
+
+        $this->assertSame(
+            'CLOSED',
+            $this->period->status
+        );
+
+        $this->assertFalse(
+            $this->period->is_active
+        );
+
+        $this->assertSame(
+            250000,
+            (int) $this->period->default_reenroll_fee
+        );
+    }
+
     private function validPayload(
         array $overrides = []
     ): array {

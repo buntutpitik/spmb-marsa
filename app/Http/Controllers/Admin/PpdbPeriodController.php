@@ -34,6 +34,15 @@ class PpdbPeriodController extends Controller
         UpdatePpdbPeriodRequest $request,
         PpdbPeriod $period
     ): RedirectResponse {
+        if ($period->isReadOnly()) {
+            return redirect()
+                ->route('admin.periods.index')
+                ->with(
+                    'error',
+                    'Periode yang sudah ditutup bersifat read-only dan tidak dapat diubah.'
+                );
+        }
+
         DB::transaction(function () use (
             $request,
             $period
