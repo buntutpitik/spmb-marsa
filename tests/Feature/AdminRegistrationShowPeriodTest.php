@@ -170,6 +170,35 @@ class AdminRegistrationShowPeriodTest extends TestCase
             ->assertSee('Aksi Pendaftaran');
     }
 
+    public function test_reenrolled_registration_shows_withdrawal_action_without_payment_action(): void
+    {
+        $registration = $this->makeRegistration(
+            $this->activePeriod
+        );
+
+        $registration->update([
+            'status' => 'REENROLLED',
+            'reenrolled_at' => now(),
+        ]);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.registrations.show', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Aksi Pendaftaran')
+            ->assertSee('Pendaftar sudah menyelesaikan daftar ulang.')
+            ->assertSee('Mengundurkan Diri')
+            ->assertSee(
+                'Jika pendaftar mengundurkan diri, pembayaran daftar ulang'
+            )
+            ->assertSee(
+                'yang telah diterima tetap tercatat dan tidak dapat dikembalikan.'
+            )
+            ->assertDontSee('Input Pembayaran');
+    }
+
     private function makePeriod(
         string $name,
         int $yearStart,

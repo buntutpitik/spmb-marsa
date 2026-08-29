@@ -802,4 +802,51 @@ class ReenrollmentPaymentServiceTest extends TestCase
                     : null,
         ]);
     }
+
+    public function test_completed_payment_remains_recorded_after_registration_is_withdrawn(): void
+    {
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $this->service->addPayment(
+            $registration,
+            250000,
+            $this->user
+        );
+
+        $registration->refresh();
+
+        $this->assertSame(
+            'REENROLLED',
+            $registration->status
+        );
+
+        app(\App\Services\RegistrationStatusService::class)->change(
+            $registration,
+            'WITHDRAWN',
+            $this->user,
+            'Mengundurkan diri setelah daftar ulang.'
+        );
+
+        $registration->refresh();
+
+        $this->assertSame(
+            'WITHDRAWN',
+            $registration->status
+        );
+
+        $this->assertSame(
+            250000,
+            (int) DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->sum('amount')
+        );
+
+        $this->assertDatabaseHas(
+            'reenrollment_payments',
+            [
+                'registration_id' => $registration->id,
+                'amount' => 250000,
+            ]
+        );
+    }
 }

@@ -144,7 +144,7 @@
             ! $isReadOnlyPeriod
             && in_array(
                 $registration->status,
-                ['REGISTERED', 'ACCEPTED'],
+                ['REGISTERED', 'ACCEPTED', 'REENROLLED'],
                 true
             )
         )
@@ -647,6 +647,40 @@
                             </div>
 
                         </div>
+
+                        @elseif ($registration->status === 'REENROLLED')
+
+                            <div class="flex flex-col gap-4">
+
+                                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+                                    <div class="text-sm font-semibold text-amber-800">
+                                        Pendaftar sudah menyelesaikan daftar ulang.
+                                    </div>
+
+                                    <div class="mt-1 text-sm text-amber-700">
+                                        Jika pendaftar mengundurkan diri, pembayaran daftar ulang
+                                        yang telah diterima tetap tercatat dan tidak dapat dikembalikan.
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap gap-3">
+
+                                    <button
+                                        type="button"
+                                        @click="openAction('WITHDRAWN')"
+                                        class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
+                                    >
+                                        <i
+                                            data-lucide="log-out"
+                                            class="h-4 w-4"
+                                        ></i>
+
+                                        Mengundurkan Diri
+                                    </button>
+
+                                </div>
+
+                            </div>
 
                     @endif
 

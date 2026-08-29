@@ -310,6 +310,57 @@ class RegistrationStatusServiceTest extends TestCase
         );
     }
 
+    public function test_reenrolled_can_be_withdrawn(): void
+    {
+        $registration = $this->makeRegistration(
+            'REENROLLED'
+        );
+
+        $result = $this->service->change(
+            $registration,
+            'WITHDRAWN',
+            $this->user,
+            'Mengundurkan diri setelah menyelesaikan daftar ulang.'
+        );
+
+        $this->assertSame(
+            'WITHDRAWN',
+            $result->status
+        );
+
+        $this->assertNotNull(
+            $result->withdrawn_at
+        );
+
+        $this->assertDatabaseHas(
+            'registration_status_histories',
+            [
+                'registration_id' => $registration->id,
+                'from_status' => 'REENROLLED',
+                'to_status' => 'WITHDRAWN',
+                'changed_by' => $this->user->id,
+            ]
+        );
+
+        $whatsappLog = WhatsappLog::query()
+            ->where('registration_id', $registration->id)
+            ->where('message_type', 'REGISTRATION_WITHDRAWN')
+            ->firstOrFail();
+
+        $this->assertSame(
+            'PENDING',
+            $whatsappLog->status
+        );
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            fn ($job) =>
+                $job->whatsappLogId === $whatsappLog->id
+                && $job->templateName === 'registration_withdrawn'
+                && $job->languageCode === 'id'
+        );
+    }
+
     public function test_registered_cannot_be_changed_directly_to_reenrolled(): void
     {
         $registration = $this->makeRegistration(
