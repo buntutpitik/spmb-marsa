@@ -43,6 +43,7 @@ use App\Http\Controllers\Admin\ReenrollmentPaymentReceiptController;
 use App\Http\Controllers\PublicRegistrationCardController;
 use App\Http\Controllers\Admin\RegistrationCardController;
 use App\Http\Controllers\PublicRegistrationStatusController;
+use App\Http\Controllers\Admin\PublicPageSettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -555,6 +556,20 @@ Route::prefix('admin')
                 '/pengaturan/profil-sekolah',
                 [SchoolProfileController::class, 'update']
             )->name('school-profile.update');
+
+            /*
+            * Halaman Publik
+            */
+
+            Route::get(
+                '/pengaturan/halaman-publik',
+                [PublicPageSettingController::class, 'edit']
+            )->name('public-page.edit');
+
+            Route::put(
+                '/pengaturan/halaman-publik',
+                [PublicPageSettingController::class, 'update']
+            )->name('public-page.update');
 
             /*
             * Jurusan
