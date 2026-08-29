@@ -60,6 +60,18 @@ class Registration extends Model
         'withdrawn_at' => 'datetime',
     ];
 
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            'REGISTERED' => 'Terdaftar',
+            'ACCEPTED' => 'Diterima',
+            'REJECTED' => 'Ditolak',
+            'REENROLLED' => 'Daftar Ulang',
+            'WITHDRAWN' => 'Mengundurkan Diri',
+            default => $this->status,
+        };
+    }
+
     public function period(): BelongsTo
     {
         return $this->belongsTo(PpdbPeriod::class);

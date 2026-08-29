@@ -42,6 +42,7 @@ use App\Http\Controllers\Admin\ComparisonController;
 use App\Http\Controllers\Admin\ReenrollmentPaymentReceiptController;
 use App\Http\Controllers\PublicRegistrationCardController;
 use App\Http\Controllers\Admin\RegistrationCardController;
+use App\Http\Controllers\PublicRegistrationStatusController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -96,6 +97,11 @@ Route::get(
     '/pendaftaran/kartu/{publicToken}',
     [PublicRegistrationCardController::class, 'download']
 )->name('registration.card');
+
+Route::get(
+    '/pendaftaran/status/{publicToken}',
+    [PublicRegistrationStatusController::class, 'show']
+)->name('registration.status');
 /*
 |--------------------------------------------------------------------------
 | Internal Dashboard
