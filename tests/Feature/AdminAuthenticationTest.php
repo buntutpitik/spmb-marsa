@@ -12,7 +12,7 @@ class AdminAuthenticationTest extends TestCase
 
     public function test_guest_is_redirected_from_dashboard_to_login(): void
     {
-        $response = $this->get('/');
+        $response = $this->get(route('dashboard'));
 
         $response->assertRedirect(route('login'));
     }
@@ -143,7 +143,7 @@ class AdminAuthenticationTest extends TestCase
         );
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk();
 
         $this->actingAs($user)
@@ -159,7 +159,7 @@ class AdminAuthenticationTest extends TestCase
         );
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk();
     }
 
@@ -171,7 +171,7 @@ class AdminAuthenticationTest extends TestCase
         );
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk();
     }
 
@@ -183,7 +183,7 @@ class AdminAuthenticationTest extends TestCase
         );
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk();
     }
 

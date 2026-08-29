@@ -20,7 +20,7 @@ class SidebarRoleVisibilityTest extends TestCase
         $user = $this->makeUser('SUPERADMIN');
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertSee('Users')
             ->assertSee('Activity Log')
@@ -32,7 +32,7 @@ class SidebarRoleVisibilityTest extends TestCase
         $user = $this->makeUser('ADMIN');
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertDontSee('Users')
             ->assertDontSee('Activity Log')
@@ -44,7 +44,7 @@ class SidebarRoleVisibilityTest extends TestCase
         $user = $this->makeUser('PANITIA');
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertDontSee('Users')
             ->assertDontSee('Activity Log')
@@ -56,7 +56,7 @@ class SidebarRoleVisibilityTest extends TestCase
         $user = $this->makeUser('BENDAHARA');
 
         $this->actingAs($user)
-            ->get('/')
+            ->get(route('dashboard'))
             ->assertOk()
             ->assertDontSee('Users')
             ->assertDontSee('Activity Log')
@@ -69,7 +69,7 @@ class SidebarRoleVisibilityTest extends TestCase
             $user = $this->makeUser($role);
 
             $this->actingAs($user)
-                ->get('/')
+                ->get(route('dashboard'))
                 ->assertOk()
                 ->assertSee('Dashboard')
                 ->assertSee('Pendaftaran')

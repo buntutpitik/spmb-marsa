@@ -30,7 +30,7 @@ class AdminRoleAccessTest extends TestCase
             $this->actingAs(
                 $this->makeUser($role)
             )
-                ->get('/')
+                ->get(route('dashboard'))
                 ->assertOk();
         }
     }

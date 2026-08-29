@@ -44,6 +44,7 @@ use App\Http\Controllers\PublicRegistrationCardController;
 use App\Http\Controllers\Admin\RegistrationCardController;
 use App\Http\Controllers\PublicRegistrationStatusController;
 use App\Http\Controllers\Admin\PublicPageSettingController;
+use App\Http\Controllers\PublicHomeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -105,15 +106,23 @@ Route::get(
 )->name('registration.status');
 /*
 |--------------------------------------------------------------------------
-| Internal Dashboard
+| Public Home
 |--------------------------------------------------------------------------
-|
-| Semua role internal boleh membuka dashboard.
-|
 */
 
 Route::get(
     '/',
+    [PublicHomeController::class, 'index']
+)->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| Internal Dashboard
+|--------------------------------------------------------------------------
+*/
+
+Route::get(
+    '/dashboard',
     [DashboardController::class, 'index']
 )
     ->middleware([
@@ -121,7 +130,6 @@ Route::get(
         'role:SUPERADMIN,ADMIN,PANITIA,BENDAHARA',
     ])
     ->name('dashboard');
-
 /*
 |--------------------------------------------------------------------------
 | Admin
