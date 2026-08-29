@@ -276,6 +276,46 @@ class AdminRegistrationMutationPeriodTest extends TestCase
         ]);
     }
 
+    public function test_reenrolled_status_cannot_be_set_manually_through_status_endpoint(): void
+    {
+        $registration = $this->makeRegistration(
+            $this->activePeriod,
+            $this->activePath,
+            'ACCEPTED'
+        );
+
+        $this->actingAs($this->admin)
+            ->patch(
+                route(
+                    'admin.registrations.status.update',
+                    [
+                        'registration' => $registration,
+                        'period_id' => $this->activePeriod->id,
+                    ]
+                ),
+                [
+                    'status' => 'REENROLLED',
+                    'notes' => 'Tidak boleh daftar ulang manual.',
+                ]
+            )
+            ->assertSessionHasErrors('status');
+
+        $registration->refresh();
+
+        $this->assertSame(
+            'ACCEPTED',
+            $registration->status
+        );
+
+        $this->assertDatabaseMissing(
+            'registration_status_histories',
+            [
+                'registration_id' => $registration->id,
+                'to_status' => 'REENROLLED',
+            ]
+        );
+    }
+
     private function makePeriod(
         string $name,
         int $yearStart,
