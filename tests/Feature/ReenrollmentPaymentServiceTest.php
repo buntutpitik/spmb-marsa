@@ -437,6 +437,111 @@ class ReenrollmentPaymentServiceTest extends TestCase
         );
     }
 
+    public function test_reenrolled_registration_cannot_make_another_payment(): void
+    {
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $this->service->addPayment(
+            $registration,
+            250000,
+            $this->user
+        );
+
+        $registration->refresh();
+
+        $this->assertSame('REENROLLED', $registration->status);
+
+        try {
+            $this->service->addPayment(
+                $registration,
+                1,
+                $this->user
+            );
+
+            $this->fail(
+                'Pendaftar yang sudah REENROLLED tidak boleh melakukan pembayaran lagi.'
+            );
+        } catch (InvalidArgumentException $exception) {
+            $this->assertNotEmpty($exception->getMessage());
+        }
+
+        $this->assertSame(
+            250000,
+            (int) DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->sum('amount')
+        );
+    }
+
+    public function test_closed_period_cannot_accept_reenrollment_payment(): void
+    {
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        try {
+            $this->service->addPayment(
+                $registration,
+                100000,
+                $this->user
+            );
+
+            $this->fail(
+                'Periode CLOSED tidak boleh menerima pembayaran daftar ulang.'
+            );
+        } catch (InvalidArgumentException $exception) {
+            $this->assertNotEmpty($exception->getMessage());
+        }
+
+        $this->assertDatabaseMissing(
+            'reenrollment_payments',
+            [
+                'registration_id' => $registration->id,
+            ]
+        );
+
+        $registration->refresh();
+
+        $this->assertSame('ACCEPTED', $registration->status);
+    }
+
+    public function test_inactive_period_cannot_accept_reenrollment_payment(): void
+    {
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $this->period->update([
+            'is_active' => false,
+        ]);
+
+        try {
+            $this->service->addPayment(
+                $registration,
+                100000,
+                $this->user
+            );
+
+            $this->fail(
+                'Periode tidak aktif tidak boleh menerima pembayaran daftar ulang.'
+            );
+        } catch (InvalidArgumentException $exception) {
+            $this->assertNotEmpty($exception->getMessage());
+        }
+
+        $this->assertDatabaseMissing(
+            'reenrollment_payments',
+            [
+                'registration_id' => $registration->id,
+            ]
+        );
+
+        $registration->refresh();
+
+        $this->assertSame('ACCEPTED', $registration->status);
+    }
+
     public function test_negative_payment_is_rejected(): void
     {
         $registration = $this->makeRegistration(
