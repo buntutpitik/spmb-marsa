@@ -328,6 +328,93 @@ class AdminOriginSchoolTest extends TestCase
         }
     }
 
+    public function test_create_origin_school_writes_activity_log(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->post(
+                route('admin.origin-schools.store'),
+                [
+                    'name' => 'SMP AUDIT CREATE',
+                    'type' => 'SMP',
+                    'sort_order' => 10,
+                ]
+            )
+            ->assertSessionHasNoErrors();
+
+        $school = OriginSchool::query()
+            ->where('name', 'SMP AUDIT CREATE')
+            ->firstOrFail();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $user->id,
+            'registration_id' => null,
+            'action' => 'CREATE_ORIGIN_SCHOOL',
+            'description' => 'Asal sekolah ditambahkan.',
+        ]);
+    }
+
+    public function test_update_origin_school_writes_activity_log(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $school = OriginSchool::create([
+            'name' => 'SMP AUDIT UPDATE LAMA',
+            'type' => 'SMP',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->put(
+                route(
+                    'admin.origin-schools.update',
+                    $school
+                ),
+                [
+                    'name' => 'SMP AUDIT UPDATE BARU',
+                    'type' => 'SMP',
+                    'sort_order' => 2,
+                ]
+            )
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $user->id,
+            'registration_id' => null,
+            'action' => 'UPDATE_ORIGIN_SCHOOL',
+            'description' => 'Asal sekolah diperbarui.',
+        ]);
+    }
+
+    public function test_toggle_origin_school_writes_activity_log(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $school = OriginSchool::create([
+            'name' => 'SMP AUDIT TOGGLE',
+            'type' => 'SMP',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($user)
+            ->patch(
+                route(
+                    'admin.origin-schools.toggle',
+                    $school
+                )
+            );
+
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $user->id,
+            'registration_id' => null,
+            'action' => 'TOGGLE_ORIGIN_SCHOOL',
+            'description' => 'Status asal sekolah diperbarui.',
+        ]);
+    }
+
     public function test_origin_school_management_has_no_delete_route(): void
     {
         $routes = collect(

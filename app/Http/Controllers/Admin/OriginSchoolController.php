@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\OriginSchool;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,20 +67,41 @@ class OriginSchoolController extends Controller
                 'Urutan harus berupa angka.',
         ]);
 
-        OriginSchool::create([
-            'name' => mb_strtoupper(
-                trim($validated['name'])
-            ),
+        DB::transaction(function () use (
+            $request,
+            $validated
+        ): void {
+            $originSchool = OriginSchool::create([
+                'name' => mb_strtoupper(
+                    trim($validated['name'])
+                ),
 
-            'type' => filled($validated['type'] ?? null)
-                ? trim($validated['type'])
-                : null,
+                'type' => filled($validated['type'] ?? null)
+                    ? trim($validated['type'])
+                    : null,
 
-            'is_active' => true,
+                'is_active' => true,
 
-            'sort_order' =>
-                $validated['sort_order'],
-        ]);
+                'sort_order' =>
+                    $validated['sort_order'],
+            ]);
+
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => null,
+                'action' => 'CREATE_ORIGIN_SCHOOL',
+                'description' => 'Asal sekolah ditambahkan.',
+                'metadata' => [
+                    'origin_school_id' => $originSchool->id,
+                    'new' => $originSchool->only([
+                        'name',
+                        'type',
+                        'is_active',
+                        'sort_order',
+                    ]),
+                ],
+            ]);
+        });
 
         return redirect()
             ->route('admin.origin-schools.index')
@@ -133,18 +156,48 @@ class OriginSchoolController extends Controller
                 'Urutan harus berupa angka.',
         ]);
 
-        $originSchool->update([
-            'name' => mb_strtoupper(
-                trim($validated['name'])
-            ),
+        DB::transaction(function () use (
+            $request,
+            $validated,
+            $originSchool
+        ): void {
+            $old = $originSchool->only([
+                'name',
+                'type',
+                'sort_order',
+            ]);
 
-            'type' => filled($validated['type'] ?? null)
-                ? trim($validated['type'])
-                : null,
+            $originSchool->update([
+                'name' => mb_strtoupper(
+                    trim($validated['name'])
+                ),
 
-            'sort_order' =>
-                $validated['sort_order'],
-        ]);
+                'type' => filled($validated['type'] ?? null)
+                    ? trim($validated['type'])
+                    : null,
+
+                'sort_order' =>
+                    $validated['sort_order'],
+            ]);
+
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => null,
+                'action' => 'UPDATE_ORIGIN_SCHOOL',
+                'description' => 'Asal sekolah diperbarui.',
+                'metadata' => [
+                    'origin_school_id' => $originSchool->id,
+                    'old' => $old,
+                    'new' => $originSchool
+                        ->fresh()
+                        ->only([
+                            'name',
+                            'type',
+                            'sort_order',
+                        ]),
+                ],
+            ]);
+        });
 
         return redirect()
             ->route('admin.origin-schools.index')
@@ -155,11 +208,36 @@ class OriginSchoolController extends Controller
     }
 
     public function toggle(
+        Request $request,
         OriginSchool $originSchool
     ): RedirectResponse {
-        $originSchool->update([
-            'is_active' => ! $originSchool->is_active,
-        ]);
+        DB::transaction(function () use (
+            $request,
+            $originSchool
+        ): void {
+            $oldStatus = (bool) $originSchool->is_active;
+
+            $originSchool->update([
+                'is_active' => ! $oldStatus,
+            ]);
+
+            ActivityLog::create([
+                'user_id' => $request->user()?->id,
+                'registration_id' => null,
+                'action' => 'TOGGLE_ORIGIN_SCHOOL',
+                'description' => 'Status asal sekolah diperbarui.',
+                'metadata' => [
+                    'origin_school_id' => $originSchool->id,
+                    'old' => [
+                        'is_active' => $oldStatus,
+                    ],
+                    'new' => [
+                        'is_active' =>
+                            (bool) $originSchool->is_active,
+                    ],
+                ],
+            ]);
+        });
 
         return redirect()
             ->route('admin.origin-schools.index')
