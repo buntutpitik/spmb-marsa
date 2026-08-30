@@ -69,7 +69,7 @@ class SpecialProgramController extends Controller
          * - fallback ke periode aktif tetap konsisten.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $program = DB::transaction(function () use (
             $request,
@@ -139,7 +139,7 @@ class SpecialProgramController extends Controller
          * Resolve period sebelum master maupun pivot dimutasi.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $old = $specialProgram->only([
             'name',
@@ -248,7 +248,7 @@ class SpecialProgramController extends Controller
          * context periode yang sudah archived.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $oldStatus = (bool) $specialProgram->is_active;
 
@@ -312,7 +312,7 @@ class SpecialProgramController extends Controller
          * tidak dapat dimutasi.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $existing = $period->specialPrograms()
             ->where(

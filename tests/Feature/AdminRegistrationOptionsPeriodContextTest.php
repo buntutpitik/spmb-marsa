@@ -20,6 +20,8 @@ class AdminRegistrationOptionsPeriodContextTest extends TestCase
 
     private PpdbPeriod $archivedPeriod;
 
+    private PpdbPeriod $closedPeriod;
+
     private ReliefOption $reliefOption;
 
     private SpecialProgram $specialProgram;
@@ -75,6 +77,23 @@ class AdminRegistrationOptionsPeriodContextTest extends TestCase
             'include_major_code' => true,
             'default_reenroll_fee' => 250000,
             'archived_at' => now(),
+        ]);
+
+        $this->closedPeriod = PpdbPeriod::query()->create([
+            'school_id' => $schoolId,
+            'name' => '2025/2026',
+            'year_start' => 2025,
+            'year_end' => 2026,
+            'registration_open' => '2025-01-01',
+            'registration_close' => '2025-06-30',
+            'status' => 'CLOSED',
+            'is_active' => false,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2025,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 250000,
+            'archived_at' => null,
         ]);
 
         $this->reliefOption = ReliefOption::query()->create([
@@ -236,5 +255,106 @@ class AdminRegistrationOptionsPeriodContextTest extends TestCase
             'id' => $this->specialProgram->id,
             'is_active' => 1,
         ]);
+    }
+
+    public function test_special_program_store_rejects_closed_period(): void
+    {
+        $this->post(
+            route('admin.special-programs.store'),
+            [
+                'period_id' => $this->closedPeriod->id,
+                'name' => 'CLOSED PROGRAM STORE',
+                'description' => null,
+                'sort_order' => 20,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseMissing('special_programs', [
+            'name' => 'CLOSED PROGRAM STORE',
+        ]);
+    }
+
+    public function test_special_program_update_rejects_closed_period(): void
+    {
+        $this->put(
+            route('admin.special-programs.update', [
+                'specialProgram' => $this->specialProgram,
+            ]),
+            [
+                'period_id' => $this->closedPeriod->id,
+                'name' => 'MUTATED CLOSED PROGRAM',
+                'description' => null,
+                'sort_order' => 30,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseHas('special_programs', [
+            'id' => $this->specialProgram->id,
+            'name' => 'PROGRAM PERIOD CONTEXT TEST',
+        ]);
+    }
+
+    public function test_special_program_period_toggle_rejects_closed_period(): void
+    {
+        $this->patch(
+            route('admin.special-programs.toggle-period', [
+                'specialProgram' => $this->specialProgram,
+            ]),
+            [
+                'period_id' => $this->closedPeriod->id,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseMissing('period_special_programs', [
+            'ppdb_period_id' => $this->closedPeriod->id,
+            'special_program_id' => $this->specialProgram->id,
+        ]);
+    }
+
+    public function test_special_program_master_toggle_rejects_closed_period(): void
+    {
+        $this->patch(
+            route('admin.special-programs.toggle-master', [
+                'specialProgram' => $this->specialProgram,
+            ]),
+            [
+                'period_id' => $this->closedPeriod->id,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseHas('special_programs', [
+            'id' => $this->specialProgram->id,
+            'is_active' => 1,
+        ]);
+    }
+
+    public function test_closed_period_special_program_management_is_read_only_in_ui(): void
+    {
+        $this->closedPeriod->specialPrograms()->attach(
+            $this->specialProgram->id,
+            [
+                'is_active' => true,
+                'sort_order' => $this->specialProgram->sort_order,
+            ]
+        );
+
+        $response = $this->get(
+            route('admin.special-programs.index', [
+                'period_id' => $this->closedPeriod->id,
+            ])
+        );
+
+        $response
+            ->assertOk()
+            ->assertSee('Periode read-only')
+            ->assertSee($this->specialProgram->name)
+            ->assertSee('Master:')
+            ->assertSee('Tersedia')
+            ->assertDontSee('Tambah Program Khusus')
+            ->assertDontSee('Simpan Perubahan')
+            ->assertDontSee('Nonaktifkan dari Periode')
+            ->assertDontSee('Aktifkan pada Periode')
+            ->assertDontSee('Nonaktifkan Master')
+            ->assertDontSee('Aktifkan Master');
     }
 }

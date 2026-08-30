@@ -110,6 +110,30 @@
 
         @else
 
+        @if ($selectedPeriod->isReadOnly())
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div class="flex items-start gap-3">
+                    <i
+                        data-lucide="lock"
+                        class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                    ></i>
+
+                    <div>
+                        <h3 class="text-sm font-semibold text-amber-900">
+                            Periode read-only
+                        </h3>
+
+                        <p class="mt-1 text-sm leading-6 text-amber-800">
+                            Periode {{ $selectedPeriod->name }} sudah ditutup.
+                            Data Program Khusus tetap dapat dilihat, tetapi master
+                            dan ketersediaannya pada periode tidak dapat diubah.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+            @if (! $selectedPeriod->isReadOnly())
             <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
 
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -191,6 +215,7 @@
                     </div>
                 </form>
             </section>
+            @endif
 
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
@@ -236,6 +261,7 @@
 
                             <div class="p-6">
 
+                                @if (! $selectedPeriod->isReadOnly())
                                 <form
                                     method="POST"
                                     action="{{ route('admin.special-programs.update', $program) }}"
@@ -330,6 +356,60 @@
                                     </div>
                                 </form>
 
+                                @else
+                                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1.6fr)_100px]">
+                                        <div>
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Nama
+                                            </div>
+                                            <div class="text-sm font-medium text-slate-800">
+                                                {{ $program->name }}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Deskripsi
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $program->description ?: '—' }}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Urutan
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $program->sort_order }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 flex flex-wrap gap-2">
+                                        <span
+                                            class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
+                                                {{ $program->is_active
+                                                    ? 'bg-emerald-50 text-emerald-700'
+                                                    : 'bg-slate-100 text-slate-500' }}"
+                                        >
+                                            Master:
+                                            {{ $program->is_active ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+
+                                        <span
+                                            class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
+                                                {{ $periodEnabled
+                                                    ? 'bg-blue-50 text-blue-700'
+                                                    : 'bg-amber-50 text-amber-700' }}"
+                                        >
+                                            {{ $selectedPeriod->name }}:
+                                            {{ $periodEnabled ? 'Tersedia' : 'Tidak tersedia' }}
+                                        </span>
+                                    </div>
+                                @endif
+
+                                @if (! $selectedPeriod->isReadOnly())
                                 <div class="mt-3 flex flex-wrap gap-2">
 
                                     <form
@@ -395,6 +475,7 @@
                                     </form>
 
                                 </div>
+                                @endif
 
                             </div>
 
