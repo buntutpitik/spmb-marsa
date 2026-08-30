@@ -610,6 +610,161 @@ class AdminMajorManagementTest extends TestCase
         );
     }
 
+    public function test_closed_period_rejects_major_store(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->post(
+                route('admin.majors.store'),
+                [
+                    'school_id' => $this->school->id,
+                    'period_id' => $this->period->id,
+                    'code' => 'TKRO',
+                    'name' => 'Teknik Kendaraan Ringan Otomotif',
+                    'short_name' => 'TKRO',
+                    'description' => null,
+                    'sort_order' => 2,
+                    'quota' => 72,
+                ]
+            )
+            ->assertStatus(409);
+
+        $this->assertDatabaseMissing('majors', [
+            'school_id' => $this->school->id,
+            'code' => 'TKRO',
+        ]);
+    }
+
+    public function test_closed_period_rejects_major_update(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->put(
+                route(
+                    'admin.majors.update',
+                    $this->major
+                ),
+                [
+                    'period_id' => $this->period->id,
+                    'code' => 'RPL',
+                    'name' => 'RPL MUTATED',
+                    'short_name' => 'RPL',
+                    'description' => null,
+                    'sort_order' => 1,
+                ]
+            )
+            ->assertStatus(409);
+
+        $this->assertSame(
+            'Rekayasa Perangkat Lunak',
+            $this->major->fresh()->name
+        );
+    }
+
+    public function test_closed_period_rejects_major_master_toggle(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->patch(
+                route(
+                    'admin.majors.toggle-master',
+                    $this->major
+                ),
+                [
+                    'period_id' => $this->period->id,
+                ]
+            )
+            ->assertStatus(409);
+
+        $this->assertTrue(
+            $this->major->fresh()->is_active
+        );
+    }
+
+    public function test_closed_period_rejects_period_major_update(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->put(
+                route(
+                    'admin.majors.update-period',
+                    $this->major
+                ),
+                [
+                    'period_id' => $this->period->id,
+                    'is_active' => '0',
+                    'quota' => 99,
+                ]
+            )
+            ->assertStatus(409);
+
+        $periodMajor = PeriodMajor::query()
+            ->where('period_id', $this->period->id)
+            ->where('major_id', $this->major->id)
+            ->firstOrFail();
+
+        $this->assertNull($periodMajor->quota);
+        $this->assertTrue($periodMajor->is_active);
+    }
+
+    public function test_closed_period_major_management_is_read_only_in_ui(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $response = $this->actingAs($user)
+            ->get(
+                route(
+                    'admin.majors.index',
+                    [
+                        'period_id' => $this->period->id,
+                    ]
+                )
+            );
+
+        $response
+            ->assertOk()
+            ->assertSee('Periode read-only')
+            ->assertSee($this->major->code)
+            ->assertSee($this->major->name)
+            ->assertSee('Master:')
+            ->assertSee('Aktif')
+            ->assertSee('Tersedia')
+            ->assertSee('Kuota:')
+            ->assertDontSee('Tambah Jurusan')
+            ->assertDontSee('Simpan Konfigurasi')
+            ->assertDontSee('Nonaktifkan Master')
+            ->assertDontSee('Aktifkan Master');
+    }
+
     public function test_superadmin_can_access_major_management(): void
     {
         $user = $this->makeUser('SUPERADMIN');

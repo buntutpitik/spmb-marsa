@@ -81,7 +81,7 @@ class MajorController extends Controller
         StoreMajorRequest $request
     ): RedirectResponse {
         $period = $this->periodContext
-            ->resolveExplicitPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $schoolId = $request->integer(
             'school_id'
@@ -204,7 +204,7 @@ class MajorController extends Controller
         Major $major
     ): RedirectResponse {
         $period = $this->periodContext
-            ->resolveExplicitPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $this->ensureSameSchool(
             $major,
@@ -309,7 +309,7 @@ class MajorController extends Controller
         ]);
 
         $period = $this->periodContext
-            ->resolveExplicitPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $this->ensureSameSchool(
             $major,
@@ -382,7 +382,7 @@ class MajorController extends Controller
         Major $major
     ): RedirectResponse {
         $period = $this->periodContext
-            ->resolveExplicitPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $this->ensureSameSchool(
             $major,

@@ -114,6 +114,29 @@
 
         @else
 
+            @if ($selectedPeriod->isReadOnly())
+                <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                    <div class="flex items-start gap-3">
+                        <i
+                            data-lucide="lock"
+                            class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                        ></i>
+
+                        <div>
+                            <h3 class="text-sm font-semibold text-amber-900">
+                                Periode read-only
+                            </h3>
+
+                            <p class="mt-1 text-sm leading-6 text-amber-800">
+                                Periode {{ $selectedPeriod->name }} sudah ditutup.
+                                Data jurusan tetap dapat dilihat, tetapi master,
+                                kuota, dan ketersediaan jurusan tidak dapat diubah.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             {{-- School info --}}
             <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
                 <div class="flex items-start gap-3">
@@ -135,6 +158,7 @@
                 </div>
             </div>
 
+            @if (! $selectedPeriod->isReadOnly())
             {{-- Add --}}
             <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
@@ -271,6 +295,8 @@
                 </form>
             </section>
 
+            @endif
+
             {{-- List --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
@@ -317,6 +343,7 @@
                             <div class="p-6">
 
                                 {{-- Master --}}
+                                @if (! $selectedPeriod->isReadOnly())
                                 <form
                                     method="POST"
                                     action="{{ route('admin.majors.update', $major) }}"
@@ -413,6 +440,55 @@
 
                                 </form>
 
+                                @else
+                                    <div class="grid gap-4 xl:grid-cols-12">
+                                        <div class="xl:col-span-2">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Kode
+                                            </div>
+                                            <div class="text-sm font-bold uppercase text-slate-800">
+                                                {{ $major->code }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-4">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Nama Jurusan
+                                            </div>
+                                            <div class="text-sm font-medium text-slate-800">
+                                                {{ $major->name }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-2">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Nama Singkat
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $major->short_name ?: '—' }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-2">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Urutan
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $major->sort_order }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-12">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Deskripsi
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $major->description ?: '—' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+
                                 {{-- Status --}}
                                 <div class="mt-4 flex flex-wrap gap-2">
 
@@ -443,103 +519,107 @@
 
                                 </div>
 
-                                {{-- Period config --}}
-                                <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                @if (! $selectedPeriod->isReadOnly())
+                                    {{-- Period config --}}
+                                    <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
 
-                                    <form
-                                        method="POST"
-                                        action="{{ route('admin.majors.update-period', $major) }}"
-                                        class="flex flex-col gap-4 lg:flex-row lg:items-end"
-                                    >
-                                        @csrf
-                                        @method('PUT')
-
-                                        <input
-                                            type="hidden"
-                                            name="period_id"
-                                            value="{{ $selectedPeriod->id }}"
+                                        <form
+                                            method="POST"
+                                            action="{{ route('admin.majors.update-period', $major) }}"
+                                            class="flex flex-col gap-4 lg:flex-row lg:items-end"
                                         >
-
-                                        <div class="w-full lg:max-w-xs">
-                                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                                Kuota Periode
-                                            </label>
+                                            @csrf
+                                            @method('PUT')
 
                                             <input
-                                                type="number"
-                                                name="quota"
-                                                value="{{ $periodQuota }}"
-                                                min="0"
-                                                placeholder="Tidak dibatasi"
-                                                class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                                                type="hidden"
+                                                name="period_id"
+                                                value="{{ $selectedPeriod->id }}"
                                             >
-                                        </div>
 
-                                        <div class="flex-1">
-                                            <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                                Ketersediaan
-                                            </label>
+                                            <div class="w-full lg:max-w-xs">
+                                                <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    Kuota Periode
+                                                </label>
 
-                                            <label class="inline-flex min-h-[42px] cursor-pointer items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5">
                                                 <input
-                                                    type="checkbox"
-                                                    name="is_active"
-                                                    value="1"
-                                                    @checked($periodEnabled)
-                                                    class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                                    type="number"
+                                                    name="quota"
+                                                    value="{{ $periodQuota }}"
+                                                    min="0"
+                                                    placeholder="Tidak dibatasi"
+                                                    class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                                                 >
+                                            </div>
 
-                                                <span class="text-sm font-medium text-slate-700">
-                                                    Tersedia pada periode {{ $selectedPeriod->name }}
-                                                </span>
-                                            </label>
-                                        </div>
+                                            <div class="flex-1">
+                                                <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                                    Ketersediaan
+                                                </label>
 
-                                        <button
-                                            type="submit"
-                                            class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                                <label class="inline-flex min-h-[42px] cursor-pointer items-center gap-3 rounded-xl border border-slate-300 bg-white px-4 py-2.5">
+                                                    <input
+                                                        type="checkbox"
+                                                        name="is_active"
+                                                        value="1"
+                                                        @checked($periodEnabled)
+                                                        class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                                    >
+
+                                                    <span class="text-sm font-medium text-slate-700">
+                                                        Tersedia pada periode {{ $selectedPeriod->name }}
+                                                    </span>
+                                                </label>
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+                                            >
+                                                <i data-lucide="settings-2" class="h-4 w-4"></i>
+                                                Simpan Konfigurasi
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+                                @endif
+
+                                @if (! $selectedPeriod->isReadOnly())
+                                    {{-- Master toggle --}}
+                                    <div class="mt-3">
+                                        <form
+                                            method="POST"
+                                            action="{{ route('admin.majors.toggle-master', $major) }}"
                                         >
-                                            <i data-lucide="settings-2" class="h-4 w-4"></i>
-                                            Simpan Konfigurasi
-                                        </button>
+                                            @csrf
+                                            @method('PATCH')
 
-                                    </form>
+                                            <input
+                                                type="hidden"
+                                                name="period_id"
+                                                value="{{ $selectedPeriod->id }}"
+                                            >
 
-                                </div>
+                                            <button
+                                                type="submit"
+                                                class="inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition
+                                                    {{ $major->is_active
+                                                        ? 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                                                        : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}"
+                                            >
+                                                <i
+                                                    data-lucide="{{ $major->is_active ? 'power-off' : 'power' }}"
+                                                    class="h-4 w-4"
+                                                ></i>
 
-                                {{-- Master toggle --}}
-                                <div class="mt-3">
-                                    <form
-                                        method="POST"
-                                        action="{{ route('admin.majors.toggle-master', $major) }}"
-                                    >
-                                        @csrf
-                                        @method('PATCH')
-
-                                        <input
-                                            type="hidden"
-                                            name="period_id"
-                                            value="{{ $selectedPeriod->id }}"
-                                        >
-
-                                        <button
-                                            type="submit"
-                                            class="inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold transition
                                                 {{ $major->is_active
-                                                    ? 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-                                                    : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }}"
-                                        >
-                                            <i
-                                                data-lucide="{{ $major->is_active ? 'power-off' : 'power' }}"
-                                                class="h-4 w-4"
-                                            ></i>
-
-                                            {{ $major->is_active
-                                                ? 'Nonaktifkan Master'
-                                                : 'Aktifkan Master' }}
-                                        </button>
-                                    </form>
-                                </div>
+                                                    ? 'Nonaktifkan Master'
+                                                    : 'Aktifkan Master' }}
+                                            </button>
+                                        </form>
+                                    </div>
+                                @endif
 
                             </div>
 
