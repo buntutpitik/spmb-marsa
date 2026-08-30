@@ -23,6 +23,20 @@ class PeriodContext
             );
     }
 
+    public function resolveWritableExplicitPeriod(
+        Request $request
+    ): PpdbPeriod {
+        $period = $this->resolveExplicitPeriod($request);
+
+        abort_if(
+            $period->isReadOnly(),
+            409,
+            'Periode yang sudah ditutup bersifat read-only.'
+        );
+
+        return $period;
+    }
+
     public function resolveAdminPeriod(
         Request $request
     ): ?PpdbPeriod {

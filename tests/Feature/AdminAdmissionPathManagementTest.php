@@ -107,7 +107,7 @@ class AdminAdmissionPathManagementTest extends TestCase
                 route('admin.admission-paths.store'),
                 [
                     'period_id' => $this->period->id,
-                    'name' => 'Gelombang Tambahan',
+                    'name' => 'Jalur Tambahan',
                     'code' => ' tambahan ',
                     'start_date' => '2027-07-01',
                     'end_date' => '2027-07-31',
@@ -129,7 +129,7 @@ class AdminAdmissionPathManagementTest extends TestCase
             'admission_paths',
             [
                 'period_id' => $this->period->id,
-                'name' => 'Gelombang Tambahan',
+                'name' => 'Jalur Tambahan',
                 'code' => 'TAMBAHAN',
                 'start_date' => '2027-07-01',
                 'end_date' => '2027-07-31',
@@ -631,6 +631,120 @@ class AdminAdmissionPathManagementTest extends TestCase
             ->assertSee($this->khusus->name)
             ->assertSee($this->umum->code)
             ->assertSee($this->period->name);
+    }
+
+    public function test_closed_period_rejects_admission_path_store(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->post(
+                route('admin.admission-paths.store'),
+                [
+                    'period_id' => $this->period->id,
+                    'name' => 'Jalur Closed',
+                    'code' => 'CLOSED',
+                    'start_date' => '2027-07-01',
+                    'end_date' => '2027-07-31',
+                    'sort_order' => 3,
+                ]
+            )
+            ->assertStatus(409);
+
+        $this->assertDatabaseMissing('admission_paths', [
+            'period_id' => $this->period->id,
+            'code' => 'CLOSED',
+        ]);
+    }
+
+    public function test_closed_period_rejects_admission_path_update(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->put(
+                route(
+                    'admin.admission-paths.update',
+                    $this->khusus
+                ),
+                [
+                    'period_id' => $this->period->id,
+                    'name' => 'Mutated Closed',
+                    'code' => 'KHUSUS',
+                    'start_date' => '2027-01-01',
+                    'end_date' => '2027-03-31',
+                    'sort_order' => 1,
+                ]
+            )
+            ->assertStatus(409);
+
+        $this->assertSame(
+            'Khusus',
+            $this->khusus->fresh()->name
+        );
+    }
+
+    public function test_closed_period_rejects_admission_path_toggle(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->actingAs($user)
+            ->patch(
+                route(
+                    'admin.admission-paths.toggle',
+                    $this->khusus
+                ),
+                [
+                    'period_id' => $this->period->id,
+                ]
+            )
+            ->assertStatus(409);
+
+        $this->assertTrue(
+            $this->khusus->fresh()->is_active
+        );
+    }
+
+    public function test_closed_period_admission_path_page_is_read_only(): void
+    {
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = $this->makeUser('SUPERADMIN');
+
+        $response = $this->actingAs($user)
+            ->get(
+                route('admin.admission-paths.index', [
+                    'period_id' => $this->period->id,
+                ])
+            );
+
+        $response
+            ->assertOk()
+            ->assertSee('Periode read-only')
+            ->assertSee($this->khusus->code)
+            ->assertSee($this->khusus->name)
+            ->assertDontSee('Tambah Jalur')
+            ->assertDontSee('Simpan')
+            ->assertDontSee('Nonaktifkan Jalur')
+            ->assertDontSee('Aktifkan Jalur');
     }
 
     private function makeUser(

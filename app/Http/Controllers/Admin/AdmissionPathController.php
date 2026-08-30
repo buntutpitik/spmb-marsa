@@ -59,7 +59,7 @@ class AdmissionPathController extends Controller
         StoreAdmissionPathRequest $request
     ): RedirectResponse {
         $period = $this->periodContext
-            ->resolveExplicitPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $admissionPath = DB::transaction(
             function () use (
@@ -162,7 +162,7 @@ class AdmissionPathController extends Controller
         AdmissionPath $admissionPath
     ): RedirectResponse {
         $period = $this->periodContext
-            ->resolveExplicitPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $this->ensureSamePeriod(
             $admissionPath,
@@ -284,7 +284,7 @@ class AdmissionPathController extends Controller
         ]);
 
         $period = $this->periodContext
-            ->resolveExplicitPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $this->ensureSamePeriod(
             $admissionPath,

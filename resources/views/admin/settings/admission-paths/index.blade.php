@@ -116,6 +116,30 @@
 
         @else
 
+        @if ($selectedPeriod->isReadOnly())
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div class="flex items-start gap-3">
+                    <i
+                        data-lucide="lock"
+                        class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                    ></i>
+
+                    <div>
+                        <h3 class="text-sm font-semibold text-amber-900">
+                            Periode read-only
+                        </h3>
+
+                        <p class="mt-1 text-sm leading-6 text-amber-800">
+                            Periode {{ $selectedPeriod->name }} sudah ditutup.
+                            Data jalur pendaftaran tetap dapat dilihat,
+                            tetapi tidak dapat ditambah, diubah, atau
+                            diaktifkan/nonaktifkan.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        @endif
+
             {{-- Information --}}
             <div class="rounded-2xl border border-blue-200 bg-blue-50 p-5">
                 <div class="flex items-start gap-3">
@@ -138,6 +162,7 @@
                 </div>
             </div>
 
+            @if (! $selectedPeriod->isReadOnly())
             {{-- Add --}}
             <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
 
@@ -265,6 +290,7 @@
                     </div>
                 </form>
             </section>
+            @endif
 
             {{-- List --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -303,6 +329,7 @@
 
                             <div class="p-6">
 
+                            @if (! $selectedPeriod->isReadOnly())
                                 <form
                                     method="POST"
                                     action="{{ route('admin.admission-paths.update', $admissionPath) }}"
@@ -411,6 +438,63 @@
                                     </div>
 
                                 </form>
+                                @else
+                                    <div class="grid gap-4 xl:grid-cols-12">
+                                        <div class="xl:col-span-2">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Kode
+                                            </div>
+                                            <div class="text-sm font-bold uppercase text-slate-800">
+                                                {{ $admissionPath->code }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-3">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Nama Jalur
+                                            </div>
+                                            <div class="text-sm font-medium text-slate-800">
+                                                {{ $admissionPath->name }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-2">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Mulai
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $admissionPath->start_date?->format('d/m/Y') ?? '-' }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-2">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Selesai
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $admissionPath->end_date?->format('d/m/Y') ?? '-' }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-1">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Urutan
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $admissionPath->sort_order }}
+                                            </div>
+                                        </div>
+
+                                        <div class="xl:col-span-12">
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Deskripsi
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $admissionPath->description ?: '-' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
 
                                 {{-- Status --}}
                                 <div class="mt-4 flex flex-wrap items-center gap-2">
@@ -442,6 +526,7 @@
 
                                 </div>
 
+                                @if (! $selectedPeriod->isReadOnly())
                                 {{-- Toggle --}}
                                 <div class="mt-3">
                                     <form
@@ -475,6 +560,7 @@
                                         </button>
                                     </form>
                                 </div>
+                                @endif
 
                             </div>
 
