@@ -111,87 +111,112 @@
 
         @else
 
-            {{-- Add --}}
-            <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div class="border-b border-slate-100 px-6 py-5">
-                    <h2 class="font-bold text-slate-900">
-                        Tambah Keringanan / Prestasi
-                    </h2>
+        @if ($selectedPeriod->isReadOnly())
+            <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div class="flex items-start gap-3">
+                    <i
+                        data-lucide="lock"
+                        class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                    ></i>
 
-                    <p class="mt-1 text-sm text-slate-500">
-                        Pilihan baru akan langsung tersedia pada periode
-                        {{ $selectedPeriod->name }}.
-                    </p>
+                    <div>
+                        <h3 class="text-sm font-semibold text-amber-900">
+                            Periode read-only
+                        </h3>
+
+                        <p class="mt-1 text-sm leading-6 text-amber-800">
+                            Periode {{ $selectedPeriod->name }} sudah ditutup.
+                            Data Keringanan / Prestasi tetap dapat dilihat, tetapi master
+                            dan ketersediaannya pada periode tidak dapat diubah.
+                        </p>
+                    </div>
                 </div>
+            </div>
+        @endif
 
-                <form
-                    method="POST"
-                    action="{{ route('admin.relief-options.store') }}"
-                    class="grid gap-5 p-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.7fr)_120px_auto]"
-                >
-                    @csrf
+            {{-- Add --}}
+            @if (! $selectedPeriod->isReadOnly())
+                <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-100 px-6 py-5">
+                        <h2 class="font-bold text-slate-900">
+                            Tambah Keringanan / Prestasi
+                        </h2>
 
-                    <input
-                        type="hidden"
-                        name="period_id"
-                        value="{{ $selectedPeriod->id }}"
+                        <p class="mt-1 text-sm text-slate-500">
+                            Pilihan baru akan langsung tersedia pada periode
+                            {{ $selectedPeriod->name }}.
+                        </p>
+                    </div>
+
+                    <form
+                        method="POST"
+                        action="{{ route('admin.relief-options.store') }}"
+                        class="grid gap-5 p-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1.7fr)_120px_auto]"
                     >
-
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">
-                            Nama
-                        </label>
+                        @csrf
 
                         <input
-                            type="text"
-                            name="name"
-                            value="{{ old('name') }}"
-                            required
-                            placeholder="Contoh: Prestasi Tingkat Nasional"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                            type="hidden"
+                            name="period_id"
+                            value="{{ $selectedPeriod->id }}"
                         >
-                    </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">
-                            Deskripsi
-                        </label>
+                        <div>
+                            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                                Nama
+                            </label>
 
-                        <input
-                            type="text"
-                            name="description"
-                            value="{{ old('description') }}"
-                            placeholder="Opsional"
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                        >
-                    </div>
+                            <input
+                                type="text"
+                                name="name"
+                                value="{{ old('name') }}"
+                                required
+                                placeholder="Contoh: Prestasi Tingkat Nasional"
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                            >
+                        </div>
 
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">
-                            Urutan
-                        </label>
+                        <div>
+                            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                                Deskripsi
+                            </label>
 
-                        <input
-                            type="number"
-                            name="sort_order"
-                            value="{{ old('sort_order', ($reliefOptions->max('sort_order') ?? 0) + 1) }}"
-                            min="0"
-                            required
-                            class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
-                        >
-                    </div>
+                            <input
+                                type="text"
+                                name="description"
+                                value="{{ old('description') }}"
+                                placeholder="Opsional"
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                            >
+                        </div>
 
-                    <div class="flex items-end">
-                        <button
-                            type="submit"
-                            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
-                        >
-                            <i data-lucide="plus" class="h-4 w-4"></i>
-                            Tambah
-                        </button>
-                    </div>
-                </form>
-            </section>
+                        <div>
+                            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                                Urutan
+                            </label>
+
+                            <input
+                                type="number"
+                                name="sort_order"
+                                value="{{ old('sort_order', ($reliefOptions->max('sort_order') ?? 0) + 1) }}"
+                                min="0"
+                                required
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                            >
+                        </div>
+
+                        <div class="flex items-end">
+                            <button
+                                type="submit"
+                                class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                            >
+                                <i data-lucide="plus" class="h-4 w-4"></i>
+                                Tambah
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            @endif
 
             {{-- List --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -234,6 +259,7 @@
 
                             <div class="p-6">
 
+                                @if (! $selectedPeriod->isReadOnly())
                                 <form
                                     method="POST"
                                     action="{{ route('admin.relief-options.update', $option) }}"
@@ -327,7 +353,60 @@
 
                                     </div>
                                 </form>
+                                @else
+                                    <div class="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1.6fr)_100px]">
+                                        <div>
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Nama
+                                            </div>
+                                            <div class="text-sm font-medium text-slate-800">
+                                                {{ $option->name }}
+                                            </div>
+                                        </div>
 
+                                        <div>
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Deskripsi
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $option->description ?: '—' }}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <div class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                                Urutan
+                                            </div>
+                                            <div class="text-sm text-slate-700">
+                                                {{ $option->sort_order }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 flex flex-wrap gap-2">
+                                        <span
+                                            class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
+                                                {{ $option->is_active
+                                                    ? 'bg-emerald-50 text-emerald-700'
+                                                    : 'bg-slate-100 text-slate-500' }}"
+                                        >
+                                            Master:
+                                            {{ $option->is_active ? 'Aktif' : 'Nonaktif' }}
+                                        </span>
+
+                                        <span
+                                            class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
+                                                {{ $periodEnabled
+                                                    ? 'bg-blue-50 text-blue-700'
+                                                    : 'bg-amber-50 text-amber-700' }}"
+                                        >
+                                            {{ $selectedPeriod->name }}:
+                                            {{ $periodEnabled ? 'Tersedia' : 'Tidak tersedia' }}
+                                        </span>
+                                    </div>
+                                @endif
+
+                                @if (! $selectedPeriod->isReadOnly())
                                 <div class="mt-3 flex flex-wrap gap-2">
 
                                     {{-- Toggle period --}}
@@ -395,6 +474,7 @@
                                     </form>
 
                                 </div>
+                                @endif
 
                             </div>
 

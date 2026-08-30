@@ -67,7 +67,7 @@ class ReliefOptionController extends Controller
          * 404 sebelum master ReliefOption dibuat.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $option = DB::transaction(function () use (
             $request,
@@ -138,7 +138,7 @@ class ReliefOptionController extends Controller
          * Resolve period sebelum master atau pivot dimutasi.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $old = $reliefOption->only([
             'name',
@@ -248,7 +248,7 @@ class ReliefOptionController extends Controller
          * context yang masih selectable / non-archived.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $oldStatus = (bool) $reliefOption->is_active;
 
@@ -312,7 +312,7 @@ class ReliefOptionController extends Controller
          * archived period tidak dapat dimutasi.
          */
         $period = $this->periodContext
-            ->resolveAdminPeriod($request);
+            ->resolveWritableExplicitPeriod($request);
 
         $existing = $period->reliefOptions()
             ->where(

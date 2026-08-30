@@ -357,4 +357,105 @@ class AdminRegistrationOptionsPeriodContextTest extends TestCase
             ->assertDontSee('Nonaktifkan Master')
             ->assertDontSee('Aktifkan Master');
     }
+
+    public function test_relief_option_store_rejects_closed_period(): void
+    {
+        $this->post(
+            route('admin.relief-options.store'),
+            [
+                'period_id' => $this->closedPeriod->id,
+                'name' => 'CLOSED RELIEF STORE',
+                'description' => null,
+                'sort_order' => 20,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseMissing('relief_options', [
+            'name' => 'CLOSED RELIEF STORE',
+        ]);
+    }
+
+    public function test_relief_option_update_rejects_closed_period(): void
+    {
+        $this->put(
+            route('admin.relief-options.update', [
+                'reliefOption' => $this->reliefOption,
+            ]),
+            [
+                'period_id' => $this->closedPeriod->id,
+                'name' => 'MUTATED CLOSED RELIEF',
+                'description' => null,
+                'sort_order' => 30,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseHas('relief_options', [
+            'id' => $this->reliefOption->id,
+            'name' => 'RELIEF PERIOD CONTEXT TEST',
+        ]);
+    }
+
+    public function test_relief_option_period_toggle_rejects_closed_period(): void
+    {
+        $this->patch(
+            route('admin.relief-options.toggle-period', [
+                'reliefOption' => $this->reliefOption,
+            ]),
+            [
+                'period_id' => $this->closedPeriod->id,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseMissing('period_relief_options', [
+            'ppdb_period_id' => $this->closedPeriod->id,
+            'relief_option_id' => $this->reliefOption->id,
+        ]);
+    }
+
+    public function test_relief_option_master_toggle_rejects_closed_period(): void
+    {
+        $this->patch(
+            route('admin.relief-options.toggle-master', [
+                'reliefOption' => $this->reliefOption,
+            ]),
+            [
+                'period_id' => $this->closedPeriod->id,
+            ]
+        )->assertStatus(409);
+
+        $this->assertDatabaseHas('relief_options', [
+            'id' => $this->reliefOption->id,
+            'is_active' => 1,
+        ]);
+    }
+
+    public function test_closed_period_relief_option_management_is_read_only_in_ui(): void
+    {
+        $this->closedPeriod->reliefOptions()->attach(
+            $this->reliefOption->id,
+            [
+                'is_active' => true,
+                'sort_order' => $this->reliefOption->sort_order,
+            ]
+        );
+
+        $response = $this->get(
+            route('admin.relief-options.index', [
+                'period_id' => $this->closedPeriod->id,
+            ])
+        );
+
+        $response
+            ->assertOk()
+            ->assertSee('Periode read-only')
+            ->assertSee($this->reliefOption->name)
+            ->assertSee('Master:')
+            ->assertSee('Tersedia')
+            ->assertDontSee('Tambah Keringanan / Prestasi')
+            ->assertDontSee('Simpan Perubahan')
+            ->assertDontSee('Nonaktifkan dari Periode')
+            ->assertDontSee('Aktifkan pada Periode')
+            ->assertDontSee('Nonaktifkan Master')
+            ->assertDontSee('Aktifkan Master');
+    }
 }
