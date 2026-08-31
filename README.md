@@ -1,58 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SPMB MARSA
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+SPMB MARSA adalah aplikasi Sistem Penerimaan Murid Baru berbasis Laravel untuk mengelola proses penerimaan siswa secara terintegrasi, mulai dari pendaftaran publik hingga penerimaan, daftar ulang, keuangan, pelaporan, dan analitik antar periode.
 
-## About Laravel
+## Fitur Utama
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Pendaftaran calon siswa secara publik tanpa akun.
+- Nomor pendaftaran otomatis.
+- Kartu pendaftaran PDF.
+- Cek status pendaftaran menggunakan secure public token.
+- Manajemen data pendaftar.
+- Workflow penerimaan dan perubahan status.
+- Daftar ulang dan pencatatan pembayaran.
+- Bukti pembayaran PDF.
+- Rekap dan laporan PDF/Excel.
+- Analitik dan perbandingan antar periode.
+- Pengelolaan jurusan, jalur penerimaan, asal sekolah, program khusus, dan keringanan.
+- Manajemen pengguna berbasis role.
+- Activity log.
+- Integrasi notifikasi WhatsApp melalui Meta Cloud API.
+- Pengaturan halaman publik dari panel administrator.
+- Dukungan data historis multi-periode.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Teknologi
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- PHP 8.3+
+- Laravel 13
+- Livewire 4
+- MySQL / MariaDB
+- Tailwind CSS
+- Vite
+- Laravel DomPDF
+- Laravel Excel
 
-## Learning Laravel
+## Instalasi
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Clone repository:
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/buntutpitik/spmb-marsa.git
+cd spmb-marsa
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Install dependency:
 
-## Contributing
+```bash
+composer install
+npm install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Buat file environment.
 
-## Code of Conduct
+Linux/macOS:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+cp .env.example .env
+```
 
-## Security Vulnerabilities
+Windows:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```bat
+copy .env.example .env
+```
 
-## License
+Generate application key:
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+php artisan key:generate
+```
+
+Sesuaikan konfigurasi database pada `.env`, kemudian:
+
+```bash
+php artisan migrate
+npm run build
+```
+
+Untuk menjalankan development environment:
+
+```bash
+composer run dev
+```
+
+## Testing
+
+Jalankan test suite:
+
+```bash
+php artisan test
+```
+
+Jika diperlukan memory limit lebih besar:
+
+```bash
+php -d memory_limit=512M vendor/phpunit/phpunit/phpunit
+```
+
+## WhatsApp
+
+Integrasi notifikasi WhatsApp menggunakan Meta Cloud API.
+
+Credential WhatsApp tidak disertakan dalam repository. Konfigurasikan credential melalui file `.env` pada masing-masing environment.
+
+Untuk development dan testing tersedia fake WhatsApp provider sehingga pengujian tidak memerlukan pengiriman pesan nyata.
+
+## Keamanan
+
+Jangan commit file `.env`, database production, dump SQL, access token, API key, password, atau credential lainnya.
+
+Untuk pelaporan kerentanan keamanan, lihat [SECURITY.md](SECURITY.md).
+
+## Data
+
+Repository ini tidak menyertakan database production maupun data pribadi calon siswa.
+
+Gunakan database dan data development/testing sendiri ketika menjalankan aplikasi.
+
+## Lisensi
+
+SPMB MARSA dirilis sebagai perangkat lunak open source di bawah [MIT License](LICENSE).
+
+## Credits
+
+SPMB MARSA dibangun menggunakan Laravel dan berbagai package open-source yang tercantum dalam `composer.json`.

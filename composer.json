@@ -1,9 +1,15 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "buntutpitik/spmb-marsa",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Sistem Penerimaan Murid Baru berbasis Laravel untuk pengelolaan pendaftaran, penerimaan, daftar ulang, pelaporan, dan analitik multi-periode.",
+    "keywords": [
+        "spmb",
+        "ppdb",
+        "laravel",
+        "penerimaan-siswa",
+        "sekolah"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.3",
