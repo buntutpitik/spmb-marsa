@@ -113,7 +113,9 @@ class PublicHomeTest extends TestCase
             ->assertSee('Pengumuman Pendaftaran')
             ->assertSee('NIK')
             ->assertSee('Isi formulir')
-            ->assertSee('Daftar ulang dilakukan setelah dinyatakan diterima.');
+            ->assertSee('Daftar ulang dilakukan setelah dinyatakan diterima.')
+            ->assertSee('href="#cara-mendaftar"', false)
+            ->assertSee('id="cara-mendaftar"', false);
     }
 
     public function test_hidden_public_sections_are_not_rendered(): void
@@ -140,7 +142,24 @@ class PublicHomeTest extends TestCase
             ->assertDontSee('RAHASIA ISI')
             ->assertDontSee('RAHASIA PERSYARATAN')
             ->assertDontSee('RAHASIA LANGKAH')
-            ->assertDontSee('RAHASIA DAFTAR ULANG');
+            ->assertDontSee('RAHASIA DAFTAR ULANG')
+            ->assertDontSee('href="#cara-mendaftar"', false);
+    }
+
+    public function test_registration_steps_navigation_is_hidden_when_steps_are_empty(): void
+    {
+        PublicPageSetting::query()->create([
+            'school_id' => $this->school->id,
+            'registration_steps' => null,
+            'show_registration_steps' => true,
+        ]);
+
+        $this->get(
+            route('home')
+        )
+            ->assertOk()
+            ->assertDontSee('href="#cara-mendaftar"', false)
+            ->assertDontSee('id="cara-mendaftar"', false);
     }
 
     public function test_registration_is_available_when_an_admission_path_is_active_today(): void

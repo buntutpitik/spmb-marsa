@@ -113,6 +113,50 @@
             color: #475569;
         }
 
+        .status-access {
+            margin-top: 16px;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .status-access-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .status-access-table td {
+            border: 0;
+            padding: 0;
+            vertical-align: middle;
+        }
+
+        .status-qr {
+            width: 88px;
+            text-align: center;
+        }
+
+        .status-qr img {
+            width: 82px;
+            height: 82px;
+        }
+
+        .status-text {
+            padding-left: 14px !important;
+        }
+
+        .status-title {
+            margin: 0 0 4px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .status-description {
+            margin: 0;
+            font-size: 9px;
+            line-height: 1.45;
+            color: #475569;
+        }
+
         .footer {
             margin-top: 16px;
             text-align: center;
@@ -229,10 +273,38 @@
                 </tr>
             </table>
 
+            @if ($statusQrCode)
+                <div class="status-access">
+                    <table class="status-access-table">
+                        <tr>
+                            <td class="status-qr">
+                                <img
+                                    src="{{ $statusQrCode }}"
+                                    alt="QR Cek Status Pendaftaran"
+                                >
+                            </td>
+
+                            <td class="status-text">
+                                <p class="status-title">
+                                    CEK STATUS PENDAFTARAN
+                                </p>
+
+                                <p class="status-description">
+                                    Scan QR Code untuk melihat status
+                                    pendaftaran terbaru. Simpan kartu ini
+                                    dan jangan membagikan QR Code kepada
+                                    orang lain.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            @endif
+
             <div class="notice">
                 Kartu ini merupakan bukti pendaftaran calon siswa.
-                Simpan dan bawa kartu ini apabila diperlukan dalam
-                proses verifikasi atau tahapan penerimaan berikutnya.
+                Proses selanjutnya adalah wawancara bersama orang tua
+                atau wali.
             </div>
 
         </div>

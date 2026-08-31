@@ -202,6 +202,36 @@ class RegistrationCardTest extends TestCase
             );
     }
 
+    public function test_admin_card_without_public_token_can_still_be_downloaded(): void
+    {
+        $this->registration->forceFill([
+            'public_token' => null,
+        ])->save();
+
+        $this->period->update([
+            'status' => 'CLOSED',
+            'is_active' => false,
+        ]);
+
+        $user = User::factory()->create([
+            'role' => 'ADMIN',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(
+                route(
+                    'admin.registrations.card',
+                    $this->registration
+                )
+            )
+            ->assertOk()
+            ->assertHeader(
+                'content-type',
+                'application/pdf'
+            );
+    }
+
     public function test_success_page_contains_registration_card_link(): void
     {
         $this->get(

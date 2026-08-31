@@ -92,12 +92,17 @@
                     Informasi
                 </a>
 
-                <a
-                    href="#cara-mendaftar"
-                    class="transition hover:text-blue-600"
-                >
-                    Cara Mendaftar
-                </a>
+                @if (
+                    $setting?->show_registration_steps
+                    && count($registrationSteps)
+                )
+                    <a
+                        href="#cara-mendaftar"
+                        class="transition hover:text-blue-600"
+                    >
+                        Cara Mendaftar
+                    </a>
+                @endif
 
                 @if ($setting?->show_contact)
                     <a
