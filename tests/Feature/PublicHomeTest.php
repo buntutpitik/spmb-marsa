@@ -460,4 +460,17 @@ class PublicHomeTest extends TestCase
 
         Carbon::setTestNow();
     }
+
+    public function test_public_home_has_admin_login_link(): void
+    {
+        $this->get(
+            route('home')
+        )
+            ->assertOk()
+            ->assertSee('Login Admin')
+            ->assertSee(
+                'href="'.route('login').'"',
+                false
+            );
+    }
 }

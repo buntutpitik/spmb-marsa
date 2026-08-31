@@ -109,7 +109,15 @@
                 @endif
             </nav>
 
-            @if ($registrationState === 'OPEN')
+            <div class="flex shrink-0 items-center gap-2">
+                <a
+                    href="{{ route('login') }}"
+                    class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-300 hover:text-blue-700"
+                >
+                    Login Admin
+                </a>
+
+                @if ($registrationState === 'OPEN')
                 <a
                     href="{{ route('registration.create') }}"
                     class="hidden shrink-0 items-center justify-center rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:inline-flex"
@@ -135,6 +143,8 @@
                     Belum Tersedia
                 </span>
             @endif
+            </div>
+
         </div>
     </header>
 
