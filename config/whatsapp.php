@@ -8,7 +8,6 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'enabled' => env('WA_ENABLED', false),
     'provider' => env('WHATSAPP_PROVIDER', 'fake'),
 
     'providers' => [
