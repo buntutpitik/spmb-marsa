@@ -131,6 +131,74 @@ class WhatsappNotificationServiceExistingTest extends TestCase
         );
     }
 
+    public function test_registration_rejected_uses_rejected_template(): void
+    {
+        Queue::fake();
+
+        config()->set('whatsapp.templates.registration_rejected', [
+            'name' => 'registration_rejected',
+            'language' => 'id',
+        ]);
+
+        $registration = $this->makeRegistration(
+            status: 'REJECTED',
+            name: 'Ahmad Fauzan'
+        );
+
+        $log = app(WhatsappNotificationService::class)
+            ->registrationRejected($registration);
+
+        $this->assertSame(
+            'REGISTRATION_REJECTED',
+            $log->message_type
+        );
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            fn ($job) =>
+                $job->templateName === 'registration_rejected'
+                && $job->languageCode === 'id'
+                && $job->bodyParameters === [
+                    $registration->full_name,
+                    $registration->registration_number,
+                ]
+        );
+    }
+
+    public function test_registration_withdrawn_uses_withdrawn_template(): void
+    {
+        Queue::fake();
+
+        config()->set('whatsapp.templates.registration_withdrawn', [
+            'name' => 'registration_withdrawn',
+            'language' => 'id',
+        ]);
+
+        $registration = $this->makeRegistration(
+            status: 'WITHDRAWN',
+            name: 'Ahmad Fauzan'
+        );
+
+        $log = app(WhatsappNotificationService::class)
+            ->registrationWithdrawn($registration);
+
+        $this->assertSame(
+            'REGISTRATION_WITHDRAWN',
+            $log->message_type
+        );
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            fn ($job) =>
+                $job->templateName === 'registration_withdrawn'
+                && $job->languageCode === 'id'
+                && $job->bodyParameters === [
+                    $registration->full_name,
+                    $registration->registration_number,
+                ]
+        );
+    }
+
     private function makeRegistration(
         string $status,
         string $name
