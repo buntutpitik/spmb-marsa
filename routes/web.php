@@ -361,12 +361,12 @@ Route::prefix('admin')
                 '/perbandingan',
                 [ComparisonController::class, 'index']
             )->name('comparison.index');
-        });
 
-        Route::get(
+            Route::get(
                 '/perbandingan/export',
                 [ComparisonController::class, 'export']
             )->name('comparison.export');
+        });
 
         /*
         |--------------------------------------------------------------------------

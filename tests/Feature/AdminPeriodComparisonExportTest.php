@@ -88,6 +88,21 @@ class AdminPeriodComparisonExportTest extends TestCase
             ->assertSessionHasErrors();
     }
 
+    public function test_unknown_role_cannot_export_period_comparison_excel(): void
+    {
+        $user = User::factory()->create([
+            'role' => 'UNKNOWN',
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('admin.comparison.export', [
+                'period_a' => $this->periodA->id,
+                'period_b' => $this->periodB->id,
+            ]))
+            ->assertForbidden();
+    }
+
     public function test_export_filename_contains_both_periods(): void
     {
         $response = $this->actingAs($this->admin)
