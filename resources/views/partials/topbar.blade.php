@@ -160,6 +160,22 @@
 
                         <div class="p-2">
 
+                            <a
+                                href="{{ route('account.password.edit') }}"
+                                class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                            >
+                                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100">
+                                    <i
+                                        data-lucide="key-round"
+                                        class="h-4 w-4"
+                                    ></i>
+                                </span>
+
+                                Ubah Password
+                            </a>
+
+                            <div class="my-1 border-t border-slate-100"></div>
+
                             <form
                                 method="POST"
                                 action="{{ route('logout') }}"

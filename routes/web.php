@@ -45,6 +45,7 @@ use App\Http\Controllers\Admin\RegistrationCardController;
 use App\Http\Controllers\PublicRegistrationStatusController;
 use App\Http\Controllers\Admin\PublicPageSettingController;
 use App\Http\Controllers\PublicHomeController;
+use App\Http\Controllers\AccountPasswordController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -73,6 +74,21 @@ Route::post(
 )
     ->middleware('auth')
     ->name('logout');
+
+Route::middleware([
+    'auth',
+    'role:SUPERADMIN,ADMIN,PANITIA,BENDAHARA',
+])->group(function () {
+    Route::get(
+        '/akun/password',
+        [AccountPasswordController::class, 'edit']
+    )->name('account.password.edit');
+
+    Route::put(
+        '/akun/password',
+        [AccountPasswordController::class, 'update']
+    )->name('account.password.update');
+});
 
 /*
 |--------------------------------------------------------------------------
