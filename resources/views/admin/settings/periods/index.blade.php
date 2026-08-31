@@ -257,8 +257,13 @@
                                 </div>
                                 <div>
                                     <label class="mb-1.5 block text-sm font-semibold text-slate-700">Status</label>
-                                    <select name="status" x-model="selectedPeriod.status" required
-                                        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100">
+                                    <select
+                                        name="status"
+                                        x-model="selectedPeriod.status"
+                                        @change="if (selectedPeriod.status === 'CLOSED') selectedPeriod.is_active = false"
+                                        required
+                                        class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
+                                    >
                                         <option value="DRAFT">Draft</option>
                                         <option value="OPEN">Dibuka</option>
                                         <option value="CLOSED">Ditutup</option>
@@ -268,13 +273,25 @@
 
                             <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
                                 <label class="flex cursor-pointer items-start gap-3">
-                                    <input type="checkbox" name="is_active" value="1" x-model="selectedPeriod.is_active"
-                                        class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+                                    <input
+                                        type="checkbox"
+                                        name="is_active"
+                                        value="1"
+                                        x-model="selectedPeriod.is_active"
+                                        :disabled="selectedPeriod.status === 'CLOSED'"
+                                        class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
                                     <span>
                                         <span class="block text-sm font-semibold text-slate-800">Jadikan periode aktif</span>
-                                        <span class="mt-1 block text-xs leading-5 text-slate-500">
-                                            Mengaktifkan periode ini akan otomatis menonaktifkan periode lain.
-                                        </span>
+                                        <span
+                                            class="mt-1 block text-xs leading-5"
+                                            :class="selectedPeriod.status === 'CLOSED' ? 'text-rose-600' : 'text-slate-500'"
+                                            x-text="
+                                                selectedPeriod.status === 'CLOSED'
+                                                    ? 'Periode yang ditutup otomatis menjadi nonaktif dan bersifat read-only.'
+                                                    : 'Mengaktifkan periode ini akan otomatis menonaktifkan periode lain.'
+                                            "
+                                        ></span>
                                     </span>
                                 </label>
                             </div>

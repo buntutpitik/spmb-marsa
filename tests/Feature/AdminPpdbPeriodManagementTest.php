@@ -390,6 +390,47 @@ class AdminPpdbPeriodManagementTest extends TestCase
         );
     }
 
+    public function test_closing_active_period_automatically_deactivates_it(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->assertSame(
+            'OPEN',
+            $this->period->status
+        );
+
+        $this->assertTrue(
+            $this->period->is_active
+        );
+
+        $this->actingAs($user)
+            ->put(
+                route(
+                    'admin.periods.update',
+                    $this->period
+                ),
+                $this->validPayload([
+                    'status' => 'CLOSED',
+                    'is_active' => '1',
+                ])
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(
+                route('admin.periods.index')
+            );
+
+        $this->period->refresh();
+
+        $this->assertSame(
+            'CLOSED',
+            $this->period->status
+        );
+
+        $this->assertFalse(
+            $this->period->is_active
+        );
+    }
+
     public function test_closed_period_is_read_only(): void
     {
         $user = $this->makeUser('SUPERADMIN');

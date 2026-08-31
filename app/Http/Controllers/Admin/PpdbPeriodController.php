@@ -65,11 +65,17 @@ class PpdbPeriodController extends Controller
                 'notes',
             ]);
 
+            $status = $request->validated('status');
+
+            $isActive = $status === 'CLOSED'
+                ? false
+                : $request->boolean('is_active');
+
             /*
-             * Jika periode ini diaktifkan,
-             * nonaktifkan semua periode lain.
-             */
-            if ($request->boolean('is_active')) {
+            * Jika periode ini diaktifkan,
+            * nonaktifkan semua periode lain.
+            */
+            if ($isActive) {
                 PpdbPeriod::query()
                     ->whereKeyNot($period->id)
                     ->where('is_active', true)
@@ -98,11 +104,9 @@ class PpdbPeriodController extends Controller
                         'registration_close'
                     ),
 
-                'status' =>
-                    $request->validated('status'),
+                'status' => $status,
 
-                'is_active' =>
-                    $request->boolean('is_active'),
+                'is_active' => $isActive,
 
                 'principal_name' =>
                     $request->validated(
