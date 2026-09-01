@@ -15,11 +15,11 @@
         $statusMeta = match ($registration->status) {
             'REGISTERED' => [
                 'class' => 'border-blue-200 bg-blue-50 text-blue-700',
-                'description' => 'Pendaftaran Anda telah tercatat dan sedang menunggu proses berikutnya.',
+                'description' => 'Pendaftaran Anda berhasil tercatat. Silakan mengikuti proses wawancara bersama orang tua atau wali pada hari dan jam kerja. Pantau halaman ini secara berkala untuk melihat pembaruan status pendaftaran Anda. Informasi lebih lanjut, hubungi: 085702244074.',
             ],
             'ACCEPTED' => [
                 'class' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
-                'description' => 'Selamat, Anda telah dinyatakan diterima.',
+                'description' => 'Selamat, Anda telah dinyatakan diterima. Silakan melakukan daftar ulang di bagian Tata Usaha.',
             ],
             'REJECTED' => [
                 'class' => 'border-red-200 bg-red-50 text-red-700',
@@ -27,7 +27,7 @@
             ],
             'REENROLLED' => [
                 'class' => 'border-violet-200 bg-violet-50 text-violet-700',
-                'description' => 'Proses daftar ulang Anda telah tercatat.',
+                'description' => 'Proses daftar ulang Anda telah tercatat. Informasi selanjutnya akan disampaikan melalui grup WA calon siswa baru.',
             ],
             'WITHDRAWN' => [
                 'class' => 'border-amber-200 bg-amber-50 text-amber-700',
