@@ -9,6 +9,38 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class AdmissionPathResolver
 {
+    public function resolveForAdmin(
+        PpdbPeriod $period,
+        ?CarbonInterface $date = null
+    ): AdmissionPath {
+        $date ??= now();
+
+        try {
+            return $this->resolve($period, $date);
+        } catch (ModelNotFoundException) {
+            $path = AdmissionPath::query()
+                ->where('period_id', $period->id)
+                ->where('is_active', true)
+                ->whereNotNull('start_date')
+                ->whereDate(
+                    'start_date',
+                    '>',
+                    $date->toDateString()
+                )
+                ->orderBy('start_date')
+                ->orderBy('sort_order')
+                ->orderBy('id')
+                ->first();
+
+            if (! $path) {
+                throw (new ModelNotFoundException())
+                    ->setModel(AdmissionPath::class);
+            }
+
+            return $path;
+        }
+    }
+
     public function resolve(
         PpdbPeriod $period,
         ?CarbonInterface $date = null

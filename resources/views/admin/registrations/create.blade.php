@@ -349,8 +349,7 @@
                             </h2>
 
                             <p class="mt-1 text-sm text-slate-500">
-                                Pilih jurusan dan jalur pendaftaran calon siswa.
-
+                                Pilih jurusan calon siswa. Jalur pendaftaran ditentukan otomatis oleh sistem berdasarkan jadwal.
                             </p>
                         </div>
                     </div>
@@ -378,36 +377,17 @@
                     </div>
 
                     <div>
-                        <label
-                            for="admission_path_id"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">
                             Jalur Pendaftaran
-                            <span class="text-red-500">*</span>
                         </label>
 
-                        <select
-                            id="admission_path_id"
-                            name="admission_path_id"
-                            class="{{ $inputClass }}"
-                            required
-                        >
-                            <option value="">Pilih jalur</option>
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                            Ditentukan otomatis oleh sistem
+                        </div>
 
-                            @foreach ($admissionPaths as $path)
-                                <option
-                                    value="{{ $path->id }}"
-                                    @selected(
-                                        (int) old(
-                                            'admission_path_id',
-                                            null
-                                        ) === (int) $path->id
-                                    )
-                                >
-                                    {{ $path->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <p class="mt-2 text-xs leading-5 text-slate-400">
+                            Jalur pendaftaran ditentukan otomatis oleh sistem berdasarkan jadwal.
+                        </p>
                     </div>
 
                     <div>

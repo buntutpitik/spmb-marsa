@@ -9,7 +9,6 @@ use App\Models\PeriodMajor;
 use App\Models\Registration;
 use App\Models\RegistrationStatusHistory;
 use App\Models\User;
-use App\Models\AdmissionPath;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -57,41 +56,33 @@ class RegistrationService
                 ->findOrFail($data['major_id']);
 
             /*
-            * ---------------------------------------------------------
-            * 2. Jalur pendaftaran.
-            * ---------------------------------------------------------
-            *
-            * PUBLIC:
-            * Jalur tetap ditentukan otomatis berdasarkan tanggal
-            * melalui AdmissionPathResolver.
-            *
-            * ADMIN:
-            * Jalur dipilih oleh petugas dan tidak mengikuti jadwal
-            * pembukaan jalur publik. Periode tetap wajib aktif + OPEN.
-            */
+             * ---------------------------------------------------------
+             * 2. Jalur pendaftaran.
+             * ---------------------------------------------------------
+             *
+             * PUBLIC:
+             * Jalur ditentukan otomatis berdasarkan jadwal yang
+             * sedang berlaku melalui AdmissionPathResolver.
+             *
+             * ADMIN:
+             * Jalur juga ditentukan otomatis. Jalur yang sedang
+             * berlaku diprioritaskan. Jika belum ada jalur yang
+             * berlaku, gunakan jalur aktif terdekat yang akan datang.
+             *
+             * admission_path_id dari client tidak dipercaya.
+             */
             if ($creator === null) {
                 $admissionPath = $this->admissionPathResolver->resolve(
                     $period,
                     now()
                 );
             } else {
-                $admissionPathId = (int) (
-                    $data['admission_path_id'] ?? 0
-                );
-
-                $admissionPath = AdmissionPath::query()
-                    ->whereKey($admissionPathId)
-                    ->where('period_id', $period->id)
-                    ->where('is_active', true)
-                    ->first();
-
-                if (! $admissionPath) {
-                    throw new InvalidArgumentException(
-                        'Jalur pendaftaran tidak tersedia atau tidak aktif pada periode SPMB yang dipilih.'
+                $admissionPath = $this->admissionPathResolver
+                    ->resolveForAdmin(
+                        $period,
+                        now()
                     );
-                }
             }
-
             /*
              * ---------------------------------------------------------
              * 3. Validasi jurusan.

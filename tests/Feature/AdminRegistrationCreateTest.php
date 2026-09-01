@@ -7,6 +7,7 @@ use App\Models\Major;
 use App\Models\PpdbPeriod;
 use App\Models\School;
 use App\Models\User;
+use App\Models\Registration;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -82,7 +83,9 @@ class AdminRegistrationCreateTest extends TestCase
          * Jalur ini baru berlaku mulai Januari 2027.
          *
          * Test berjalan pada 28 Agustus 2026.
-         * ADMIN tetap harus bisa memilihnya secara manual.
+         * ADMIN tetap harus dapat membuat pendaftaran.
+         * Sistem otomatis menggunakan jalur aktif terdekat
+         * yang akan datang.
          */
         $this->specialPath = AdmissionPath::query()->create([
             'period_id' => $this->activePeriod->id,
@@ -130,6 +133,24 @@ class AdminRegistrationCreateTest extends TestCase
                 ->assertOk()
                 ->assertSee('Tambah Pendaftar');
         }
+    }
+
+    public function test_create_form_does_not_expose_manual_admission_path_input(): void
+    {
+        $admin = $this->makeUser('ADMIN');
+
+        $this->actingAs($admin)
+            ->get(route(
+                'admin.registrations.create',
+                [
+                    'period_id' => $this->activePeriod->id,
+                ]
+            ))
+            ->assertOk()
+            ->assertDontSee('name="admission_path_id"', false)
+            ->assertSee(
+                'Jalur pendaftaran ditentukan otomatis oleh sistem berdasarkan jadwal.'
+            );
     }
 
     public function test_historical_period_cannot_open_create_form(): void
@@ -192,8 +213,9 @@ class AdminRegistrationCreateTest extends TestCase
         );
 
         /*
-         * Jalur harus berasal dari pilihan ADMIN,
-         * bukan resolver tanggal publik.
+         * Jalur harus ditentukan otomatis oleh sistem.
+         * Karena tanggal test masih sebelum pembukaan jalur,
+         * ADMIN menggunakan jalur aktif terdekat yang akan datang.
          */
         $this->assertSame(
             $this->specialPath->id,
@@ -338,6 +360,146 @@ class AdminRegistrationCreateTest extends TestCase
         );
     }
 
+    public function test_admission_path_id_from_client_is_ignored(): void
+    {
+        $admin = $this->makeUser('ADMIN');
+
+        $otherPeriod = $this->makePeriod(
+            '2028/2029',
+            2028,
+            false,
+            'OPEN'
+        );
+
+        $otherPath = AdmissionPath::query()->create([
+            'period_id' => $otherPeriod->id,
+            'name' => 'Umum 2028',
+            'code' => 'UMUM-2028',
+            'start_date' => '2028-01-01',
+            'end_date' => '2028-06-30',
+            'is_active' => true,
+            'sort_order' => 10,
+        ]);
+
+        $payload = array_merge(
+            $this->validPayload(),
+            [
+                'admission_path_id' => $otherPath->id,
+            ]
+        );
+
+        $this->actingAs($admin)
+            ->post(
+                route('admin.registrations.store'),
+                $payload
+            )
+            ->assertSessionHasNoErrors();
+
+        $registration = Registration::query()
+            ->where(
+                'period_id',
+                $this->activePeriod->id
+            )
+            ->where(
+                'nik',
+                '3377777777000001'
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            $this->specialPath->id,
+            $registration->admission_path_id
+        );
+
+        $this->assertNotSame(
+            $otherPath->id,
+            $registration->admission_path_id
+        );
+    }
+
+    public function test_current_active_admission_path_is_preferred_for_admin(): void
+    {
+        $admin = $this->makeUser('ADMIN');
+
+        $currentPath = AdmissionPath::query()->create([
+            'period_id' => $this->activePeriod->id,
+            'name' => 'Umum Saat Ini',
+            'code' => 'UMUM-CURRENT',
+            'start_date' => '2026-08-01',
+            'end_date' => '2026-12-31',
+            'is_active' => true,
+            'sort_order' => 20,
+        ]);
+
+        $this->actingAs($admin)
+            ->post(
+                route('admin.registrations.store'),
+                $this->validPayload()
+            )
+            ->assertSessionHasNoErrors();
+
+        $registration = Registration::query()
+            ->where(
+                'period_id',
+                $this->activePeriod->id
+            )
+            ->where(
+                'nik',
+                '3377777777000001'
+            )
+            ->firstOrFail();
+
+        $this->assertSame(
+            $currentPath->id,
+            $registration->admission_path_id
+        );
+
+        $this->assertNotSame(
+            $this->specialPath->id,
+            $registration->admission_path_id
+        );
+    }
+
+    public function test_admin_gets_friendly_error_when_no_admission_path_is_available(): void
+    {
+        $admin = $this->makeUser('ADMIN');
+
+        $this->specialPath->update([
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-06-30',
+        ]);
+
+        $response = $this
+            ->from(route(
+                'admin.registrations.create',
+                [
+                    'period_id' => $this->activePeriod->id,
+                ]
+            ))
+            ->actingAs($admin)
+            ->post(
+                route('admin.registrations.store'),
+                $this->validPayload()
+            );
+
+        $response
+            ->assertRedirect(route(
+                'admin.registrations.create',
+                [
+                    'period_id' => $this->activePeriod->id,
+                ]
+            ))
+            ->assertSessionHasErrors('admission_path');
+
+        $this->assertDatabaseMissing(
+            'registrations',
+            [
+                'period_id' => $this->activePeriod->id,
+                'nik' => '3377777777000001',
+            ]
+        );
+    }
+
     public function test_nik_must_be_unique_within_same_period(): void
     {
         $admin = $this->makeUser('ADMIN');
@@ -386,7 +548,7 @@ class AdminRegistrationCreateTest extends TestCase
         );
     }
 
-    public function test_major_and_admission_path_from_other_period_are_rejected(): void
+    public function test_major_from_other_period_is_rejected(): void
     {
         $admin = $this->makeUser('ADMIN');
 
@@ -411,21 +573,10 @@ class AdminRegistrationCreateTest extends TestCase
             ]
         );
 
-        $otherPath = AdmissionPath::query()->create([
-            'period_id' => $otherPeriod->id,
-            'name' => 'Umum 2028',
-            'code' => 'UMUM-2028',
-            'start_date' => '2028-01-01',
-            'end_date' => '2028-06-30',
-            'is_active' => true,
-            'sort_order' => 10,
-        ]);
-
         $payload = array_merge(
             $this->validPayload(),
             [
                 'major_id' => $otherMajor->id,
-                'admission_path_id' => $otherPath->id,
             ]
         );
 
@@ -434,10 +585,7 @@ class AdminRegistrationCreateTest extends TestCase
                 route('admin.registrations.store'),
                 $payload
             )
-            ->assertSessionHasErrors([
-                'major_id',
-                'admission_path_id',
-            ]);
+            ->assertSessionHasErrors('major_id');
 
         $this->assertDatabaseMissing(
             'registrations',
@@ -775,9 +923,6 @@ public function test_historical_period_index_hides_add_registration_button(): vo
             'whatsapp' => '081277770001',
 
             'graduation_score' => 85.50,
-
-            'admission_path_id' =>
-                $this->specialPath->id,
 
             'major_id' =>
                 $this->major->id,

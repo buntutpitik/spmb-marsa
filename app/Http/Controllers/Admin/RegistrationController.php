@@ -7,11 +7,13 @@ use App\Models\ActivityLog;
 use App\Models\OriginSchool;
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
+use App\Models\AdmissionPath;
 use App\Services\PeriodContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateRegistrationRequest;
 use App\Services\RegistrationService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -219,13 +221,6 @@ class RegistrationController extends Controller
             ->orderBy('majors.name')
             ->get();
 
-        $admissionPaths = $selectedPeriod
-            ->admissionPaths()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
-            ->orderBy('name')
-            ->get();
-
         $originSchools = OriginSchool::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -253,7 +248,6 @@ class RegistrationController extends Controller
             compact(
                 'selectedPeriod',
                 'majors',
-                'admissionPaths',
                 'originSchools',
                 'reliefOptions',
                 'specialPrograms'
@@ -361,15 +355,30 @@ class RegistrationController extends Controller
 
         $data['period_id'] = $selectedPeriod->id;
 
-        $registration = $this->registrationService->create(
-            $data,
-            $request->user(),
-            null,
-            [
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-            ]
-        );
+        try {
+            $registration = $this->registrationService->create(
+                $data,
+                $request->user(),
+                null,
+                [
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]
+            );
+        } catch (ModelNotFoundException $exception) {
+            if ($exception->getModel() !== AdmissionPath::class) {
+                throw $exception;
+            }
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'admission_path' =>
+                        'Tidak ada jalur pendaftaran yang tersedia '
+                        .'untuk periode aktif. Silakan periksa '
+                        .'pengaturan jadwal jalur pendaftaran.',
+                ]);
+        }
 
         return redirect()
             ->route(

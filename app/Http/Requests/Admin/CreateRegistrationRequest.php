@@ -152,20 +152,6 @@ class CreateRegistrationRequest extends FormRequest
                 'min:0',
                 'max:100',
             ],
-
-            'admission_path_id' => [
-                'required',
-                'integer',
-                Rule::exists(
-                    'admission_paths',
-                    'id'
-                )->where(
-                    fn ($query) => $query
-                        ->where('period_id', $periodId)
-                        ->where('is_active', true)
-                ),
-            ],
-
             'major_id' => [
                 'required',
                 'integer',
