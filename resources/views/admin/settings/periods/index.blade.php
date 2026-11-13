@@ -3,14 +3,27 @@
 @section('content')
 <div x-data="{
     editOpen:false,
+    createOpen: @js(session()->has('errors') && old('_period_form') === 'create'),
     selectedPeriod:null,
+    originalPeriodActive:false,
     feeDisplay:'',
+    createFeeDisplay: @js(number_format((int) old('default_reenroll_fee', 250000), 0, ',', '.')),
+    formatCreateFee(value){
+        const numeric=String(value??'').replace(/\D/g,'');
+        this.createFeeDisplay=numeric
+            ? new Intl.NumberFormat('id-ID').format(numeric)
+            : '0';
+    },
+    openCreate(){
+        this.createOpen=true;
+    },
     formatFee(value){
         const numeric=String(value??'').replace(/\D/g,'');
         this.feeDisplay=numeric ? new Intl.NumberFormat('id-ID').format(numeric) : '0';
     },
     openEdit(period){
         this.selectedPeriod=period;
+        this.originalPeriodActive=Boolean(period.is_active);
         this.formatFee(period.default_reenroll_fee??0);
         this.editOpen=true;
     }
@@ -32,9 +45,24 @@
             </p>
         </div>
 
-        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-            <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Total Periode</div>
-            <div class="mt-1 text-sm font-semibold text-slate-800">{{ number_format($periods->count()) }} periode</div>
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    Total Periode
+                </div>
+                <div class="mt-1 text-sm font-semibold text-slate-800">
+                    {{ number_format($periods->count()) }} periode
+                </div>
+            </div>
+
+            <button
+                type="button"
+                @click="openCreate()"
+                class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-100"
+            >
+                <i data-lucide="plus" class="h-4 w-4"></i>
+                Tambah Periode
+            </button>
         </div>
     </div>
 
@@ -207,7 +235,26 @@
 
         <div x-show="editOpen" x-transition.opacity.scale.95 @click.stop
             class="relative z-10 my-auto w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <form method="POST" :action="selectedPeriod ? '{{ url('/admin/pengaturan/periode') }}/'+selectedPeriod.id : '#'">
+            <form
+                method="POST"
+                :action="selectedPeriod ? '{{ url('/admin/pengaturan/periode') }}/'+selectedPeriod.id : '#'"
+                @submit="
+                    if (
+                        selectedPeriod &&
+                        selectedPeriod.status === 'OPEN' &&
+                        selectedPeriod.is_active &&
+                        !originalPeriodActive
+                    ) {
+                        if (!window.confirm(
+                            'Aktifkan periode ' + selectedPeriod.name + '?\n\n' +
+                            'Periode lain yang saat ini aktif akan otomatis dinonaktifkan.\n\n' +
+                            'Pastikan konfigurasi periode baru sudah diperiksa.'
+                        )) {
+                            $event.preventDefault();
+                        }
+                    }
+                "
+            >
                 @csrf
                 @method('PUT')
 
@@ -260,7 +307,7 @@
                                     <select
                                         name="status"
                                         x-model="selectedPeriod.status"
-                                        @change="if (selectedPeriod.status === 'CLOSED') selectedPeriod.is_active = false"
+                                        @change="if (selectedPeriod.status !== 'OPEN') selectedPeriod.is_active = false"
                                         required
                                         class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-100"
                                     >
@@ -278,20 +325,20 @@
                                         name="is_active"
                                         value="1"
                                         x-model="selectedPeriod.is_active"
-                                        :disabled="selectedPeriod.status === 'CLOSED'"
+                                        :disabled="selectedPeriod.status !== 'OPEN'"
                                         class="mt-1 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                    <span>
-                                        <span class="block text-sm font-semibold text-slate-800">Jadikan periode aktif</span>
-                                        <span
-                                            class="mt-1 block text-xs leading-5"
-                                            :class="selectedPeriod.status === 'CLOSED' ? 'text-rose-600' : 'text-slate-500'"
-                                            x-text="
-                                                selectedPeriod.status === 'CLOSED'
-                                                    ? 'Periode yang ditutup otomatis menjadi nonaktif dan bersifat read-only.'
+                                    <span
+                                        class="mt-1 block text-xs leading-5"
+                                        :class="selectedPeriod.status !== 'OPEN' ? 'text-rose-600' : 'text-slate-500'"
+                                        x-text="
+                                            selectedPeriod.status === 'CLOSED'
+                                                ? 'Periode yang ditutup otomatis menjadi nonaktif dan bersifat read-only.'
+                                                : selectedPeriod.status === 'DRAFT'
+                                                    ? 'Ubah status menjadi Dibuka sebelum mengaktifkan periode.'
                                                     : 'Mengaktifkan periode ini akan otomatis menonaktifkan periode lain.'
-                                            "
-                                        ></span>
+                                        "
+                                    ></span>
                                     </span>
                                 </label>
                             </div>
@@ -400,6 +447,185 @@
                         class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
                         <i data-lucide="save" class="h-4 w-4"></i>
                         Simpan Periode
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Modal Tambah Periode --}}
+    <div
+        x-show="createOpen"
+        x-cloak
+        @keydown.escape.window="createOpen=false"
+        class="fixed inset-0 z-[9999] flex items-center justify-center overflow-y-auto p-4 sm:p-6"
+    >
+        <div
+            class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px]"
+            @click="createOpen=false"
+        ></div>
+
+        <div
+            x-show="createOpen"
+            x-transition.opacity.scale.95
+            @click.stop
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="create-period-title"
+            class="relative z-10 my-auto w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+        >
+            <form method="POST" action="{{ route('admin.periods.store') }}">
+                @csrf
+                <input type="hidden" name="_period_form" value="create">
+
+                <div class="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
+                    <div>
+                        <h3 id="create-period-title" class="text-lg font-bold text-slate-900">
+                            Tambah Periode SPMB
+                        </h3>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Periode baru dibuat sebagai Draft dan belum aktif.
+                        </p>
+                    </div>
+                    <button type="button" @click="createOpen=false"
+                        class="rounded-lg p-2 text-slate-400 hover:bg-slate-100">
+                        <i data-lucide="x" class="h-5 w-5"></i>
+                    </button>
+                </div>
+
+                <div class="max-h-[72vh] space-y-7 overflow-y-auto p-6">
+
+                    <section>
+                        <h4 class="font-bold text-slate-900">Identitas Periode</h4>
+                        <div class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <div>
+                                <label for="create-name" class="mb-1.5 block text-sm font-semibold text-slate-700">Nama Periode</label>
+                                <input id="create-name" type="text" name="name" maxlength="20" required
+                                    value="{{ old('name') }}"
+                                    placeholder="2028/2029"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label for="create-year-start" class="mb-1.5 block text-sm font-semibold text-slate-700">Tahun Awal</label>
+                                <input id="create-year-start" type="number" name="year_start"
+                                    min="2020" max="2100" required
+                                    value="{{ old('year_start') }}"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label for="create-year-end" class="mb-1.5 block text-sm font-semibold text-slate-700">Tahun Akhir</label>
+                                <input id="create-year-end" type="number" name="year_end"
+                                    min="2021" max="2101" required
+                                    value="{{ old('year_end') }}"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label for="create-registration-open" class="mb-1.5 block text-sm font-semibold text-slate-700">Tanggal Buka</label>
+                                <input id="create-registration-open" type="date" name="registration_open"
+                                    value="{{ old('registration_open') }}"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label for="create-registration-close" class="mb-1.5 block text-sm font-semibold text-slate-700">Tanggal Tutup</label>
+                                <input id="create-registration-close" type="date" name="registration_close"
+                                    value="{{ old('registration_close') }}"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-slate-100 pt-6">
+                        <h4 class="font-bold text-slate-900">Salin Konfigurasi</h4>
+                        <p class="mt-1 text-sm text-slate-500">
+                            Opsional. Menyalin jalur pendaftaran, jurusan, keringanan biaya,
+                            dan program khusus dari periode sebelumnya.
+                            Data pendaftar dan pembayaran tidak disalin.
+                        </p>
+                        <div class="mt-4">
+                            <label for="create-copy-source" class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                Periode Sumber
+                            </label>
+                            <select id="create-copy-source" name="copy_from_period_id"
+                                class="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm">
+                                <option value="">Tidak menyalin (periode kosong)</option>
+                                @foreach ($periods as $sourcePeriod)
+                                    <option value="{{ $sourcePeriod->id }}"
+                                        @selected(old('copy_from_period_id') == $sourcePeriod->id)>
+                                        {{ $sourcePeriod->name }} — {{ $sourcePeriod->year_start }}/{{ $sourcePeriod->year_end }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-slate-100 pt-6">
+                        <h4 class="font-bold text-slate-900">Biaya Daftar Ulang</h4>
+                        <div class="mt-4 max-w-sm">
+                            <label for="create-fee" class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                Nominal (Rp)
+                            </label>
+                            <input id="create-fee" type="text" inputmode="numeric"
+                                x-model="createFeeDisplay"
+                                @input="formatCreateFee($event.target.value)"
+                                class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            <input type="hidden" name="default_reenroll_fee"
+                                :value="createFeeDisplay.replace(/\D/g,'') || '0'">
+                            <p class="mt-1.5 text-xs text-slate-500">
+                                Isi 0 jika daftar ulang tidak berbayar.
+                            </p>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-slate-100 pt-6">
+                        <h4 class="font-bold text-slate-900">Format Nomor Pendaftaran</h4>
+                        <div class="mt-4 grid gap-4 sm:grid-cols-3">
+                            <div>
+                                <label for="create-prefix" class="mb-1.5 block text-sm font-semibold text-slate-700">Prefix</label>
+                                <input id="create-prefix" type="text" name="number_prefix"
+                                    maxlength="30" required
+                                    value="{{ old('number_prefix', 'SPMB') }}"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label for="create-number-year" class="mb-1.5 block text-sm font-semibold text-slate-700">Tahun Nomor</label>
+                                <input id="create-number-year" type="number" name="number_year"
+                                    min="2020" max="2100" required
+                                    value="{{ old('number_year') }}"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                            <div>
+                                <label for="create-digits" class="mb-1.5 block text-sm font-semibold text-slate-700">Jumlah Digit</label>
+                                <input id="create-digits" type="number" name="number_digits"
+                                    min="3" max="8" required
+                                    value="{{ old('number_digits', 4) }}"
+                                    class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm">
+                            </div>
+                        </div>
+                        <div class="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                            <input type="hidden" name="include_major_code" value="0">
+                            <label class="flex items-center gap-3 text-sm font-semibold text-slate-700">
+                                <input type="checkbox" name="include_major_code" value="1"
+                                    @checked(old('include_major_code', '1') == '1')
+                                    class="h-4 w-4 rounded border-slate-300 text-emerald-600">
+                                Sertakan kode jurusan dalam nomor pendaftaran
+                            </label>
+                        </div>
+                    </section>
+
+                    <div class="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+                        Periode baru tidak langsung aktif. Setelah konfigurasi diperiksa,
+                        ubah status menjadi Dibuka sebelum mengaktifkannya.
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
+                    <button type="button" @click="createOpen=false"
+                        class="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-600">
+                        Batal
+                    </button>
+                    <button type="submit"
+                        class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700">
+                        Buat Periode
                     </button>
                 </div>
             </form>

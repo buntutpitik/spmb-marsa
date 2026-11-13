@@ -67,6 +67,98 @@ class AdminPpdbPeriodManagementTest extends TestCase
             ->assertSee('Periode SPMB');
     }
 
+    public function test_superadmin_period_page_renders_creation_form_and_copy_sources(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $archivedPeriod = PpdbPeriod::query()->create([
+            'school_id' => $this->school->id,
+            'name' => '2025/2026',
+            'year_start' => 2025,
+            'year_end' => 2026,
+            'status' => 'CLOSED',
+            'is_active' => false,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2025,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 250000,
+            'archived_at' => now(),
+        ]);
+
+        $response = $this->actingAs($user)
+            ->get(route('admin.periods.index'));
+
+        $response
+            ->assertOk()
+            ->assertSee('Tambah Periode')
+            ->assertSee('name="copy_from_period_id"', false)
+            ->assertSee('name="_period_form" value="create"', false)
+            ->assertSee('name="default_reenroll_fee"', false)
+            ->assertSee('name="include_major_code"', false)
+            ->assertSee(
+                'action="'.route('admin.periods.store').'"',
+                false
+            )
+            ->assertSee(
+                '<option value="'.$this->period->id.'"',
+                false
+            )
+            ->assertDontSee(
+                '<option value="'.$archivedPeriod->id.'"',
+                false
+            );
+    }
+
+    public function test_create_period_validation_error_restores_form_input(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $payload = [
+            '_period_form' => 'create',
+            'name' => '2028/2029',
+            'year_start' => 2028,
+            'year_end' => 2028,
+            'registration_open' => '2028-01-10',
+            'registration_close' => '2028-06-30',
+            'copy_from_period_id' => $this->period->id,
+            'default_reenroll_fee' => 350000,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2028,
+            'number_digits' => 5,
+            'include_major_code' => 1,
+        ];
+
+        $response = $this->actingAs($user)
+            ->from(route('admin.periods.index'))
+            ->post(route('admin.periods.store'), $payload);
+
+        $response
+            ->assertRedirect(route('admin.periods.index'))
+            ->assertSessionHasErrors('year_end')
+            ->assertSessionHasInput('_period_form', 'create')
+            ->assertSessionHasInput('name', '2028/2029')
+            ->assertSessionHasInput('default_reenroll_fee', 350000);
+
+        // Simulasikan browser mengikuti redirect.
+        $page = $this->actingAs($user)
+            ->get(route('admin.periods.index'));
+
+        $page
+            ->assertOk()
+            ->assertSee('createOpen: true', false)
+            ->assertSee("createFeeDisplay: '350.000'", false)
+            ->assertSee('value="2028/2029"', false)
+            ->assertSee('value="MARSA"', false)
+            ->assertSee('value="5"', false);
+
+        $this->assertDatabaseMissing('ppdb_periods', [
+            'school_id' => $this->school->id,
+            'year_start' => 2028,
+            'year_end' => 2028,
+        ]);
+    }
+
     public function test_non_superadmin_roles_cannot_access_period_management(): void
     {
         foreach (
@@ -483,6 +575,189 @@ class AdminPpdbPeriodManagementTest extends TestCase
         $this->assertSame(
             250000,
             (int) $this->period->default_reenroll_fee
+        );
+    }
+
+    public function test_draft_period_cannot_be_activated(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $draft = PpdbPeriod::query()->create([
+            'school_id' => $this->school->id,
+            'name' => '2028/2029',
+            'year_start' => 2028,
+            'year_end' => 2029,
+            'registration_open' => '2028-01-01',
+            'registration_close' => '2028-06-30',
+            'status' => 'DRAFT',
+            'is_active' => false,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2028,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 250000,
+        ]);
+
+        $this->actingAs($user)
+            ->from(route('admin.periods.index'))
+            ->put(
+                route('admin.periods.update', $draft),
+                $this->validPayload([
+                    'name' => '2028/2029',
+                    'year_start' => 2028,
+                    'year_end' => 2029,
+                    'number_year' => 2028,
+                    'status' => 'DRAFT',
+                    'is_active' => '1',
+                ])
+            )
+            ->assertRedirect(route('admin.periods.index'))
+            ->assertSessionHasErrors('is_active');
+
+        $draft->refresh();
+        $this->period->refresh();
+
+        $this->assertSame('DRAFT', $draft->status);
+        $this->assertFalse($draft->is_active);
+
+        $this->assertSame('OPEN', $this->period->status);
+        $this->assertTrue($this->period->is_active);
+
+        $this->assertSame(
+            1,
+            PpdbPeriod::query()
+                ->where('school_id', $this->school->id)
+                ->where('is_active', true)
+                ->count()
+        );
+    }
+
+    public function test_activating_period_does_not_deactivate_another_school(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $otherSchool = School::query()->create([
+            'name' => 'SMK OTHER SCHOOL',
+            'npsn' => '87654335',
+        ]);
+
+        $foreignPeriod = PpdbPeriod::query()->create([
+            'school_id' => $otherSchool->id,
+            'name' => '2027/2028',
+            'year_start' => 2027,
+            'year_end' => 2028,
+            'registration_open' => '2027-01-01',
+            'registration_close' => '2027-06-30',
+            'status' => 'OPEN',
+            'is_active' => true,
+            'number_prefix' => 'OTHER',
+            'number_year' => 2027,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 200000,
+        ]);
+
+        $targetPeriod = PpdbPeriod::query()->create([
+            'school_id' => $this->school->id,
+            'name' => '2028/2029',
+            'year_start' => 2028,
+            'year_end' => 2029,
+            'registration_open' => '2028-01-01',
+            'registration_close' => '2028-06-30',
+            'status' => 'DRAFT',
+            'is_active' => false,
+            'number_prefix' => 'MARSA',
+            'number_year' => 2028,
+            'number_digits' => 4,
+            'include_major_code' => true,
+            'default_reenroll_fee' => 250000,
+        ]);
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.periods.update', $targetPeriod),
+                $this->validPayload([
+                    'name' => '2028/2029',
+                    'year_start' => 2028,
+                    'year_end' => 2029,
+                    'registration_open' => '2028-01-01',
+                    'registration_close' => '2028-06-30',
+                    'status' => 'OPEN',
+                    'is_active' => '1',
+                    'number_year' => 2028,
+                ])
+            )
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('admin.periods.index'));
+
+        $this->period->refresh();
+        $targetPeriod->refresh();
+        $foreignPeriod->refresh();
+
+        $this->assertFalse($this->period->is_active);
+        $this->assertTrue($targetPeriod->is_active);
+        $this->assertTrue($foreignPeriod->is_active);
+
+        $this->assertSame(
+            1,
+            PpdbPeriod::query()
+                ->where('school_id', $this->school->id)
+                ->where('is_active', true)
+                ->count()
+        );
+
+        $this->assertSame(
+            1,
+            PpdbPeriod::query()
+                ->where('school_id', $otherSchool->id)
+                ->where('is_active', true)
+                ->count()
+        );
+    }
+
+    public function test_archived_period_cannot_be_updated(): void
+    {
+        $user = $this->makeUser('SUPERADMIN');
+
+        $this->period->update([
+            'archived_at' => now(),
+            'is_active' => false,
+        ]);
+
+        $initialLogCount = ActivityLog::query()
+            ->where('action', 'UPDATE_PPDB_PERIOD')
+            ->count();
+
+        $this->actingAs($user)
+            ->put(
+                route('admin.periods.update', $this->period),
+                $this->validPayload([
+                    'name' => 'PERIODE ARSIP DIUBAH',
+                    'status' => 'OPEN',
+                    'is_active' => '1',
+                    'default_reenroll_fee' => 999999,
+                ])
+            )
+            ->assertRedirect(route('admin.periods.index'))
+            ->assertSessionHas('error');
+
+        $this->period->refresh();
+
+        $this->assertSame('2027/2028', $this->period->name);
+        $this->assertSame('OPEN', $this->period->status);
+        $this->assertFalse($this->period->is_active);
+        $this->assertNotNull($this->period->archived_at);
+
+        $this->assertSame(
+            250000,
+            (int) $this->period->default_reenroll_fee
+        );
+
+        $this->assertSame(
+            $initialLogCount,
+            ActivityLog::query()
+                ->where('action', 'UPDATE_PPDB_PERIOD')
+                ->count()
         );
     }
 

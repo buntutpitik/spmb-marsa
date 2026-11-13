@@ -44,7 +44,8 @@ class PpdbPeriod extends Model
 
     public function isReadOnly(): bool
     {
-        return $this->status === 'CLOSED';
+        return $this->status === 'CLOSED'
+            || $this->archived_at !== null;
     }
 
     public function school(): BelongsTo

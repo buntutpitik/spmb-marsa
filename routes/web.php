@@ -553,6 +553,11 @@ Route::prefix('admin')
                 [PpdbPeriodController::class, 'index']
             )->name('periods.index');
 
+            Route::post(
+                '/pengaturan/periode',
+                [PpdbPeriodController::class, 'store']
+            )->name('periods.store');
+
             Route::put(
                 '/pengaturan/periode/{period}',
                 [PpdbPeriodController::class, 'update']

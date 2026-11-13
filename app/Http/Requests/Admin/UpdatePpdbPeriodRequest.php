@@ -4,6 +4,7 @@ namespace App\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class UpdatePpdbPeriodRequest extends FormRequest
 {
@@ -110,6 +111,24 @@ class UpdatePpdbPeriodRequest extends FormRequest
                 'string',
                 'max:2000',
             ],
+        ];
+    }
+
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                if (
+                    $this->input('status') === 'DRAFT'
+                    && $this->boolean('is_active')
+                ) {
+                    $validator->errors()->add(
+                        'is_active',
+                        'Periode DRAFT tidak dapat diaktifkan. '
+                        . 'Ubah status menjadi OPEN terlebih dahulu.'
+                    );
+                }
+            },
         ];
     }
 
