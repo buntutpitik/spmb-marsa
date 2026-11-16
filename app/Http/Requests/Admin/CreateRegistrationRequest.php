@@ -5,9 +5,12 @@ namespace App\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use App\Services\PeriodContext;
+use App\Http\Requests\Concerns\CopiesParentAddress;
 
 class CreateRegistrationRequest extends FormRequest
 {
+    use CopiesParentAddress;
+
     public function authorize(): bool
     {
         return in_array(
@@ -134,6 +137,17 @@ class CreateRegistrationRequest extends FormRequest
                 'digits:5',
             ],
 
+            'parent_hamlet' => ['nullable', 'string', 'max:100'],
+            'parent_rt' => ['nullable', 'string', 'max:10'],
+            'parent_rw' => ['nullable', 'string', 'max:10'],
+            'parent_village' => ['nullable', 'string', 'max:100'],
+            'parent_district' => ['nullable', 'string', 'max:100'],
+            'parent_city' => ['nullable', 'string', 'max:100'],
+            'parent_province' => ['nullable', 'string', 'max:100'],
+            'parent_postal_code' => ['nullable', 'digits:5'],
+
+            'same_parent_address' => ['sometimes', 'boolean'],
+
             'father_name' => ['nullable', 'string', 'max:150'],
             'mother_name' => ['nullable', 'string', 'max:150'],
             'father_job' => ['nullable', 'string', 'max:100'],
@@ -180,6 +194,8 @@ class CreateRegistrationRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:150',
+                Rule::exists('referral_sources', 'name')
+                    ->where('is_active', true)
             ],
 
             'relief_options' => [
@@ -300,5 +316,6 @@ class CreateRegistrationRequest extends FormRequest
                 (string) $this->input('whatsapp')
             ),
         ]);
+        $this->copyParentAddressWhenRequested();
     }
 }

@@ -8,6 +8,7 @@ use App\Models\OriginSchool;
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
 use App\Models\AdmissionPath;
+use App\Models\ReferralSource;
 use App\Services\PeriodContext;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CreateRegistrationRequest;
@@ -227,6 +228,11 @@ class RegistrationController extends Controller
             ->orderBy('name')
             ->get();
 
+        $referralSources = ReferralSource::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         $reliefOptions = $selectedPeriod
             ->reliefOptions()
             ->wherePivot('is_active', true)
@@ -249,6 +255,7 @@ class RegistrationController extends Controller
                 'selectedPeriod',
                 'majors',
                 'originSchools',
+                'referralSources',
                 'reliefOptions',
                 'specialPrograms'
             )
@@ -315,6 +322,11 @@ class RegistrationController extends Controller
             ->orderBy('special_programs.name')
             ->get();
 
+        $referralSources = ReferralSource::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+
         $originSchools = OriginSchool::query()
             ->where('is_active', true)
             ->orderBy('sort_order')
@@ -329,6 +341,7 @@ class RegistrationController extends Controller
             'reliefOptions' => $reliefOptions,
             'specialPrograms' => $specialPrograms,
             'originSchools' => $originSchools,
+            'referralSources' => $referralSources,
         ]);
     }
 
@@ -516,6 +529,14 @@ class RegistrationController extends Controller
                 'city',
                 'province',
                 'postal_code',
+                'parent_hamlet',
+                'parent_rt',
+                'parent_rw',
+                'parent_village',
+                'parent_district',
+                'parent_city',
+                'parent_province',
+                'parent_postal_code',
                 'father_name',
                 'mother_name',
                 'father_job',
@@ -531,7 +552,8 @@ class RegistrationController extends Controller
 
             unset(
                 $validated['relief_options'],
-                $validated['special_programs']
+                $validated['special_programs'],
+                $validated['same_parent_address']
             );
 
             $registration->update($validated);

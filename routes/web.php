@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdmissionPdfController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\MajorRecapExportController;
 use App\Http\Controllers\Admin\MajorRecapPdfController;
+use App\Http\Controllers\Admin\ReferralSourceController;
 use App\Http\Controllers\Admin\OriginSchoolController;
 use App\Http\Controllers\Admin\OriginSchoolRecapController;
 use App\Http\Controllers\Admin\OriginSchoolRecapExportController;
@@ -543,6 +544,30 @@ Route::prefix('admin')
                 '/pengaturan/asal-sekolah/{originSchool}/toggle',
                 [OriginSchoolController::class, 'toggle']
             )->name('origin-schools.toggle');
+
+            /*
+             * Master Asal Pembawa
+             */
+
+            Route::get(
+                '/pengaturan/asal-pembawa',
+                [ReferralSourceController::class, 'index']
+            )->name('referral-sources.index');
+
+            Route::post(
+                '/pengaturan/asal-pembawa',
+                [ReferralSourceController::class, 'store']
+            )->name('referral-sources.store');
+
+            Route::put(
+                '/pengaturan/asal-pembawa/{referralSource}',
+                [ReferralSourceController::class, 'update']
+            )->name('referral-sources.update');
+
+            Route::patch(
+                '/pengaturan/asal-pembawa/{referralSource}/toggle',
+                [ReferralSourceController::class, 'toggle']
+            )->name('referral-sources.toggle');
 
             /*
             * Periode SPMB

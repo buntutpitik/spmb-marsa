@@ -339,6 +339,50 @@
 
         </div>
 
+        {{-- Asal Pembawa --}}
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+
+            <div class="flex items-start gap-4">
+
+                <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">
+                    <i data-lucide="users" class="h-5 w-5"></i>
+                </div>
+
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+
+                        <h2 class="font-bold text-slate-900">
+                            Asal Pembawa
+                        </h2>
+
+                        <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                            Aktif
+                        </span>
+
+                    </div>
+
+                    <p class="mt-2 text-sm leading-6 text-slate-500">
+                        Kelola pilihan Asal Pembawa pada formulir
+                        pendaftaran Admin, termasuk pengubahan nama
+                        dan status aktif atau nonaktif.
+                    </p>
+                </div>
+
+            </div>
+
+            <div class="mt-5">
+                <a
+                    href="{{ route('admin.referral-sources.index') }}"
+                    class="inline-flex items-center gap-2 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700"
+                >
+                    Kelola Asal Pembawa
+
+                    <i data-lucide="arrow-right" class="h-4 w-4"></i>
+                </a>
+            </div>
+
+        </div>
+
         {{-- Keringanan / Prestasi --}}
         <div class="rounded-2xl border border-emerald-200 bg-white p-6 shadow-sm">
 

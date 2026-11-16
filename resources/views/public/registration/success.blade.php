@@ -234,17 +234,44 @@
 
                             <div>
                                 <h3 class="text-sm font-semibold text-amber-900">
-                                    Simpan akses pendaftaran Anda
+                                    Informasi Pendaftaran
                                 </h3>
 
-                                <p class="mt-1 text-sm leading-6 text-amber-800">
-                                    Gunakan halaman ini untuk membuka status dan kartu pendaftaran Anda.
-                                    Simpan nomor pendaftaran dan jangan membagikan tautan akses pendaftaran kepada orang lain.
+                                <p class="mt-2 text-sm leading-6 text-amber-800">
+                                    Pendaftaran Anda telah berhasil diterima oleh sistem SPMB MARSA.
                                 </p>
 
                                 <p class="mt-2 text-sm leading-6 text-amber-800">
-                                    Tahap berikutnya adalah wawancara bersama orang tua/wali.
-                                    Silakan datang ke Sekretariat SPMB MARSA pada jam kerja.
+                                    <strong>Simpan nomor pendaftaran</strong>
+                                    sebagai bukti registrasi dan untuk keperluan pengecekan
+                                    status serta pencetakan kartu pendaftaran.
+                                </p>
+
+                                <h4 class="mt-4 text-sm font-semibold text-amber-900">
+                                    Tahap Selanjutnya: Verifikasi Data Diri
+                                </h4>
+
+                                <p class="mt-2 text-sm leading-6 text-amber-800">
+                                    Calon peserta didik wajib melakukan verifikasi data diri
+                                    di Sekretariat SPMB SMK Ma'arif 9 Kebumen pada hari dan jam kerja.
+                                </p>
+
+                                <p class="mt-2 text-sm leading-6 text-amber-800">
+                                    Informasi lebih lanjut akan disampaikan melalui grup
+                                    WhatsApp calon murid baru.
+                                </p>
+
+                                <p class="mt-2 text-sm leading-6 text-amber-800">
+                                    Bagi yang belum bergabung ke grup WhatsApp,
+                                    silakan menghubungi
+                                    <a
+                                        href="https://wa.me/6282220251022"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700"
+                                    >
+                                        0822-2025-1022
+                                    </a>.
                                 </p>
                             </div>
 

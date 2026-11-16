@@ -329,6 +329,15 @@ class RegistrationService
                 'province',
                 'postal_code',
 
+                'parent_hamlet',
+                'parent_rt',
+                'parent_rw',
+                'parent_village',
+                'parent_district',
+                'parent_city',
+                'parent_province',
+                'parent_postal_code',
+
                 'father_name',
                 'mother_name',
                 'father_job',

@@ -15,7 +15,7 @@
         $statusMeta = match ($registration->status) {
             'REGISTERED' => [
                 'class' => 'border-blue-200 bg-blue-50 text-blue-700',
-                'description' => 'Pendaftaran Anda berhasil tercatat. Silakan mengikuti proses wawancara bersama orang tua atau wali pada hari dan jam kerja. Pantau halaman ini secara berkala untuk melihat pembaruan status pendaftaran Anda. Informasi lebih lanjut, hubungi: 085702244074.',
+                'description' => 'Pendaftaran Anda berhasil tercatat. Proses selanjutnya verifikasi data diri, silakan datang ke sekretariat SPMB pada hari dan jam kerja. Pantau halaman ini secara berkala untuk melihat pembaruan status pendaftaran Anda. Informasi lebih lanjut, hubungi: 082220251022.',
             ],
             'ACCEPTED' => [
                 'class' => 'border-emerald-200 bg-emerald-50 text-emerald-700',

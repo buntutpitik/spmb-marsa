@@ -72,6 +72,11 @@ class AdminRegistrationEditTest extends TestCase
             'is_active' => true,
             'sort_order' => 10,
         ]);
+
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'ALUMNI',
+            'is_active' => true,
+        ]);
     }
 
     public function test_all_operational_roles_can_open_active_registration_edit_form(): void
@@ -544,6 +549,293 @@ class AdminRegistrationEditTest extends TestCase
             ]))
             ->assertOk()
             ->assertDontSee('Edit Data');
+    }
+
+    public function test_admin_can_update_parent_address(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+        $payload = $this->validPayload($registration);
+
+        $payload['same_parent_address'] = '0';
+        $payload['parent_hamlet'] = 'DUKUH MAWAR';
+        $payload['parent_rt'] = '005';
+        $payload['parent_rw'] = '006';
+        $payload['parent_village'] = 'DESA MAWAR';
+        $payload['parent_district'] = 'GOMBONG';
+        $payload['parent_city'] = 'KEBUMEN';
+        $payload['parent_province'] = 'JAWA TENGAH';
+        $payload['parent_postal_code'] = '54411';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'parent_hamlet' => 'DUKUH MAWAR',
+            'parent_rt' => '005',
+            'parent_rw' => '006',
+            'parent_village' => 'DESA MAWAR',
+            'parent_district' => 'GOMBONG',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54411',
+        ]);
+    }
+
+    public function test_admin_edit_preserves_parent_address_when_not_submitted(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+
+        $registration->update([
+            'parent_hamlet' => 'DUKUH LAMA',
+            'parent_rt' => '007',
+            'parent_rw' => '008',
+            'parent_village' => 'DESA LAMA',
+            'parent_district' => 'KEBUMEN',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54311',
+        ]);
+
+        $payload = $this->validPayload($registration);
+
+        unset($payload['same_parent_address']);
+
+        foreach ([
+            'parent_hamlet',
+            'parent_rt',
+            'parent_rw',
+            'parent_village',
+            'parent_district',
+            'parent_city',
+            'parent_province',
+            'parent_postal_code',
+        ] as $field) {
+            unset($payload[$field]);
+        }
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'parent_hamlet' => 'DUKUH LAMA',
+            'parent_rt' => '007',
+            'parent_rw' => '008',
+            'parent_village' => 'DESA LAMA',
+            'parent_district' => 'KEBUMEN',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54311',
+        ]);
+    }
+
+    public function test_admin_edit_checkbox_copies_updated_student_address(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+
+        $registration->update([
+            'parent_hamlet' => 'ALAMAT ORANG TUA LAMA',
+            'parent_city' => 'PURWOREJO',
+        ]);
+
+        $payload = $this->validPayload($registration);
+
+        $payload['same_parent_address'] = '1';
+        $payload['hamlet'] = 'DUKUH BARU';
+        $payload['rt'] = '011';
+        $payload['rw'] = '012';
+        $payload['village'] = 'DESA BARU';
+        $payload['district'] = 'GOMBONG';
+        $payload['city'] = 'KEBUMEN';
+        $payload['province'] = 'JAWA TENGAH';
+        $payload['postal_code'] = '54411';
+
+        $payload['parent_hamlet'] = 'ALAMAT MANIPULASI';
+        $payload['parent_city'] = 'KOTA LAIN';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'parent_hamlet' => 'DUKUH BARU',
+            'parent_rt' => '011',
+            'parent_rw' => '012',
+            'parent_village' => 'DESA BARU',
+            'parent_district' => 'GOMBONG',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54411',
+        ]);
+    }
+
+    public function test_edit_rejects_inactive_referral_source_as_new_value(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'SUMBER NONAKTIF',
+            'is_active' => false,
+        ]);
+
+        $payload = $this->validPayload($registration);
+        $payload['referrer_source'] = 'SUMBER NONAKTIF';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasErrors('referrer_source');
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_source' => null,
+        ]);
+    }
+
+    public function test_edit_preserves_inactive_historical_referral_source(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+
+        $registration->update([
+            'referrer_source' => 'SUMBER LAMA',
+        ]);
+
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'SUMBER LAMA',
+            'is_active' => false,
+        ]);
+
+        $registration->refresh();
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->get(route('admin.registrations.edit', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('value="SUMBER LAMA"', false);
+
+        $payload = $this->validPayload($registration);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_source' => 'SUMBER LAMA',
+        ]);
+    }
+
+    public function test_edit_rejects_unknown_referral_source_from_another_registration(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+
+        $payload = $this->validPayload($registration);
+        $payload['referrer_source'] = 'SUMBER HISTORIS LAIN';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasErrors('referrer_source');
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_source' => null,
+        ]);
+    }
+
+    public function test_edit_preserves_historical_referral_source_missing_from_master(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+
+        $registration->update([
+            'referrer_source' => 'SUMBER HISTORIS DIHAPUS',
+        ]);
+
+        $registration->refresh();
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->get(route('admin.registrations.edit', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('value="SUMBER HISTORIS DIHAPUS"', false);
+
+        $payload = $this->validPayload($registration);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_source' => 'SUMBER HISTORIS DIHAPUS',
+        ]);
+    }
+
+    public function test_edit_can_select_another_active_referral_source(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'WALI MURID',
+            'is_active' => true,
+        ]);
+
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'SUMBER NONAKTIF',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->get(route('admin.registrations.edit', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('value="ALUMNI"', false)
+            ->assertSee('value="WALI MURID"', false)
+            ->assertDontSee('value="SUMBER NONAKTIF"', false);
+
+        $payload = $this->validPayload($registration);
+        $payload['referrer_source'] = 'WALI MURID';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_source' => 'WALI MURID',
+        ]);
     }
 
     private function makeUser(string $role): User

@@ -4,12 +4,15 @@ namespace App\Http\Requests;
 
 use App\Models\OriginSchool;
 use App\Services\PeriodContext;
+use App\Http\Requests\Concerns\CopiesParentAddress;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StorePublicRegistrationRequest extends FormRequest
 {
+    use CopiesParentAddress;
+
     public function authorize(): bool
     {
         return true;
@@ -170,6 +173,17 @@ class StorePublicRegistrationRequest extends FormRequest
                 'nullable',
                 'digits:5',
             ],
+
+            'parent_hamlet' => ['nullable', 'string', 'max:100'],
+            'parent_rt' => ['nullable', 'string', 'max:10'],
+            'parent_rw' => ['nullable', 'string', 'max:10'],
+            'parent_village' => ['nullable', 'string', 'max:100'],
+            'parent_district' => ['nullable', 'string', 'max:100'],
+            'parent_city' => ['nullable', 'string', 'max:100'],
+            'parent_province' => ['nullable', 'string', 'max:100'],
+            'parent_postal_code' => ['nullable', 'digits:5'],
+
+            'same_parent_address' => ['sometimes', 'boolean'],
 
             'father_name' => [
                 'nullable',
@@ -378,6 +392,8 @@ class StorePublicRegistrationRequest extends FormRequest
                 (string) $this->input('whatsapp')
             ),
         ]);
+
+        $this->copyParentAddressWhenRequested();
     }
 
     public function withValidator(

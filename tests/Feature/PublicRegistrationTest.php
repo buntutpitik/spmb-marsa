@@ -347,6 +347,16 @@ class PublicRegistrationTest extends TestCase
 
                     'full_name' => 'TEST FEATURE SPMB MARSA',
 
+                    'same_parent_address' => '0',
+                    'parent_hamlet' => 'DUKUH MELATI',
+                    'parent_rt' => '003',
+                    'parent_rw' => '004',
+                    'parent_village' => 'DESA MELATI',
+                    'parent_district' => 'GOMBONG',
+                    'parent_city' => 'KEBUMEN',
+                    'parent_province' => 'JAWA TENGAH',
+                    'parent_postal_code' => '54411',
+
                     'birth_place' => 'Kebumen',
                     'birth_date' => '2009-02-15',
 
@@ -425,6 +435,18 @@ class PublicRegistrationTest extends TestCase
             ->where('period_id', $periodId)
             ->where('nik', '3399999999999999')
             ->firstOrFail();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'parent_hamlet' => 'DUKUH MELATI',
+            'parent_rt' => '003',
+            'parent_rw' => '004',
+            'parent_village' => 'DESA MELATI',
+            'parent_district' => 'GOMBONG',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54411',
+        ]);
 
         /*
          * =========================================================

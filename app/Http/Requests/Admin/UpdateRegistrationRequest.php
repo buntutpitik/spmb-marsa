@@ -5,9 +5,12 @@ namespace App\Http\Requests\Admin;
 use App\Models\Registration;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use App\Http\Requests\Concerns\CopiesParentAddress;
 
 class UpdateRegistrationRequest extends FormRequest
 {
+    use CopiesParentAddress;
+
     public function authorize(): bool
     {
         return auth()->check()
@@ -134,6 +137,17 @@ class UpdateRegistrationRequest extends FormRequest
                 'digits:5',
             ],
 
+            'parent_hamlet' => ['nullable', 'string', 'max:100'],
+            'parent_rt' => ['nullable', 'string', 'max:10'],
+            'parent_rw' => ['nullable', 'string', 'max:10'],
+            'parent_village' => ['nullable', 'string', 'max:100'],
+            'parent_district' => ['nullable', 'string', 'max:100'],
+            'parent_city' => ['nullable', 'string', 'max:100'],
+            'parent_province' => ['nullable', 'string', 'max:100'],
+            'parent_postal_code' => ['nullable', 'digits:5'],
+
+            'same_parent_address' => ['sometimes', 'boolean'],
+
             'father_name' => [
                 'nullable',
                 'string',
@@ -194,6 +208,27 @@ class UpdateRegistrationRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:150',
+                function ($attribute, $value, $fail) {
+                    $registration = $this->route('registration');
+
+                    // Nilai historis milik pendaftaran ini boleh dipertahankan.
+                    if (
+                        $registration instanceof \App\Models\Registration
+                        && $value === $registration->referrer_source
+                    ) {
+                        return;
+                    }
+
+                    // Nilai baru harus berasal dari master aktif.
+                    $exists = \App\Models\ReferralSource::query()
+                        ->where('name', $value)
+                        ->where('is_active', true)
+                        ->exists();
+
+                    if (! $exists) {
+                        $fail('Asal Pembawa harus dipilih dari master yang aktif.');
+                    }
+                },
             ],
 
             'notes' => [
@@ -341,5 +376,6 @@ class UpdateRegistrationRequest extends FormRequest
         }
 
         $this->merge($prepared);
+        $this->copyParentAddressWhenRequested();
     }
 }

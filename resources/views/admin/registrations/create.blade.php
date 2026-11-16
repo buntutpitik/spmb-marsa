@@ -106,67 +106,84 @@
             @csrf
 
 
-            {{-- Identitas --}}
+            {{-- Pilihan Pendaftaran --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">
-                            1
-                        </div>
-
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">1</div>
                         <div>
-                            <h2 class="font-bold text-slate-900">
-                                Identitas Calon Siswa
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Masukkan identitas utama calon siswa.
-                            </p>
+                            <h2 class="font-bold text-slate-900">Pilihan Pendaftaran</h2>
+                            <p class="mt-1 text-sm text-slate-500">Periode dan jalur ditentukan otomatis oleh sistem.</p>
                         </div>
                     </div>
                 </div>
-
                 <div class="grid gap-5 p-6 md:grid-cols-2">
                     <div>
-                        <label
-                            for="nik"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            NIK
-                            <span class="text-red-500">*</span>
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">
+                            Periode
                         </label>
 
-                        <input
-                            id="nik"
-                            type="text"
-                            name="nik"
-                            inputmode="numeric"
-                            maxlength="16"
-                            value="{{ old('nik') }}"
-                            class="{{ $inputClass }}"
-                            required
-                        >
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                            {{ $selectedPeriod->name }}
+                        </div>
                     </div>
-
                     <div>
-                        <label
-                            for="nisn"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            NISN
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">
+                            Nomor Pendaftaran
                         </label>
 
-                        <input
-                            id="nisn"
-                            type="text"
-                            name="nisn"
-                            inputmode="numeric"
-                            maxlength="20"
-                            value="{{ old('nisn') }}"
-                            class="{{ $inputClass }}"
-                        >
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                            Dibuat otomatis oleh sistem
+                        </div>
                     </div>
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">
+                            Jalur Pendaftaran
+                        </label>
 
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                            Ditentukan otomatis oleh sistem
+                        </div>
+
+                        <p class="mt-2 text-xs leading-5 text-slate-400">
+                            Jalur pendaftaran ditentukan otomatis oleh sistem berdasarkan jadwal.
+                        </p>
+                    </div>
+                    <div>
+                        <label class="mb-2 block text-sm font-semibold text-slate-700">
+                            Status
+                        </label>
+
+                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                            {{ match ('REGISTERED') {
+                                'REGISTERED' => 'Terdaftar',
+                                'ACCEPTED' => 'Diterima',
+                                'REJECTED' => 'Ditolak',
+                                'REENROLLED' => 'Daftar Ulang',
+                                'WITHDRAWN' => 'Mengundurkan Diri',
+                                default => 'REGISTERED',
+                            } }}
+                        </div>
+
+                        <p class="mt-2 text-xs text-slate-400">
+                            Status dikelola melalui alur perubahan status.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {{-- Identitas Siswa --}}
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">2</div>
+                        <div>
+                            <h2 class="font-bold text-slate-900">Identitas Siswa</h2>
+                            <p class="mt-1 text-sm text-slate-500">Masukkan identitas utama calon siswa.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid gap-5 p-6 md:grid-cols-2">
                     <div class="md:col-span-2">
                         <label
                             for="full_name"
@@ -186,42 +203,6 @@
                             required
                         >
                     </div>
-
-                    <div>
-                        <label
-                            for="birth_place"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Tempat Lahir
-                        </label>
-
-                        <input
-                            id="birth_place"
-                            type="text"
-                            name="birth_place"
-                            maxlength="100"
-                            value="{{ old('birth_place') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="birth_date"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Tanggal Lahir
-                        </label>
-
-                        <input
-                            id="birth_date"
-                            type="date"
-                            name="birth_date"
-                            value="{{ old('birth_date') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
                     <div>
                         <label
                             for="gender"
@@ -252,7 +233,77 @@
                             </option>
                         </select>
                     </div>
+                    <div>
+                        <label
+                            for="nisn"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            NISN
+                        </label>
 
+                        <input
+                            id="nisn"
+                            type="text"
+                            name="nisn"
+                            inputmode="numeric"
+                            maxlength="20"
+                            value="{{ old('nisn') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="nik"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            NIK
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        <input
+                            id="nik"
+                            type="text"
+                            name="nik"
+                            inputmode="numeric"
+                            maxlength="16"
+                            value="{{ old('nik') }}"
+                            class="{{ $inputClass }}"
+                            required
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="birth_place"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Tempat Lahir
+                        </label>
+
+                        <input
+                            id="birth_place"
+                            type="text"
+                            name="birth_place"
+                            maxlength="100"
+                            value="{{ old('birth_place') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="birth_date"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Tanggal Lahir
+                        </label>
+
+                        <input
+                            id="birth_date"
+                            type="date"
+                            name="birth_date"
+                            value="{{ old('birth_date') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
                     <div>
                         <label
                             for="religion"
@@ -270,7 +321,215 @@
                             class="{{ $inputClass }}"
                         >
                     </div>
+                </div>
+            </section>
 
+            {{-- Alamat Siswa --}}
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">3</div>
+                        <div>
+                            <h2 class="font-bold text-slate-900">Alamat Siswa</h2>
+                            <p class="mt-1 text-sm text-slate-500">Alamat tempat tinggal calon siswa.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid gap-5 p-6 md:grid-cols-2 lg:grid-cols-3">
+                    <div>
+                        <label
+                            for="hamlet"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Dusun
+                        </label>
+
+                        <input
+                            id="hamlet"
+                            type="text"
+                            name="hamlet"
+                            value="{{ old('hamlet') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="rt"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            RT
+                        </label>
+
+                        <input
+                            id="rt"
+                            type="text"
+                            name="rt"
+                            maxlength="10"
+                            value="{{ old('rt') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="rw"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            RW
+                        </label>
+
+                        <input
+                            id="rw"
+                            type="text"
+                            name="rw"
+                            maxlength="10"
+                            value="{{ old('rw') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="village"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Desa / Kelurahan
+                        </label>
+
+                        <input
+                            id="village"
+                            type="text"
+                            name="village"
+                            value="{{ old('village') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="district"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Kecamatan
+                        </label>
+
+                        <input
+                            id="district"
+                            type="text"
+                            name="district"
+                            value="{{ old('district') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="city"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Kabupaten / Kota
+                        </label>
+
+                        <input
+                            id="city"
+                            type="text"
+                            name="city"
+                            value="{{ old('city') }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="province"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Provinsi
+                        </label>
+
+                        <input
+                            id="province"
+                            type="text"
+                            name="province"
+                            value="{{ old(
+                                'province',
+                                null
+                            ) }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                    <div>
+                        <label
+                            for="postal_code"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Kode Pos
+                        </label>
+
+                        <input
+                            id="postal_code"
+                            type="text"
+                            name="postal_code"
+                            inputmode="numeric"
+                            maxlength="5"
+                            value="{{ old(
+                                'postal_code',
+                                null
+                            ) }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
+                </div>
+            </section>
+
+            {{-- Kontak Pendaftaran --}}
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">4</div>
+                        <div>
+                            <h2 class="font-bold text-slate-900">Kontak Pendaftaran</h2>
+                            <p class="mt-1 text-sm text-slate-500">
+                                Nomor WhatsApp aktif untuk komunikasi pendaftaran.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <div>
+                        <label
+                            for="whatsapp"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Nomor WhatsApp
+                            <span class="text-red-500">*</span>
+                        </label>
+
+                        <input
+                            id="whatsapp"
+                            type="text"
+                            name="whatsapp"
+                            maxlength="30"
+                            value="{{ old('whatsapp') }}"
+                            class="{{ $inputClass }}"
+                            placeholder="Contoh: 6281234567890"
+                            required
+                        >
+                        <p class="mt-2 text-xs text-slate-500">
+                            Gunakan nomor WhatsApp aktif yang dapat dihubungi.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            {{-- Asal Sekolah --}}
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">5</div>
+                        <div>
+                            <h2 class="font-bold text-slate-900">Asal Sekolah</h2>
+                            <p class="mt-1 text-sm text-slate-500">Pilih asal sekolah dan masukkan nilai kelulusan.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="grid gap-5 p-6 md:grid-cols-2">
                     <div class="md:col-span-2">
                         <label
                             for="origin_school_id"
@@ -308,7 +567,7 @@
                             </option>
                         </select>
 
-                        <div class="mt-4">
+                        <div id="origin_school_other_wrapper" class="mt-4" hidden>
                             <label
                                 for="origin_school_other"
                                 class="mb-2 block text-sm font-semibold text-slate-700"
@@ -332,64 +591,43 @@
                             pilih Lainnya lalu isi nama sekolah.
                         </p>
                     </div>
+                    <div>
+                        <label
+                            for="graduation_score"
+                            class="mb-2 block text-sm font-semibold text-slate-700"
+                        >
+                            Nilai Kelulusan
+                        </label>
+
+                        <input
+                            id="graduation_score"
+                            type="number"
+                            name="graduation_score"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value="{{ old(
+                                'graduation_score',
+                                null
+                            ) }}"
+                            class="{{ $inputClass }}"
+                        >
+                    </div>
                 </div>
             </section>
 
-            {{-- Informasi Pendaftaran --}}
+            {{-- Jurusan & Program Khusus --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">
-                            2
-                        </div>
-
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">6</div>
                         <div>
-                            <h2 class="font-bold text-slate-900">
-                                Informasi Pendaftaran
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Pilih jurusan calon siswa. Jalur pendaftaran ditentukan otomatis oleh sistem berdasarkan jadwal.
-                            </p>
+                            <h2 class="font-bold text-slate-900">Jurusan & Program Khusus</h2>
+                            <p class="mt-1 text-sm text-slate-500">Pilih jurusan dan program khusus yang diikuti.</p>
                         </div>
                     </div>
                 </div>
-
-                <div class="grid gap-5 p-6 md:grid-cols-2">
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">
-                            Periode
-                        </label>
-
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                            {{ $selectedPeriod->name }}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">
-                            Nomor Pendaftaran
-                        </label>
-
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                            Dibuat otomatis oleh sistem
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">
-                            Jalur Pendaftaran
-                        </label>
-
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                            Ditentukan otomatis oleh sistem
-                        </div>
-
-                        <p class="mt-2 text-xs leading-5 text-slate-400">
-                            Jalur pendaftaran ditentukan otomatis oleh sistem berdasarkan jadwal.
-                        </p>
-                    </div>
-
+                <div class="space-y-6 p-6">
                     <div>
                         <label
                             for="major_id"
@@ -422,242 +660,69 @@
                             @endforeach
                         </select>
                     </div>
-
                     <div>
-                        <label
-                            for="graduation_score"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Nilai Kelulusan
-                        </label>
+                        <div class="mb-3">
+                            <h3 class="text-sm font-bold text-slate-800">
+                                Program Khusus
+                            </h3>
 
-                        <input
-                            id="graduation_score"
-                            type="number"
-                            name="graduation_score"
-                            min="0"
-                            max="100"
-                            step="0.01"
-                            value="{{ old(
-                                'graduation_score',
-                                null
-                            ) }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label class="mb-2 block text-sm font-semibold text-slate-700">
-                            Status
-                        </label>
-
-                        <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
-                            {{ match ('REGISTERED') {
-                                'REGISTERED' => 'Terdaftar',
-                                'ACCEPTED' => 'Diterima',
-                                'REJECTED' => 'Ditolak',
-                                'REENROLLED' => 'Daftar Ulang',
-                                'WITHDRAWN' => 'Mengundurkan Diri',
-                                default => 'REGISTERED',
-                            } }}
+                            <p class="mt-1 text-xs leading-5 text-slate-400">
+                                Program Khusus yang diikuti calon siswa.
+                            </p>
                         </div>
 
-                        <p class="mt-2 text-xs text-slate-400">
-                            Status dikelola melalui alur perubahan status.
-                        </p>
+                        @if ($specialPrograms->isEmpty())
+                            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
+                                Belum ada Program Khusus aktif pada periode ini.
+                            </div>
+                        @else
+                            <div class="grid gap-3 md:grid-cols-2">
+                                @foreach ($specialPrograms as $program)
+                                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 px-4 py-3 transition hover:border-violet-300 hover:bg-violet-50/40">
+                                        <input
+                                            type="checkbox"
+                                            name="special_programs[]"
+                                            value="{{ $program->id }}"
+                                            @checked(
+                                                in_array(
+                                                    (int) $program->id,
+                                                    $selectedSpecialPrograms,
+                                                    true
+                                                )
+                                            )
+                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+                                        >
+
+                                        <span>
+                                            <span class="block text-sm font-semibold text-slate-800">
+                                                {{ $program->name }}
+                                            </span>
+
+                                            @if ($program->description)
+                                                <span class="mt-1 block text-xs leading-5 text-slate-500">
+                                                    {{ $program->description }}
+                                                </span>
+                                            @endif
+                                        </span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
                 </div>
             </section>
 
-            {{-- Alamat --}}
+            {{-- Data Orang Tua/Wali --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">
-                            3
-                        </div>
-
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">7</div>
                         <div>
-                            <h2 class="font-bold text-slate-900">
-                                Alamat
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Masukkan alamat tempat tinggal calon siswa.
-                            </p>
+                            <h2 class="font-bold text-slate-900">Data Orang Tua/Wali</h2>
+                            <p class="mt-1 text-sm text-slate-500">Data ayah dan ibu.</p>
                         </div>
                     </div>
                 </div>
-
-                <div class="grid gap-5 p-6 md:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                        <label
-                            for="hamlet"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Dusun
-                        </label>
-
-                        <input
-                            id="hamlet"
-                            type="text"
-                            name="hamlet"
-                            value="{{ old('hamlet') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="rt"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            RT
-                        </label>
-
-                        <input
-                            id="rt"
-                            type="text"
-                            name="rt"
-                            maxlength="10"
-                            value="{{ old('rt') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="rw"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            RW
-                        </label>
-
-                        <input
-                            id="rw"
-                            type="text"
-                            name="rw"
-                            maxlength="10"
-                            value="{{ old('rw') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="village"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Desa / Kelurahan
-                        </label>
-
-                        <input
-                            id="village"
-                            type="text"
-                            name="village"
-                            value="{{ old('village') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="district"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Kecamatan
-                        </label>
-
-                        <input
-                            id="district"
-                            type="text"
-                            name="district"
-                            value="{{ old('district') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="city"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Kabupaten / Kota
-                        </label>
-
-                        <input
-                            id="city"
-                            type="text"
-                            name="city"
-                            value="{{ old('city') }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="province"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Provinsi
-                        </label>
-
-                        <input
-                            id="province"
-                            type="text"
-                            name="province"
-                            value="{{ old(
-                                'province',
-                                null
-                            ) }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-
-                    <div>
-                        <label
-                            for="postal_code"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Kode Pos
-                        </label>
-
-                        <input
-                            id="postal_code"
-                            type="text"
-                            name="postal_code"
-                            inputmode="numeric"
-                            maxlength="5"
-                            value="{{ old(
-                                'postal_code',
-                                null
-                            ) }}"
-                            class="{{ $inputClass }}"
-                        >
-                    </div>
-                </div>
-            </section>
-
-            {{-- Orang Tua --}}
-            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div class="border-b border-slate-100 px-6 py-5">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">
-                            4
-                        </div>
-
-                        <div>
-                            <h2 class="font-bold text-slate-900">
-                                Orang Tua & Kontak
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Data orang tua dan nomor WhatsApp aktif.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="grid gap-5 p-6 md:grid-cols-2">
                     <div>
                         <label
@@ -678,7 +743,6 @@
                             class="{{ $inputClass }}"
                         >
                     </div>
-
                     <div>
                         <label
                             for="father_job"
@@ -698,7 +762,6 @@
                             class="{{ $inputClass }}"
                         >
                     </div>
-
                     <div>
                         <label
                             for="mother_name"
@@ -718,7 +781,6 @@
                             class="{{ $inputClass }}"
                         >
                     </div>
-
                     <div>
                         <label
                             for="mother_job"
@@ -738,61 +800,81 @@
                             class="{{ $inputClass }}"
                         >
                     </div>
-
-                    <div class="md:col-span-2">
-                        <label
-                            for="whatsapp"
-                            class="mb-2 block text-sm font-semibold text-slate-700"
-                        >
-                            Nomor WhatsApp
-                            <span class="text-red-500">*</span>
-                        </label>
-
-                        <input
-                            id="whatsapp"
-                            type="text"
-                            name="whatsapp"
-                            maxlength="30"
-                            value="{{ old(
-                                'whatsapp',
-                                null
-                            ) }}"
-                            class="{{ $inputClass }}"
-                            required
-                        >
-                    </div>
                 </div>
             </section>
 
-            {{-- Internal --}}
+            {{-- Alamat Orang Tua/Wali --}}
             <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="border-b border-slate-100 px-6 py-5">
                     <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">
-                            5
-                        </div>
-
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">8</div>
                         <div>
-                            <h2 class="font-bold text-slate-900">
-                                Data Internal & Program
-                            </h2>
-
-                            <p class="mt-1 text-sm text-slate-500">
-                                Keringanan dan referral dikelola oleh petugas.
-                                Program Khusus dapat disesuaikan bila diperlukan.
-                            </p>
+                            <h2 class="font-bold text-slate-900">Alamat Orang Tua/Wali</h2>
+                            <p class="mt-1 text-sm text-slate-500">Centang jika alamat sama dengan alamat siswa.</p>
                         </div>
                     </div>
                 </div>
+                <div class="grid gap-5 p-6 md:grid-cols-2 lg:grid-cols-3">
+<div class="md:col-span-2 lg:col-span-3">
+    <label class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+        <input type="hidden" name="same_parent_address" value="0">
+        <input type="checkbox" id="same_parent_address" name="same_parent_address" value="1" @checked((string) old('same_parent_address', '0') === '1') class="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+        Alamat orang tua/wali sama dengan alamat siswa
+    </label>
+</div>
+<div>
+    <label for="parent_hamlet" class="mb-2 block text-sm font-semibold text-slate-700">Dusun</label>
+    <input id="parent_hamlet" type="text" name="parent_hamlet" value="{{ old('parent_hamlet') }}" class="{{ $inputClass }}" data-parent-address="hamlet">
+</div>
+<div>
+    <label for="parent_rt" class="mb-2 block text-sm font-semibold text-slate-700">RT</label>
+    <input id="parent_rt" type="text" name="parent_rt" value="{{ old('parent_rt') }}" maxlength="10" class="{{ $inputClass }}" data-parent-address="rt">
+</div>
+<div>
+    <label for="parent_rw" class="mb-2 block text-sm font-semibold text-slate-700">RW</label>
+    <input id="parent_rw" type="text" name="parent_rw" value="{{ old('parent_rw') }}" maxlength="10" class="{{ $inputClass }}" data-parent-address="rw">
+</div>
+<div>
+    <label for="parent_village" class="mb-2 block text-sm font-semibold text-slate-700">Desa / Kelurahan</label>
+    <input id="parent_village" type="text" name="parent_village" value="{{ old('parent_village') }}" class="{{ $inputClass }}" data-parent-address="village">
+</div>
+<div>
+    <label for="parent_district" class="mb-2 block text-sm font-semibold text-slate-700">Kecamatan</label>
+    <input id="parent_district" type="text" name="parent_district" value="{{ old('parent_district') }}" class="{{ $inputClass }}" data-parent-address="district">
+</div>
+<div>
+    <label for="parent_city" class="mb-2 block text-sm font-semibold text-slate-700">Kabupaten / Kota</label>
+    <input id="parent_city" type="text" name="parent_city" value="{{ old('parent_city') }}" class="{{ $inputClass }}" data-parent-address="city">
+</div>
+<div>
+    <label for="parent_province" class="mb-2 block text-sm font-semibold text-slate-700">Provinsi</label>
+    <input id="parent_province" type="text" name="parent_province" value="{{ old('parent_province') }}" class="{{ $inputClass }}" data-parent-address="province">
+</div>
+<div>
+    <label for="parent_postal_code" class="mb-2 block text-sm font-semibold text-slate-700">Kode Pos</label>
+    <input id="parent_postal_code" type="text" name="parent_postal_code" value="{{ old('parent_postal_code') }}" inputmode="numeric" maxlength="5" class="{{ $inputClass }}" data-parent-address="postal_code">
+</div>
+                </div>
+            </section>
 
-                <div class="space-y-7 p-6">
-                    <div class="grid gap-5 md:grid-cols-2">
+            {{-- Data Internal --}}
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">9</div>
                         <div>
+                            <h2 class="font-bold text-slate-900">Data Internal</h2>
+                            <p class="mt-1 text-sm text-slate-500">Informasi pembawa dan keringanan khusus petugas.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="space-y-6 p-6">
+<div class="grid gap-5 md:grid-cols-2"><div>
                             <label
                                 for="referrer_name"
                                 class="mb-2 block text-sm font-semibold text-slate-700"
                             >
-                                Nama Pembawa / Referral
+                                Nama Pembawa
                             </label>
 
                             <input
@@ -806,31 +888,19 @@
                                 ) }}"
                                 class="{{ $inputClass }}"
                             >
-                        </div>
-
-                        <div>
-                            <label
-                                for="referrer_source"
-                                class="mb-2 block text-sm font-semibold text-slate-700"
-                            >
-                                Asal Referral
-                            </label>
-
-                            <input
-                                id="referrer_source"
-                                type="text"
-                                name="referrer_source"
-                                maxlength="150"
-                                value="{{ old(
-                                    'referrer_source',
-                                    null
-                                ) }}"
-                                class="{{ $inputClass }}"
-                            >
-                        </div>
-                    </div>
-
-                    <div>
+                        </div><div>
+    <label for="referrer_source" class="mb-2 block text-sm font-semibold text-slate-700">Asal Pembawa</label>
+    <select id="referrer_source" name="referrer_source" class="{{ $inputClass }}">
+        <option value="">Pilih asal pembawa</option>
+        @foreach (($referralSources ?? collect()) as $source)
+            <option value="{{ $source->name }}" @selected(old('referrer_source') === $source->name)>{{ $source->name }}</option>
+        @endforeach
+        @if (old('referrer_source') && !($referralSources ?? collect())->contains('name', old('referrer_source')))
+            <option value="{{ old('referrer_source') }}" selected>{{ old('referrer_source') }}</option>
+        @endif
+    </select>
+</div></div>
+<div>
                         <div class="mb-3">
                             <h3 class="text-sm font-bold text-slate-800">
                                 Keringanan / Prestasi
@@ -881,58 +951,22 @@
                             </div>
                         @endif
                     </div>
+                </div>
+            </section>
 
-                    <div>
-                        <div class="mb-3">
-                            <h3 class="text-sm font-bold text-slate-800">
-                                Program Khusus
-                            </h3>
-
-                            <p class="mt-1 text-xs leading-5 text-slate-400">
-                                Program Khusus yang diikuti calon siswa.
-                            </p>
+            {{-- Catatan --}}
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-100 px-6 py-5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 font-bold text-emerald-600">10</div>
+                        <div>
+                            <h2 class="font-bold text-slate-900">Catatan</h2>
+                            <p class="mt-1 text-sm text-slate-500">Informasi tambahan bila diperlukan.</p>
                         </div>
-
-                        @if ($specialPrograms->isEmpty())
-                            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-500">
-                                Belum ada Program Khusus aktif pada periode ini.
-                            </div>
-                        @else
-                            <div class="grid gap-3 md:grid-cols-2">
-                                @foreach ($specialPrograms as $program)
-                                    <label class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 px-4 py-3 transition hover:border-violet-300 hover:bg-violet-50/40">
-                                        <input
-                                            type="checkbox"
-                                            name="special_programs[]"
-                                            value="{{ $program->id }}"
-                                            @checked(
-                                                in_array(
-                                                    (int) $program->id,
-                                                    $selectedSpecialPrograms,
-                                                    true
-                                                )
-                                            )
-                                            class="mt-0.5 h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
-                                        >
-
-                                        <span>
-                                            <span class="block text-sm font-semibold text-slate-800">
-                                                {{ $program->name }}
-                                            </span>
-
-                                            @if ($program->description)
-                                                <span class="mt-1 block text-xs leading-5 text-slate-500">
-                                                    {{ $program->description }}
-                                                </span>
-                                            @endif
-                                        </span>
-                                    </label>
-                                @endforeach
-                            </div>
-                        @endif
                     </div>
-
-                    <div>
+                </div>
+                <div class="p-6">
+<div>
                         <label
                             for="notes"
                             class="mb-2 block text-sm font-semibold text-slate-700"
@@ -980,4 +1014,47 @@
             </div>
         </form>
     </div>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const originSchool = document.getElementById('origin_school_id');
+    const otherWrapper = document.getElementById('origin_school_other_wrapper');
+    const otherInput = document.getElementById('origin_school_other');
+
+    if (originSchool && otherWrapper && otherInput) {
+        const syncOtherSchool = () => {
+            const isOther = originSchool.value === 'OTHER';
+
+            otherWrapper.hidden = !isOther;
+            otherInput.required = isOther;
+            otherInput.disabled = !isOther;
+
+            if (!isOther) {
+                otherInput.value = '';
+            }
+        };
+
+        originSchool.addEventListener('change', syncOtherSchool);
+        syncOtherSchool();
+    }
+    const checkbox = document.getElementById('same_parent_address');
+    if (!checkbox) return;
+    const fields = ['hamlet', 'rt', 'rw', 'village', 'district', 'city', 'province', 'postal_code'];
+    const sync = () => {
+        if (!checkbox.checked) return;
+        fields.forEach(field => {
+            const student = document.getElementById(field);
+            const parent = document.getElementById('parent_' + field);
+            if (student && parent) parent.value = student.value;
+        });
+    };
+    checkbox.addEventListener('change', sync);
+    fields.forEach(field => document.getElementById(field)?.addEventListener('input', sync));
+    sync();
+});
+</script>
+
+
 @endsection

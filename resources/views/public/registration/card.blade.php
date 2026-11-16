@@ -303,8 +303,7 @@
 
             <div class="notice">
                 Kartu ini merupakan bukti pendaftaran calon siswa.
-                Proses selanjutnya adalah wawancara bersama orang tua
-                atau wali.
+                Proses selanjutnya adalah verifikasi data diri.
             </div>
 
         </div>

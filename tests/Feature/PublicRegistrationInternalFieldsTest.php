@@ -225,6 +225,59 @@ class PublicRegistrationInternalFieldsTest extends TestCase
         );
     }
 
+    public function test_public_checkbox_copies_student_address_to_parent_address(): void
+    {
+        Queue::fake();
+        Carbon::setTestNow(Carbon::parse('2027-02-15 10:00:00', config('app.timezone')));
+
+        $fixture = $this->makeFixture();
+
+        $payload = [
+            'period_id' => $fixture['period_id'],
+            'major_id' => $fixture['major_id'],
+            'nik' => '3397777777777777',
+            'nisn' => '9777777777',
+            'full_name' => 'TEST PUBLIC PARENT ADDRESS',
+            'birth_place' => 'Kebumen',
+            'birth_date' => '2009-02-15',
+            'gender' => 'L',
+            'religion' => 'Islam',
+            'origin_school_id' => (string) $fixture['origin_school_id'],
+            'hamlet' => 'DUKUH BARU',
+            'rt' => '011',
+            'rw' => '012',
+            'village' => 'DESA BARU',
+            'district' => 'GOMBONG',
+            'city' => 'KEBUMEN',
+            'province' => 'JAWA TENGAH',
+            'postal_code' => '54411',
+            'same_parent_address' => '1',
+            'parent_hamlet' => 'ALAMAT MANIPULASI',
+            'parent_city' => 'KOTA LAIN',
+            'father_name' => 'AYAH TEST',
+            'father_job' => 'Wiraswasta',
+            'mother_name' => 'IBU TEST',
+            'mother_job' => 'Ibu Rumah Tangga',
+            'whatsapp' => '081277777777',
+            'graduation_score' => 90,
+        ];
+
+        $this->post(route('registration.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'nik' => '3397777777777777',
+            'parent_hamlet' => 'DUKUH BARU',
+            'parent_rt' => '011',
+            'parent_rw' => '012',
+            'parent_village' => 'DESA BARU',
+            'parent_district' => 'GOMBONG',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54411',
+        ]);
+    }
+
     private function makeFixture(): array
     {
         $now = now();

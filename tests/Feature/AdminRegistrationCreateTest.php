@@ -106,6 +106,11 @@ class AdminRegistrationCreateTest extends TestCase
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'ALUMNI',
+            'is_active' => true,
+        ]);
     }
 
     protected function tearDown(): void
@@ -831,19 +836,130 @@ class AdminRegistrationCreateTest extends TestCase
             ]),
             false
         );
-}
+    }
 
-public function test_historical_period_index_hides_add_registration_button(): void
-{
-    $admin = $this->makeUser('ADMIN');
+    public function test_historical_period_index_hides_add_registration_button(): void
+    {
+        $admin = $this->makeUser('ADMIN');
 
-    $this->actingAs($admin)
-        ->get(route('admin.registrations.index', [
-            'period_id' => $this->historicalPeriod->id,
-        ]))
-        ->assertOk()
-        ->assertDontSee('Tambah Pendaftar');
-}
+        $this->actingAs($admin)
+            ->get(route('admin.registrations.index', [
+                'period_id' => $this->historicalPeriod->id,
+            ]))
+            ->assertOk()
+            ->assertDontSee('Tambah Pendaftar');
+    }
+
+    public function test_admin_can_store_different_parent_address(): void
+    {
+        $payload = array_merge($this->validPayload(), [
+            'same_parent_address' => '0',
+            'parent_hamlet' => 'DUKUH MELATI',
+            'parent_rt' => '003',
+            'parent_rw' => '004',
+            'parent_village' => 'DESA MELATI',
+            'parent_district' => 'GOMBONG',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54411',
+        ]);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+            'parent_hamlet' => 'DUKUH MELATI',
+            'parent_rt' => '003',
+            'parent_rw' => '004',
+            'parent_village' => 'DESA MELATI',
+            'parent_district' => 'GOMBONG',
+            'parent_city' => 'KEBUMEN',
+            'parent_province' => 'JAWA TENGAH',
+            'parent_postal_code' => '54411',
+        ]);
+    }
+
+    public function test_admin_checkbox_copies_student_address_on_server(): void
+    {
+        $payload = array_merge($this->validPayload(), [
+            'same_parent_address' => '1',
+            'parent_hamlet' => 'ALAMAT MANIPULASI',
+            'parent_rt' => '999',
+            'parent_rw' => '999',
+            'parent_village' => 'DESA LAIN',
+            'parent_district' => 'KECAMATAN LAIN',
+            'parent_city' => 'KOTA LAIN',
+            'parent_province' => 'PROVINSI LAIN',
+            'parent_postal_code' => '99999',
+        ]);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+            'parent_hamlet' => $payload['hamlet'],
+            'parent_rt' => $payload['rt'],
+            'parent_rw' => $payload['rw'],
+            'parent_village' => $payload['village'],
+            'parent_district' => $payload['district'],
+            'parent_city' => $payload['city'],
+            'parent_province' => $payload['province'],
+            'parent_postal_code' => $payload['postal_code'],
+        ]);
+    }
+
+    public function test_create_form_only_lists_active_referral_sources(): void
+    {
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'WALI MURID',
+            'is_active' => true,
+        ]);
+
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'SUMBER NONAKTIF',
+            'is_active' => false,
+        ]);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->get(route('admin.registrations.create', [
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('value="ALUMNI"', false)
+            ->assertSee('value="WALI MURID"', false)
+            ->assertDontSee('value="SUMBER NONAKTIF"', false);
+    }
+
+    public function test_create_rejects_inactive_referral_source(): void
+    {
+        \App\Models\ReferralSource::query()->create([
+            'name' => 'SUMBER NONAKTIF',
+            'is_active' => false,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['referrer_source'] = 'SUMBER NONAKTIF';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasErrors('referrer_source');
+    }
+
+    public function test_create_rejects_unknown_referral_source(): void
+    {
+        $payload = $this->validPayload();
+        $payload['referrer_source'] = 'SUMBER TIDAK TERDAFTAR';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasErrors('referrer_source');
+    }
 
     private function makeUser(string $role): User
     {
