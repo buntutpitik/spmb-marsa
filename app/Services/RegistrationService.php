@@ -182,6 +182,10 @@ class RegistrationService
              * 5. Keringanan / Prestasi.
              * ---------------------------------------------------------
              */
+            if (array_key_exists('relief_options', $data) && ($creator === null || ! $period->enable_achievement_relief)) {
+                throw new InvalidArgumentException('Keringanan Prestasi tidak diizinkan pada pendaftaran ini.');
+            }
+
             $reliefOptionIds = collect(
                 $data['relief_options'] ?? []
             )
@@ -345,10 +349,15 @@ class RegistrationService
 
                 'whatsapp',
 
+                'graduation_year',
                 'graduation_score',
 
                 'referrer_name',
                 'referrer_source',
+                'referral_source_id',
+                'referrer_class',
+                'referrer_registration_id',
+                'referrer_notes',
 
                 'notes',
             ]);
@@ -356,6 +365,27 @@ class RegistrationService
             /*
              * Snapshot asal sekolah final.
              */
+            if (! $period->show_graduation_score) {
+                unset($payload['graduation_score']);
+            }
+
+            if ($creator === null) {
+                unset(
+                    $payload['referrer_name'],
+                    $payload['referrer_source'],
+                    $payload['referral_source_id'],
+                    $payload['referrer_class'],
+                    $payload['referrer_registration_id'],
+                    $payload['referrer_notes']
+                );
+            }
+
+            if ($creator !== null && ! empty($payload['referral_source_id'])) {
+                $payload['referrer_source'] = \App\Models\ReferralSource::query()
+                    ->findOrFail($payload['referral_source_id'])
+                    ->name;
+            }
+
             $payload['origin_school'] = $originSchoolName;
 
             /*
@@ -408,9 +438,11 @@ class RegistrationService
              * 12. Pivot Keringanan / Prestasi.
              * ---------------------------------------------------------
              */
-            $registration->reliefOptions()->sync(
-                $reliefOptionIds->all()
-            );
+            if ($creator !== null && $period->enable_achievement_relief) {
+                $registration->reliefOptions()->sync(
+                    $reliefOptionIds->all()
+                );
+            }
 
             /*
              * ---------------------------------------------------------

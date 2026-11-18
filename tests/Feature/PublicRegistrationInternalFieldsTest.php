@@ -133,6 +133,7 @@ class PublicRegistrationInternalFieldsTest extends TestCase
 
                 'whatsapp' => '081288888888',
 
+                'graduation_year' => 2026,
                 'graduation_score' => 90,
 
                 /*
@@ -259,6 +260,7 @@ class PublicRegistrationInternalFieldsTest extends TestCase
             'mother_name' => 'IBU TEST',
             'mother_job' => 'Ibu Rumah Tangga',
             'whatsapp' => '081277777777',
+            'graduation_year' => 2026,
             'graduation_score' => 90,
         ];
 

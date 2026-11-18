@@ -22,6 +22,7 @@ class Registration extends Model
         'gender',
         'religion',
         'origin_school',
+        'graduation_year',
         'hamlet',
         'rt',
         'rw',
@@ -47,6 +48,10 @@ class Registration extends Model
         'achievement_relief',
         'referrer_name',
         'referrer_source',
+        'referral_source_id',
+        'referrer_class',
+        'referrer_registration_id',
+        'referrer_notes',
         'data_source',
         'status',
         'created_by',
@@ -60,6 +65,7 @@ class Registration extends Model
 
     protected $casts = [
         'birth_date' => 'date',
+        'graduation_year' => 'integer',
         'graduation_score' => 'decimal:2',
         'registered_at' => 'datetime',
         'accepted_at' => 'datetime',
@@ -93,6 +99,21 @@ class Registration extends Model
     public function major(): BelongsTo
     {
         return $this->belongsTo(Major::class);
+    }
+
+    public function referralSource(): BelongsTo
+    {
+        return $this->belongsTo(ReferralSource::class, 'referral_source_id');
+    }
+
+    public function referrerRegistration(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'referrer_registration_id');
+    }
+
+    public function referredRegistrations(): HasMany
+    {
+        return $this->hasMany(self::class, 'referrer_registration_id');
     }
 
     public function creator(): BelongsTo

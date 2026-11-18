@@ -384,6 +384,28 @@ class AdminReferralRecapExportTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_hybrid_and_legacy_referrals_use_historical_snapshots(): void
+    {
+        [, $period, $path, $major] = $this->makeFixture();
+        $legacy = $this->makeRegistration($period, $path, $major, 'PAK AHMAD', 'ALUMNI', 'REGISTERED');
+        $hybrid = $this->makeRegistration($period, $path, $major, 'PAK AHMAD', 'ALUMNI', 'ACCEPTED');
+        $different = $this->makeRegistration($period, $path, $major, 'PAK AHMAD', 'GURU', 'REGISTERED');
+        $source = \App\Models\ReferralSource::create(['name' => 'ALUMNI', 'code' => null, 'is_active' => true]);
+        $hybrid->update(['referral_source_id' => $source->id]);
+        $this->assertNull($legacy->fresh()->referral_source_id);
+        $this->assertSame($source->id, $hybrid->fresh()->referral_source_id);
+        $rows = (new ReferralRecapExport($period))->collection()->filter(fn ($row) => $row->referrer_name_label !== 'TOTAL');
+        $this->assertCount(2, $rows);
+        $alumni = $rows->first(fn ($row) => $row->referrer_source_label === 'ALUMNI');
+        $guru = $rows->first(fn ($row) => $row->referrer_source_label === 'GURU');
+        $this->assertNotNull($alumni);
+        $this->assertNotNull($guru);
+        $this->assertSame(2, (int) $alumni->total);
+        $this->assertSame(1, (int) $alumni->registered);
+        $this->assertSame(1, (int) $alumni->accepted);
+        $this->assertSame(1, (int) $guru->total);
+    }
+
     private function makeFixture(): array
     {
         $user = User::factory()->create([

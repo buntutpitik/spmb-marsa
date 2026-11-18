@@ -592,6 +592,24 @@
                         </p>
                     </div>
                     <div>
+                        <label for="graduation_year" class="mb-2 block text-sm font-semibold text-slate-700">
+                            Tahun Lulus <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                            id="graduation_year"
+                            type="number"
+                            name="graduation_year"
+                            min="2000"
+                            max="2100"
+                            step="1"
+                            value="{{ old('graduation_year') }}"
+                            class="{{ $inputClass }}"
+                            placeholder="Contoh: 2026"
+                            required
+                        >
+                    </div>
+                    @if ($selectedPeriod->show_graduation_score)
+                    <div>
                         <label
                             for="graduation_score"
                             class="mb-2 block text-sm font-semibold text-slate-700"
@@ -613,6 +631,7 @@
                             class="{{ $inputClass }}"
                         >
                     </div>
+                    @endif
                 </div>
             </section>
 
@@ -889,17 +908,33 @@
                                 class="{{ $inputClass }}"
                             >
                         </div><div>
-    <label for="referrer_source" class="mb-2 block text-sm font-semibold text-slate-700">Asal Pembawa</label>
-    <select id="referrer_source" name="referrer_source" class="{{ $inputClass }}">
+        <label for="referral_source_id" class="mb-2 block text-sm font-semibold text-slate-700">Asal Pembawa</label>
+    <select id="referral_source_id" name="referral_source_id" class="{{ $inputClass }}">
         <option value="">Pilih asal pembawa</option>
         @foreach (($referralSources ?? collect()) as $source)
-            <option value="{{ $source->name }}" @selected(old('referrer_source') === $source->name)>{{ $source->name }}</option>
+            <option value="{{ $source->id }}" data-referral-code="{{ $source->code }}" @selected((string) old('referral_source_id') === (string) $source->id)>{{ $source->name }}</option>
         @endforeach
-        @if (old('referrer_source') && !($referralSources ?? collect())->contains('name', old('referrer_source')))
-            <option value="{{ old('referrer_source') }}" selected>{{ old('referrer_source') }}</option>
-        @endif
     </select>
-</div></div>
+
+</div>
+<div id="referrer_class_wrapper" class="md:col-span-2" hidden>
+    <label for="referrer_class" class="mb-2 block text-sm font-semibold text-slate-700">Kelas Pembawa</label>
+    <input id="referrer_class" type="text" name="referrer_class" maxlength="100" value="{{ old('referrer_class') }}" class="{{ $inputClass }}" disabled>
+</div>
+
+<div id="referrer_registration_wrapper" class="md:col-span-2" hidden>
+    <label for="referrer_registration_id" class="mb-2 block text-sm font-semibold text-slate-700">Calon Siswa Pembawa</label>
+    <select id="referrer_registration_id" name="referrer_registration_id" class="{{ $inputClass }}" disabled>
+        <option value="">Pilih calon siswa pembawa</option>
+        @foreach (($referrerCandidates ?? collect()) as $candidate)
+            <option value="{{ $candidate->id }}" @selected((string) old('referrer_registration_id') === (string) $candidate->id)>{{ $candidate->registration_number }} - {{ $candidate->full_name }}</option>
+        @endforeach
+    </select>
+</div>
+
+<div class="md:col-span-2">     <label for="referrer_notes" class="mb-2 block text-sm font-semibold text-slate-700">Catatan Pembawa (Opsional)</label>     <textarea id="referrer_notes" name="referrer_notes" rows="3" class="{{ $inputClass }}">{{ old('referrer_notes') }}</textarea> </div>
+</div>
+                    @if ($selectedPeriod->enable_achievement_relief)
 <div>
                         <div class="mb-3">
                             <h3 class="text-sm font-bold text-slate-800">
@@ -951,6 +986,7 @@
                             </div>
                         @endif
                     </div>
+                    @endif
                 </div>
             </section>
 
@@ -1019,6 +1055,31 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    const referralSource = document.getElementById('referral_source_id');
+    const classWrapper = document.getElementById('referrer_class_wrapper');
+    const classInput = document.getElementById('referrer_class');
+    const candidateWrapper = document.getElementById('referrer_registration_wrapper');
+    const candidateInput = document.getElementById('referrer_registration_id');
+    if (referralSource && classWrapper && classInput && candidateWrapper && candidateInput) {
+        const syncReferralFields = (clearInactive = false) => {
+            const code = referralSource.selectedOptions[0]?.dataset.referralCode || '';
+            const showClass = code === 'ACTIVE_STUDENT';
+            const showCandidate = code === 'PROSPECTIVE_STUDENT';
+            classWrapper.hidden = !showClass;
+            candidateWrapper.hidden = !showCandidate;
+            classInput.disabled = !showClass;
+            candidateInput.disabled = !showCandidate;
+            classInput.required = showClass;
+            candidateInput.required = showCandidate;
+            if (clearInactive) {
+                if (!showClass) classInput.value = '';
+                if (!showCandidate) candidateInput.value = '';
+            }
+        };
+        referralSource.addEventListener('change', () => syncReferralFields(true));
+        syncReferralFields();
+    }
+
     const originSchool = document.getElementById('origin_school_id');
     const otherWrapper = document.getElementById('origin_school_other_wrapper');
     const otherInput = document.getElementById('origin_school_other');

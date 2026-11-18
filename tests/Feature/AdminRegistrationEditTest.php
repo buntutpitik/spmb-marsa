@@ -461,6 +461,10 @@ class AdminRegistrationEditTest extends TestCase
 
     public function test_relief_options_and_special_programs_can_be_synced(): void
     {
+        $this->activePeriod->update([
+            'enable_achievement_relief' => true,
+        ]);
+
         $registration = $this->makeRegistration($this->activePeriod);
         $admin = $this->makeUser('ADMIN');
 
@@ -728,7 +732,8 @@ class AdminRegistrationEditTest extends TestCase
                 'period_id' => $this->activePeriod->id,
             ]))
             ->assertOk()
-            ->assertSee('value="SUMBER LAMA"', false);
+            ->assertSee('Asal Pembawa historis: SUMBER LAMA (belum terhubung ke master)')
+            ->assertSee('name="referral_source_id"', false);
 
         $payload = $this->validPayload($registration);
 
@@ -781,7 +786,8 @@ class AdminRegistrationEditTest extends TestCase
                 'period_id' => $this->activePeriod->id,
             ]))
             ->assertOk()
-            ->assertSee('value="SUMBER HISTORIS DIHAPUS"', false);
+            ->assertSee('Asal Pembawa historis: SUMBER HISTORIS DIHAPUS (belum terhubung ke master)')
+            ->assertSee('name="referral_source_id"', false);
 
         $payload = $this->validPayload($registration);
 
@@ -818,9 +824,9 @@ class AdminRegistrationEditTest extends TestCase
                 'period_id' => $this->activePeriod->id,
             ]))
             ->assertOk()
-            ->assertSee('value="ALUMNI"', false)
-            ->assertSee('value="WALI MURID"', false)
-            ->assertDontSee('value="SUMBER NONAKTIF"', false);
+            ->assertSee('name="referral_source_id"', false)
+            ->assertSee('WALI MURID')
+            ->assertDontSee('>SUMBER NONAKTIF</option>', false);
 
         $payload = $this->validPayload($registration);
         $payload['referrer_source'] = 'WALI MURID';
@@ -836,6 +842,194 @@ class AdminRegistrationEditTest extends TestCase
             'id' => $registration->id,
             'referrer_source' => 'WALI MURID',
         ]);
+    }
+
+    public function test_editing_biodata_preserves_existing_hybrid_referrer_fields(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'SISWA AKTIF',
+            'code' => 'ACTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update([
+            'referral_source_id' => $source->id,
+            'referrer_name' => 'PAK AHMAD',
+            'referrer_source' => $source->name,
+            'referrer_class' => 'XII RPL 1',
+            'referrer_notes' => 'REFERENSI SISWA AKTIF',
+        ]);
+
+        $payload = $this->validPayload($registration);
+        $payload['full_name'] = 'NAMA SISWA DIPERBAIKI';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'full_name' => 'NAMA SISWA DIPERBAIKI',
+            'referral_source_id' => $source->id,
+            'referrer_name' => 'PAK AHMAD',
+            'referrer_source' => 'SISWA AKTIF',
+            'referrer_class' => 'XII RPL 1',
+            'referrer_notes' => 'REFERENSI SISWA AKTIF',
+        ]);
+    }
+
+    public function test_edit_rejects_inactive_hybrid_referral_source_as_new_value(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'KATEGORI HYBRID NONAKTIF',
+            'code' => 'INACTIVE_TEST',
+            'is_active' => false,
+        ]);
+
+        $registration = $this->makeRegistration($this->activePeriod);
+        $payload = $this->validPayload($registration);
+        $payload['referral_source_id'] = $source->id;
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasErrors('referral_source_id');
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referral_source_id' => null,
+            'referrer_source' => $registration->referrer_source,
+        ]);
+    }
+
+    public function test_edit_preserves_existing_inactive_hybrid_referral_source(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'SISWA AKTIF',
+            'code' => 'ACTIVE_STUDENT',
+            'is_active' => false,
+        ]);
+
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update([
+            'referral_source_id' => $source->id,
+            'referrer_name' => 'PAK AHMAD',
+            'referrer_source' => 'SISWA AKTIF',
+            'referrer_class' => 'XII RPL 1',
+        ]);
+
+        $payload = $this->validPayload($registration);
+        $payload['full_name'] = 'BIODATA DIPERBARUI';
+        $payload['referral_source_id'] = $source->id;
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'full_name' => 'BIODATA DIPERBARUI',
+            'referral_source_id' => $source->id,
+            'referrer_source' => 'SISWA AKTIF',
+            'referrer_class' => 'XII RPL 1',
+        ]);
+    }
+
+    public function test_edit_new_active_student_category_requires_referrer_class(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'SISWA AKTIF',
+            'code' => 'ACTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $registration = $this->makeRegistration($this->activePeriod);
+        $payload = $this->validPayload($registration);
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = $source->name;
+        unset($payload['referrer_class']);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasErrors('referrer_class');
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referral_source_id' => null,
+            'referrer_class' => null,
+        ]);
+    }
+
+    public function test_edit_new_prospective_student_category_requires_registration_reference(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'CALON SISWA',
+            'code' => 'PROSPECTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $registration = $this->makeRegistration($this->activePeriod);
+        $payload = $this->validPayload($registration);
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = $source->name;
+        unset($payload['referrer_registration_id']);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]), $payload)
+            ->assertSessionHasErrors('referrer_registration_id');
+
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referral_source_id' => null,
+            'referrer_registration_id' => null,
+        ]);
+    }
+
+    public function test_hybrid_edit_changes_snapshot_and_clears_old_student_class(): void
+    {
+        $studentSource = \App\Models\ReferralSource::query()->firstOrCreate(['name' => 'SISWA AKTIF'], ['code' => 'ACTIVE_STUDENT', 'is_active' => true]);
+        $alumniSource = \App\Models\ReferralSource::query()->firstOrCreate(['name' => 'ALUMNI'], ['code' => 'ALUMNI', 'is_active' => true]);
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update(['referral_source_id' => $studentSource->id, 'referrer_source' => 'SISWA AKTIF', 'referrer_class' => 'XII RPL 1']);
+        $payload = $this->validPayload($registration);
+        $payload['referral_source_id'] = $alumniSource->id;
+        unset($payload['referrer_source']);
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', ['registration' => $registration, 'period_id' => $this->activePeriod->id]), $payload)
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('registrations', ['id' => $registration->id, 'referral_source_id' => $alumniSource->id, 'referrer_source' => 'ALUMNI', 'referrer_class' => null, 'referrer_registration_id' => null]);
+    }
+
+    public function test_hybrid_edit_clears_old_prospective_student_reference(): void
+    {
+        $prospectiveSource = \App\Models\ReferralSource::query()->firstOrCreate(['name' => 'CALON SISWA'], ['code' => 'PROSPECTIVE_STUDENT', 'is_active' => true]);
+        $alumniSource = \App\Models\ReferralSource::query()->firstOrCreate(['name' => 'ALUMNI'], ['code' => 'ALUMNI', 'is_active' => true]);
+        $referrer = $this->makeRegistration($this->activePeriod);
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update(['referral_source_id' => $prospectiveSource->id, 'referrer_source' => 'CALON SISWA', 'referrer_registration_id' => $referrer->id]);
+        $payload = $this->validPayload($registration);
+        $payload['referral_source_id'] = $alumniSource->id;
+        unset($payload['referrer_source']);
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->put(route('admin.registrations.update', ['registration' => $registration, 'period_id' => $this->activePeriod->id]), $payload)
+            ->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('registrations', ['id' => $registration->id, 'referral_source_id' => $alumniSource->id, 'referrer_source' => 'ALUMNI', 'referrer_registration_id' => null, 'referrer_class' => null]);
+        $this->assertDatabaseHas('registrations', ['id' => $referrer->id]);
     }
 
     private function makeUser(string $role): User
@@ -877,6 +1071,125 @@ class AdminRegistrationEditTest extends TestCase
             'include_major_code' => true,
             'default_reenroll_fee' => 350000,
         ]);
+    }
+
+    public function test_admin_can_update_clear_and_preserve_referrer_notes(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update(['referrer_notes' => 'CATATAN LAMA']);
+        $url = route('admin.registrations.update', [
+            'registration' => $registration,
+            'period_id' => $this->activePeriod->id,
+        ]);
+        $this->actingAs($this->makeUser('ADMIN'));
+
+        $payload = $this->validPayload($registration);
+        $payload['referrer_notes'] = 'CATATAN BARU';
+        $this->put($url, $payload)->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_notes' => 'CATATAN BARU',
+        ]);
+
+        $payload['referrer_notes'] = null;
+        $this->put($url, $payload)->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_notes' => null,
+        ]);
+
+        $registration->refresh()->update(['referrer_notes' => 'CATATAN DIPERTAHANKAN']);
+        unset($payload['referrer_notes']);
+        $this->put($url, $payload)->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('registrations', [
+            'id' => $registration->id,
+            'referrer_notes' => 'CATATAN DIPERTAHANKAN',
+        ]);
+    }
+
+    public function test_edit_form_respects_period_visibility_settings(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+        $admin = $this->makeUser('ADMIN');
+        $url = route('admin.registrations.edit', [
+            'registration' => $registration,
+            'period_id' => $this->activePeriod->id,
+        ]);
+
+        $this->activePeriod->update([
+            'show_graduation_score' => true,
+            'enable_achievement_relief' => true,
+        ]);
+
+        $this->actingAs($admin)->get($url)->assertOk()
+            ->assertSee('name="graduation_year"', false)
+            ->assertSee('name="graduation_score"', false)
+            ->assertSee('Keringanan / Prestasi');
+
+        $this->activePeriod->update([
+            'show_graduation_score' => false,
+            'enable_achievement_relief' => false,
+        ]);
+
+        $this->actingAs($admin)->get($url)->assertOk()
+            ->assertSee('name="graduation_year"', false)
+            ->assertDontSee('name="graduation_score"', false)
+            ->assertDontSee('Keringanan / Prestasi');
+    }
+
+    public function test_registration_detail_displays_historical_referrer_snapshot(): void
+    {
+        $registration = $this->makeRegistration($this->historicalPeriod);
+        $registration->update([
+            'graduation_year' => 2025,
+            'referrer_name' => 'PAK AHMAD HISTORIS',
+            'referrer_source' => 'JARINGAN LAMA',
+            'referral_source_id' => null,
+        ]);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->get(route('admin.registrations.show', [
+                'registration' => $registration,
+                'period_id' => $this->historicalPeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Informasi Pembawa')
+            ->assertSee('PAK AHMAD HISTORIS')
+            ->assertSee('JARINGAN LAMA')
+            ->assertSee('Tahun Lulus')
+            ->assertSee('2025');
+    }
+
+    public function test_registration_detail_displays_prospective_student_referrer(): void
+    {
+        $candidate = $this->makeRegistration($this->activePeriod);
+        $registration = $this->makeRegistration($this->activePeriod);
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'CALON SISWA',
+            'code' => 'PROSPECTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $registration->update([
+            'referrer_name' => 'PEMBAWA TEST',
+            'referrer_source' => 'CALON SISWA',
+            'referral_source_id' => $source->id,
+            'referrer_registration_id' => $candidate->id,
+            'referrer_notes' => 'DIREKOMENDASIKAN TEMAN',
+        ]);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->get(route('admin.registrations.show', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Informasi Pembawa')
+            ->assertSee('PEMBAWA TEST')
+            ->assertSee('CALON SISWA')
+            ->assertSee($candidate->registration_number)
+            ->assertSee($candidate->full_name)
+            ->assertSee('DIREKOMENDASIKAN TEMAN');
     }
 
     private function makeRegistration(
@@ -978,7 +1291,7 @@ class AdminRegistrationEditTest extends TestCase
             'referrer_source' => $registration->referrer_source,
             'notes' => $registration->notes,
 
-            'relief_options' => [],
+
             'special_programs' => [],
         ];
     }

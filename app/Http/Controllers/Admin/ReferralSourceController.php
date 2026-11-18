@@ -81,6 +81,12 @@ class ReferralSourceController extends Controller
             ],
         ]);
 
+        if (in_array($referralSource->code, ['STAFF', 'ALUMNI', 'NETWORK', 'ACTIVE_STUDENT', 'PROSPECTIVE_STUDENT'], true) && $validated['name'] !== $referralSource->name) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'name' => 'Nama kategori Pembawa sistem tidak boleh diubah.',
+            ]);
+        }
+
         DB::transaction(function () use (
             $request,
             $validated,

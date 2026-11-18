@@ -853,6 +853,7 @@
                             'Tanggal Lahir' => $registration->birth_date?->format('d/m/Y'),
                             'Agama' => $registration->religion,
                             'Asal Sekolah' => $registration->origin_school,
+                            'Tahun Lulus' => $registration->graduation_year,
                         ];
                     @endphp
 
@@ -952,6 +953,33 @@
             </section>
 
         </div>
+
+        {{-- Hybrid Referral Detail --}}
+        <section class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div class="border-b border-slate-100 px-6 py-5">
+                <h2 class="font-bold text-slate-900">Informasi Pembawa</h2>
+            </div>
+
+            <div class="grid gap-5 p-6 sm:grid-cols-2">
+                @foreach ([
+                    'Nama Pembawa' => $registration->referrer_name,
+                    'Asal Pembawa' => $registration->referrer_source,
+                    'Kategori Pembawa' => $registration->referralSource?->name,
+                    'Kelas Pembawa' => $registration->referrer_class,
+                    'Calon Siswa Pembawa' => $registration->referrerRegistration
+                        ? ($registration->referrerRegistration->registration_number . ' - ' . $registration->referrerRegistration->full_name)
+                        : null,
+                    'Catatan Pembawa' => $registration->referrer_notes,
+                ] as $label => $value)
+                    <div>
+                        <div class="text-xs text-slate-400">{{ $label }}</div>
+                        <div class="mt-1 text-sm font-semibold text-slate-800">
+                            {{ filled($value) ? $value : '-' }}
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
 
         {{-- Address + Parent --}}
         <div class="grid gap-6 lg:grid-cols-2">

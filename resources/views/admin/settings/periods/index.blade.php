@@ -172,6 +172,8 @@
                                     'number_year'=>$period->number_year,
                                     'number_digits'=>$period->number_digits,
                                     'include_major_code'=>$period->include_major_code,
+                                    'show_graduation_score'=>$period->show_graduation_score,
+                                    'enable_achievement_relief'=>$period->enable_achievement_relief,
                                     'default_reenroll_fee'=>$period->default_reenroll_fee,
                                     'notes'=>$period->notes,
                                 ]))"
@@ -359,6 +361,15 @@
                                     <input type="hidden" name="default_reenroll_fee" :value="feeDisplay.replace(/\D/g,'') || '0'">
                                 </div>
                                 <p class="mt-1.5 text-xs text-slate-500">Isi 0 jika daftar ulang pada periode ini tidak berbayar.</p>
+                            </div>
+                        </section>
+
+                        <section class="border-t border-slate-100 pt-7">
+                            <h4 class="font-bold text-slate-900">Pengaturan Formulir Pendaftaran</h4>
+                            <p class="mt-1 text-sm text-slate-500">Atur tampilan nilai kelulusan dan keringanan prestasi untuk periode ini.</p>
+                            <div class="mt-4 space-y-4">
+                                <div><input type="hidden" name="show_graduation_score" value="0"><label class="flex items-center gap-3 text-sm font-semibold text-slate-700"><input type="checkbox" name="show_graduation_score" value="1" x-model="selectedPeriod.show_graduation_score" class="h-4 w-4 rounded border-slate-300 text-emerald-600"> Tampilkan Nilai Kelulusan</label><p class="mt-1 text-xs text-slate-500">Berlaku pada formulir publik dan admin.</p></div>
+                                <div><input type="hidden" name="enable_achievement_relief" value="0"><label class="flex items-center gap-3 text-sm font-semibold text-slate-700"><input type="checkbox" name="enable_achievement_relief" value="1" x-model="selectedPeriod.enable_achievement_relief" class="h-4 w-4 rounded border-slate-300 text-emerald-600"> Aktifkan Keringanan Prestasi</label><p class="mt-1 text-xs text-slate-500">Hanya berlaku pada formulir admin.</p></div>
                             </div>
                         </section>
 
@@ -555,6 +566,15 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+                    </section>
+
+                    <section class="border-t border-slate-100 pt-6">
+                        <h4 class="font-bold text-slate-900">Pengaturan Formulir Pendaftaran</h4>
+                        <p class="mt-1 text-sm text-slate-500">Pengaturan ini berlaku khusus untuk periode yang dibuat.</p>
+                        <div class="mt-4 space-y-4">
+                            <div><input type="hidden" name="show_graduation_score" value="0"><label class="flex items-center gap-3 text-sm font-semibold text-slate-700"><input type="checkbox" name="show_graduation_score" value="1" @checked(old('show_graduation_score', '1') == '1') class="h-4 w-4 rounded border-slate-300 text-emerald-600"> Tampilkan Nilai Kelulusan</label><p class="mt-1 text-xs text-slate-500">Berlaku pada formulir publik dan admin.</p></div>
+                            <div><input type="hidden" name="enable_achievement_relief" value="0"><label class="flex items-center gap-3 text-sm font-semibold text-slate-700"><input type="checkbox" name="enable_achievement_relief" value="1" @checked(old('enable_achievement_relief', '0') == '1') class="h-4 w-4 rounded border-slate-300 text-emerald-600"> Aktifkan Keringanan Prestasi</label><p class="mt-1 text-xs text-slate-500">Hanya berlaku pada formulir admin.</p></div>
                         </div>
                     </section>
 

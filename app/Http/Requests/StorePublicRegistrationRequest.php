@@ -216,6 +216,12 @@ class StorePublicRegistrationRequest extends FormRequest
                 'regex:/^(?:\+62|62|0|8)[0-9\s\-\(\)\.]{7,20}$/',
             ],
 
+            'graduation_year' => [
+                'required',
+                'integer',
+                'between:2000,2100',
+            ],
+
             'graduation_score' => [
                 'nullable',
                 'numeric',

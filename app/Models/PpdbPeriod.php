@@ -24,6 +24,8 @@ class PpdbPeriod extends Model
         'number_year',
         'number_digits',
         'include_major_code',
+        'show_graduation_score',
+        'enable_achievement_relief',
         'default_reenroll_fee',
         'notes',
         'archived_at',
@@ -38,6 +40,8 @@ class PpdbPeriod extends Model
         'number_year' => 'integer',
         'number_digits' => 'integer',
         'include_major_code' => 'boolean',
+        'show_graduation_score' => 'boolean',
+        'enable_achievement_relief' => 'boolean',
         'default_reenroll_fee' => 'integer',
         'archived_at' => 'datetime',
     ];

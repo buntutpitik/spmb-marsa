@@ -108,6 +108,20 @@ class AdminReferralSourceTest extends TestCase
         }
     }
 
+    public function test_system_referral_source_name_cannot_be_changed(): void
+    {
+        $user = User::factory()->create(['role' => 'SUPERADMIN', 'is_active' => true]);
+        $source = ReferralSource::query()->firstOrCreate(['name' => 'ALUMNI'], ['code' => 'ALUMNI', 'is_active' => true]);
+        $source->update(['code' => 'ALUMNI', 'is_active' => true]);
+
+        $this->actingAs($user)
+            ->from(route('admin.referral-sources.index'))
+            ->put(route('admin.referral-sources.update', $source), ['name' => 'ALUMNI BARU'])
+            ->assertSessionHasErrors('name');
+
+        $this->assertDatabaseHas('referral_sources', ['id' => $source->id, 'name' => 'ALUMNI', 'code' => 'ALUMNI']);
+    }
+
     public function test_superadmin_can_update_referral_source(): void
     {
         $user = User::factory()->create([
@@ -322,6 +336,20 @@ class AdminReferralSourceTest extends TestCase
             ->assertSee('WALI MURID')
             ->assertSee('Nonaktif')
             ->assertSee('Kelola');
+    }
+
+    public function test_system_referral_source_has_no_edit_form(): void
+    {
+        $user = User::factory()->create(['role' => 'SUPERADMIN', 'is_active' => true]);
+        $system = ReferralSource::create(['name' => 'ALUMNI', 'code' => 'ALUMNI', 'is_active' => true]);
+        $custom = ReferralSource::create(['name' => 'WALI MURID', 'is_active' => true]);
+
+        $response = $this->actingAs($user)->get(route('admin.referral-sources.index'));
+        $response->assertOk()
+            ->assertSee('Kategori Sistem - nama dikunci')
+            ->assertDontSee('action="'.route('admin.referral-sources.update', $system).'"', false)
+            ->assertSee('action="'.route('admin.referral-sources.update', $custom).'"', false)
+            ->assertSee('action="'.route('admin.referral-sources.toggle', $system).'"', false);
     }
 
     public function test_superadmin_can_see_referral_source_link_in_settings(): void

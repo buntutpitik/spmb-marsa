@@ -74,6 +74,12 @@ class PpdbPeriodController extends Controller
                 'number_digits' => $data['number_digits'],
                 'include_major_code' =>
                     $data['include_major_code'],
+                'show_graduation_score' =>
+                    array_key_exists('show_graduation_score', $data)
+                        ? $request->boolean('show_graduation_score')
+                        : true,
+                'enable_achievement_relief' =>
+                    $request->boolean('enable_achievement_relief'),
                 'default_reenroll_fee' =>
                     $data['default_reenroll_fee'],
             ]);
@@ -171,6 +177,8 @@ class PpdbPeriodController extends Controller
                 'number_year',
                 'number_digits',
                 'include_major_code',
+                'show_graduation_score',
+                'enable_achievement_relief',
                 'default_reenroll_fee',
                 'notes',
             ]);
@@ -236,6 +244,16 @@ class PpdbPeriodController extends Controller
                 'include_major_code' =>
                     $request->boolean('include_major_code'),
 
+                'show_graduation_score' =>
+                    $request->exists('show_graduation_score')
+                        ? $request->boolean('show_graduation_score')
+                        : $period->show_graduation_score,
+
+                'enable_achievement_relief' =>
+                    $request->exists('enable_achievement_relief')
+                        ? $request->boolean('enable_achievement_relief')
+                        : $period->enable_achievement_relief,
+
                 'default_reenroll_fee' =>
                     $request->integer('default_reenroll_fee'),
 
@@ -278,6 +296,8 @@ class PpdbPeriodController extends Controller
                         'number_year',
                         'number_digits',
                         'include_major_code',
+                        'show_graduation_score',
+                        'enable_achievement_relief',
                         'default_reenroll_fee',
                         'notes',
                     ]),

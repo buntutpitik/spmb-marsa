@@ -161,6 +161,10 @@
                 </th>
 
                 <th>
+                    Tahun Lulus
+                </th>
+
+                <th>
                     Jurusan
                 </th>
 
@@ -212,6 +216,10 @@
 
                     <td>
                         {{ $registration->origin_school ?: '-' }}
+                    </td>
+
+                    <td class="center">
+                        {{ $registration->graduation_year ?? '-' }}
                     </td>
 
                     <td>
@@ -266,7 +274,7 @@
                 <tr>
 
                     <td
-                        colspan="11"
+                        colspan="12"
                         class="center"
                     >
                         Belum ada data pendaftar pada periode ini.

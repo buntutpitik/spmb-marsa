@@ -105,6 +105,13 @@
                 @foreach ($referralSources as $source)
                     <div class="p-6">
 
+                        @if (in_array($source->code, ['STAFF', 'ALUMNI', 'NETWORK', 'ACTIVE_STUDENT', 'PROSPECTIVE_STUDENT'], true))
+                            <div class="space-y-2">
+                                <p class="font-semibold text-slate-800">{{ $source->name }}</p>
+                                <span class="text-xs text-slate-500">Kategori Sistem - nama dikunci</span>
+                                <span class="block text-xs text-slate-600">{{ $source->is_active ? 'Aktif' : 'Nonaktif' }}</span>
+                            </div>
+                        @else
                         <form method="POST"
                               action="{{ route('admin.referral-sources.update', $source) }}"
                               class="space-y-4">
@@ -141,6 +148,8 @@
                                 </button>
                             </div>
                         </form>
+
+                        @endif
 
                         <form method="POST"
                               action="{{ route('admin.referral-sources.toggle', $source) }}"

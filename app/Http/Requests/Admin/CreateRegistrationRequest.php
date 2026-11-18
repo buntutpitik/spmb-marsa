@@ -160,6 +160,12 @@ class CreateRegistrationRequest extends FormRequest
                 'regex:/^(?:\+62|62|0|8)[0-9\s\-\(\)\.]{7,20}$/',
             ],
 
+            'graduation_year' => [
+                'required',
+                'integer',
+                'between:2000,2100',
+            ],
+
             'graduation_score' => [
                 'nullable',
                 'numeric',
@@ -184,6 +190,52 @@ class CreateRegistrationRequest extends FormRequest
                 ),
             ],
 
+            'referral_source_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('referral_sources', 'id')
+                    ->where('is_active', true),
+            ],
+
+            'referrer_class' => [
+                Rule::prohibitedIf(fn () => ! \App\Models\ReferralSource::query()
+                    ->whereKey($this->input('referral_source_id'))
+                    ->where('is_active', true)
+                    ->where('code', 'ACTIVE_STUDENT')
+                    ->exists()),
+                Rule::requiredIf(fn () => \App\Models\ReferralSource::query()
+                    ->whereKey($this->input('referral_source_id'))
+                    ->where('is_active', true)
+                    ->where('code', 'ACTIVE_STUDENT')
+                    ->exists()),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'referrer_registration_id' => [
+                Rule::prohibitedIf(fn () => ! \App\Models\ReferralSource::query()
+                    ->whereKey($this->input('referral_source_id'))
+                    ->where('is_active', true)
+                    ->where('code', 'PROSPECTIVE_STUDENT')
+                    ->exists()),
+                Rule::requiredIf(fn () => \App\Models\ReferralSource::query()
+                    ->whereKey($this->input('referral_source_id'))
+                    ->where('is_active', true)
+                    ->where('code', 'PROSPECTIVE_STUDENT')
+                    ->exists()),
+                'nullable',
+                'integer',
+                Rule::exists('registrations', 'id')
+                    ->where('period_id', $periodId),
+            ],
+
+            'referrer_notes' => [
+                'nullable',
+                'string',
+                'max:2000',
+            ],
+
             'referrer_name' => [
                 'nullable',
                 'string',
@@ -195,7 +247,20 @@ class CreateRegistrationRequest extends FormRequest
                 'string',
                 'max:150',
                 Rule::exists('referral_sources', 'name')
-                    ->where('is_active', true)
+                    ->where('is_active', true),
+                function ($attribute, $value, $fail) {
+                    if (! $this->filled('referral_source_id') || $value === null) {
+                        return;
+                    }
+                    $matches = \App\Models\ReferralSource::query()
+                        ->whereKey($this->input('referral_source_id'))
+                        ->where('is_active', true)
+                        ->where('name', $value)
+                        ->exists();
+                    if (! $matches) {
+                        $fail('Kategori Pembawa tidak sesuai dengan master yang dipilih.');
+                    }
+                },
             ],
 
             'relief_options' => [

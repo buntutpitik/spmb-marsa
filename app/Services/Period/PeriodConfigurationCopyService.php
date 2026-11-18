@@ -27,6 +27,11 @@ class PeriodConfigurationCopyService
             ]);
         }
 
+        $target->update([
+            'show_graduation_score' => $source->show_graduation_score,
+            'enable_achievement_relief' => $source->enable_achievement_relief,
+        ]);
+
         $yearDifference = $target->year_start - $source->year_start;
 
         $paths = AdmissionPath::query()

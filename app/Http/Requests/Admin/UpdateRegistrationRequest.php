@@ -179,6 +179,13 @@ class UpdateRegistrationRequest extends FormRequest
                 'regex:/^(?:\+62|62|0|8)[0-9\s\-\(\)\.]{7,20}$/',
             ],
 
+            'graduation_year' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                'between:2000,2100',
+            ],
+
             'graduation_score' => [
                 'nullable',
                 'numeric',
@@ -196,6 +203,108 @@ class UpdateRegistrationRequest extends FormRequest
                 'required',
                 'integer',
                 'exists:majors,id',
+            ],
+
+            'referral_source_id' => [
+                'sometimes',
+                'nullable',
+                'integer',
+                function ($attribute, $value, $fail) use ($registration) {
+                    if ($value === null) {
+                        return;
+                    }
+
+                    if (
+                        $registration instanceof Registration
+                        && (int) $value === (int) $registration->referral_source_id
+                        && $registration->referral_source_id !== null
+                    ) {
+                        return;
+                    }
+
+                    $active = \App\Models\ReferralSource::query()
+                        ->whereKey($value)
+                        ->where('is_active', true)
+                        ->exists();
+
+                    if (! $active) {
+                        $fail('Kategori Pembawa harus berasal dari master aktif.');
+                    }
+                },
+            ],
+
+            'referrer_class' => [
+                Rule::requiredIf(function () use ($registration) {
+                    $sourceId = $this->exists('referral_source_id')
+                        ? $this->input('referral_source_id')
+                        : $registration?->referral_source_id;
+
+                    return \App\Models\ReferralSource::query()
+                        ->whereKey($sourceId)
+                        ->where('code', 'ACTIVE_STUDENT')
+                        ->exists()
+                        && (
+                            $this->exists('referrer_class')
+                            || (
+                                $this->exists('referral_source_id')
+                                && (
+                                    (int) $sourceId !== (int) $registration?->referral_source_id
+                                    || ! $registration?->referrer_class
+                                )
+                            )
+                        );
+                }),
+                Rule::prohibitedIf(function () use ($registration) {
+                    $sourceId = $this->exists('referral_source_id')
+                        ? $this->input('referral_source_id')
+                        : $registration?->referral_source_id;
+
+                    return ! \App\Models\ReferralSource::query()
+                        ->whereKey($sourceId)
+                        ->where('code', 'ACTIVE_STUDENT')
+                        ->exists();
+                }),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
+            'referrer_registration_id' => [
+                Rule::requiredIf(function () use ($registration) {
+                    $sourceId = $this->exists('referral_source_id')
+                        ? $this->input('referral_source_id')
+                        : $registration?->referral_source_id;
+
+                    $isProspectiveStudent = \App\Models\ReferralSource::query()
+                        ->whereKey($sourceId)
+                        ->where('code', 'PROSPECTIVE_STUDENT')
+                        ->exists();
+
+                    return $isProspectiveStudent
+                        && (
+                            $this->exists('referrer_registration_id')
+                            || ! $registration?->referrer_registration_id
+                            || (
+                                $this->exists('referral_source_id')
+                                && (int) $sourceId !== (int) $registration?->referral_source_id
+                            )
+                        );
+                }),
+                Rule::prohibitedIf(function () use ($registration) {
+                    $sourceId = $this->exists('referral_source_id')
+                        ? $this->input('referral_source_id')
+                        : $registration?->referral_source_id;
+
+                    return ! \App\Models\ReferralSource::query()
+                        ->whereKey($sourceId)
+                        ->where('code', 'PROSPECTIVE_STUDENT')
+                        ->exists();
+                }),
+                'nullable',
+                'integer',
+                Rule::exists('registrations', 'id')
+                    ->where('period_id', $registration?->period_id),
+                Rule::notIn([$registration?->id]),
             ],
 
             'referrer_name' => [
@@ -229,6 +338,13 @@ class UpdateRegistrationRequest extends FormRequest
                         $fail('Asal Pembawa harus dipilih dari master yang aktif.');
                     }
                 },
+            ],
+
+            'referrer_notes' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:2000',
             ],
 
             'notes' => [

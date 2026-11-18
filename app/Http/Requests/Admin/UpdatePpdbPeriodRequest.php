@@ -100,6 +100,16 @@ class UpdatePpdbPeriodRequest extends FormRequest
                 'boolean',
             ],
 
+            'show_graduation_score' => [
+                'sometimes',
+                'boolean',
+            ],
+
+            'enable_achievement_relief' => [
+                'sometimes',
+                'boolean',
+            ],
+
             'default_reenroll_fee' => [
                 'required',
                 'integer',

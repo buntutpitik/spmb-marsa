@@ -386,6 +386,7 @@ class PublicRegistrationTest extends TestCase
 
                     'whatsapp' => '081299999999',
 
+                    'graduation_year' => 2026,
                     'graduation_score' => 90,
 
                     /*

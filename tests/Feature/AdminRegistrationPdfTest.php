@@ -93,6 +93,23 @@ class AdminRegistrationPdfTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_pdf_template_displays_graduation_year(): void
+    {
+        [$user, $period, $path, $major] = $this->makeFixture();
+        $registration = $this->makeRegistration($period, $path, $major);
+        $html = view('admin.reports.pdf.registrations', [
+            'period' => $period,
+            'registrations' => collect([$registration]),
+        ])->render();
+        $this->assertStringContainsString('Tahun Lulus', $html);
+        $this->assertMatchesRegularExpression('/SMP PDF TEST\s*<\/td>\s*<td[^>]*>\s*2026\s*<\/td>/', $html);
+        $emptyHtml = view('admin.reports.pdf.registrations', [
+            'period' => $period,
+            'registrations' => collect(),
+        ])->render();
+        $this->assertStringContainsString('colspan="12"', $emptyHtml);
+    }
+
     private function makeFixture(): array
     {
         $user = User::factory()->create([
@@ -149,6 +166,7 @@ class AdminRegistrationPdfTest extends TestCase
             'nik' => '3378787878123456',
             'full_name' => 'TEST PDF PENDAFTAR',
             'origin_school' => 'SMP PDF TEST',
+            'graduation_year' => 2026,
             'whatsapp' => '081278787878',
             'data_source' => 'ADMIN',
             'status' => 'REGISTERED',

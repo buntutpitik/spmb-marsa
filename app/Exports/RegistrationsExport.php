@@ -66,6 +66,7 @@ class RegistrationsExport implements
             'Agama',
 
             'Asal Sekolah',
+            'Tahun Lulus',
 
             'Dusun',
             'RT',
@@ -140,6 +141,8 @@ class RegistrationsExport implements
             $registration->religion,
 
             $registration->origin_school,
+
+            $registration->graduation_year,
 
             $registration->hamlet,
 

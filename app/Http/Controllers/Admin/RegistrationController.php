@@ -176,6 +176,8 @@ class RegistrationController extends Controller
             'period',
             'major',
             'admissionPath',
+            'referralSource',
+            'referrerRegistration',
             'creator',
             'reliefOptions',
             'specialPrograms',
@@ -233,6 +235,11 @@ class RegistrationController extends Controller
             ->orderBy('name')
             ->get();
 
+        $referrerCandidates = Registration::query()
+            ->where('period_id', $selectedPeriod->id)
+            ->orderBy('registration_number')
+            ->get(['id', 'registration_number', 'full_name']);
+
         $reliefOptions = $selectedPeriod
             ->reliefOptions()
             ->wherePivot('is_active', true)
@@ -256,6 +263,7 @@ class RegistrationController extends Controller
                 'majors',
                 'originSchools',
                 'referralSources',
+                'referrerCandidates',
                 'reliefOptions',
                 'specialPrograms'
             )
@@ -323,12 +331,24 @@ class RegistrationController extends Controller
             ->get();
 
         $referralSources = ReferralSource::query()
-            ->where('is_active', true)
+            ->where(function ($query) use ($registration) {
+                $query->where('is_active', true)
+                    ->orWhere('id', $registration->referral_source_id);
+            })
             ->orderBy('name')
             ->get();
 
+        $referrerCandidates = Registration::query()
+            ->where('period_id', $selectedPeriod->id)
+            ->where('id', '!=', $registration->id)
+            ->orderBy('registration_number')
+            ->get(['id', 'registration_number', 'full_name']);
+
         $originSchools = OriginSchool::query()
-            ->where('is_active', true)
+            ->where(function ($query) use ($registration) {
+                $query->where('is_active', true)
+                    ->orWhere('id', $registration->origin_school_id);
+            })
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -342,6 +362,7 @@ class RegistrationController extends Controller
             'specialPrograms' => $specialPrograms,
             'originSchools' => $originSchools,
             'referralSources' => $referralSources,
+            'referrerCandidates' => $referrerCandidates,
         ]);
     }
 
@@ -428,6 +449,10 @@ class RegistrationController extends Controller
 
         $validated = $request->validated();
 
+        if (! $selectedPeriod->show_graduation_score) {
+            unset($validated['graduation_score']);
+        }
+
         /*
         * Validasi relasi terhadap PERIODE yang sedang diedit.
         *
@@ -449,6 +474,10 @@ class RegistrationController extends Controller
             ->exists();
 
         abort_unless($admissionPathValid, 422);
+
+        if (! $selectedPeriod->enable_achievement_relief && $request->exists('relief_options')) {
+            abort(422, 'Keringanan Prestasi tidak aktif pada periode ini.');
+        }
 
         $reliefIds = collect(
             $validated['relief_options'] ?? []
@@ -510,7 +539,8 @@ class RegistrationController extends Controller
             $registration,
             $validated,
             $reliefIds,
-            $specialProgramIds
+            $specialProgramIds,
+            $selectedPeriod
         ): void {
             $before = $registration->only([
                 'nik',
@@ -542,11 +572,16 @@ class RegistrationController extends Controller
                 'father_job',
                 'mother_job',
                 'whatsapp',
+                'graduation_year',
                 'graduation_score',
                 'admission_path_id',
                 'major_id',
                 'referrer_name',
                 'referrer_source',
+                'referral_source_id',
+                'referrer_class',
+                'referrer_registration_id',
+                'referrer_notes',
                 'notes',
             ]);
 
@@ -556,10 +591,36 @@ class RegistrationController extends Controller
                 $validated['same_parent_address']
             );
 
+            if (array_key_exists('referral_source_id', $validated)) {
+                $sourceId = $validated['referral_source_id'];
+                $categoryChanged = (int) $sourceId !== (int) $registration->referral_source_id;
+
+                if ($sourceId !== null && $categoryChanged) {
+                    $source = ReferralSource::query()->findOrFail($sourceId);
+                    $validated['referrer_source'] = $source->name;
+                }
+
+                if ($categoryChanged) {
+                    $code = $sourceId !== null
+                        ? ReferralSource::query()->findOrFail($sourceId)->code
+                        : null;
+
+                    if ($code !== 'ACTIVE_STUDENT') {
+                        $validated['referrer_class'] = null;
+                    }
+
+                    if ($code !== 'PROSPECTIVE_STUDENT') {
+                        $validated['referrer_registration_id'] = null;
+                    }
+                }
+            }
+
             $registration->update($validated);
 
-            $registration->reliefOptions()
-                ->sync($reliefIds->all());
+            if ($selectedPeriod->enable_achievement_relief) {
+                $registration->reliefOptions()
+                    ->sync($reliefIds->all());
+            }
 
             $registration->specialPrograms()
                 ->sync($specialProgramIds->all());

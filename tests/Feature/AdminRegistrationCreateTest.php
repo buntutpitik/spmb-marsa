@@ -733,6 +733,10 @@ class AdminRegistrationCreateTest extends TestCase
 
     public function test_valid_relief_and_special_program_are_saved(): void
     {
+        $this->activePeriod->update([
+            'enable_achievement_relief' => true,
+        ]);
+
         $admin = $this->makeUser('ADMIN');
 
         $reliefOptionId = DB::table('relief_options')
@@ -931,9 +935,9 @@ class AdminRegistrationCreateTest extends TestCase
                 'period_id' => $this->activePeriod->id,
             ]))
             ->assertOk()
-            ->assertSee('value="ALUMNI"', false)
-            ->assertSee('value="WALI MURID"', false)
-            ->assertDontSee('value="SUMBER NONAKTIF"', false);
+            ->assertSee('value="' . \App\Models\ReferralSource::query()->where('name', 'ALUMNI')->firstOrFail()->id . '"', false)
+            ->assertSee('value="' . \App\Models\ReferralSource::query()->where('name', 'WALI MURID')->firstOrFail()->id . '"', false)
+            ->assertDontSee('value="' . \App\Models\ReferralSource::query()->where('name', 'SUMBER NONAKTIF')->firstOrFail()->id . '"', false);
     }
 
     public function test_create_rejects_inactive_referral_source(): void
@@ -959,6 +963,256 @@ class AdminRegistrationCreateTest extends TestCase
         $this->actingAs($this->makeUser('ADMIN'))
             ->post(route('admin.registrations.store'), $payload)
             ->assertSessionHasErrors('referrer_source');
+    }
+
+    public function test_hybrid_active_student_requires_referrer_class(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'SISWA AKTIF',
+            'code' => 'ACTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = $source->name;
+        unset($payload['referrer_class']);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasErrors('referrer_class');
+
+        $this->assertDatabaseMissing('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+        ]);
+    }
+
+    public function test_hybrid_rejects_referrer_class_for_non_student_category(): void
+    {
+        $payload = $this->validPayload();
+        $payload['referrer_class'] = 'XII RPL 1';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasErrors('referrer_class');
+
+        $this->assertDatabaseMissing('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+        ]);
+    }
+
+    public function test_hybrid_prospective_student_requires_registration_reference(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'CALON SISWA',
+            'code' => 'PROSPECTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = $source->name;
+        unset($payload['referrer_registration_id']);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasErrors('referrer_registration_id');
+
+        $this->assertDatabaseMissing('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+        ]);
+    }
+
+    public function test_hybrid_rejects_prospective_student_from_different_period(): void
+    {
+        $historicalPath = AdmissionPath::query()->create([
+            'period_id' => $this->historicalPeriod->id,
+            'name' => 'Reguler Historis',
+            'code' => 'REG-HIST',
+            'start_date' => '2026-01-01',
+            'end_date' => '2026-06-30',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $historicalRegistration = Registration::query()->create([
+            'period_id' => $this->historicalPeriod->id,
+            'admission_path_id' => $historicalPath->id,
+            'major_id' => $this->major->id,
+            'registration_number' => 'HIST-0001',
+            'nik' => '3377777777000099',
+            'full_name' => 'PENDAFTAR HISTORIS',
+            'whatsapp' => '081277770099',
+        ]);
+
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'CALON SISWA',
+            'code' => 'PROSPECTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = $source->name;
+        $payload['referrer_registration_id'] = $historicalRegistration->id;
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasErrors('referrer_registration_id');
+
+        $this->assertDatabaseMissing('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+        ]);
+    }
+
+    public function test_hybrid_rejects_mismatched_referral_source_snapshot(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'SISWA AKTIF',
+            'code' => 'ACTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = 'ALUMNI';
+        $payload['referrer_class'] = 'XII RPL 1';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasErrors('referrer_source');
+
+        $this->assertDatabaseMissing('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+        ]);
+    }
+
+    public function test_hybrid_active_student_fields_are_persisted(): void
+    {
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'SISWA AKTIF',
+            'code' => 'ACTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = $source->name;
+        $payload['referrer_class'] = 'XII RPL 1';
+        $payload['referrer_notes'] = 'REFERENSI DARI SISWA AKTIF';
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+            'referral_source_id' => $source->id,
+            'referrer_source' => 'SISWA AKTIF',
+            'referrer_name' => 'PAK AHMAD',
+            'referrer_class' => 'XII RPL 1',
+            'referrer_notes' => 'REFERENSI DARI SISWA AKTIF',
+        ]);
+    }
+
+    public function test_hybrid_prospective_student_reference_is_persisted(): void
+    {
+        $admin = $this->makeUser('ADMIN');
+        $firstPayload = $this->validPayload();
+
+        $this->actingAs($admin)
+            ->post(route('admin.registrations.store'), $firstPayload)
+            ->assertSessionHasNoErrors();
+
+        $first = Registration::query()
+            ->where('period_id', $this->activePeriod->id)
+            ->where('nik', $firstPayload['nik'])
+            ->firstOrFail();
+
+        $source = \App\Models\ReferralSource::query()->create([
+            'name' => 'CALON SISWA',
+            'code' => 'PROSPECTIVE_STUDENT',
+            'is_active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['nik'] = '3377777777000002';
+        $payload['nisn'] = '1234567891';
+        $payload['full_name'] = 'SISWA KEDUA';
+        $payload['referral_source_id'] = $source->id;
+        $payload['referrer_source'] = $source->name;
+        $payload['referrer_registration_id'] = $first->id;
+        $payload['referrer_notes'] = 'DIAJAK TEMAN PENDAFTAR';
+
+        $this->actingAs($admin)
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+            'referral_source_id' => $source->id,
+            'referrer_source' => 'CALON SISWA',
+            'referrer_registration_id' => $first->id,
+            'referrer_notes' => 'DIAJAK TEMAN PENDAFTAR',
+        ]);
+    }
+
+    public function test_hybrid_create_derives_referrer_source_snapshot_from_master(): void
+    {
+        $source = \App\Models\ReferralSource::query()->firstOrCreate([
+            'name' => 'ALUMNI',
+        ], [
+            'code' => 'ALUMNI',
+            'is_active' => true,
+        ]);
+
+        $payload = $this->validPayload();
+        $payload['referral_source_id'] = $source->id;
+        unset($payload['referrer_source']);
+
+        $this->actingAs($this->makeUser('ADMIN'))
+            ->post(route('admin.registrations.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('registrations', [
+            'period_id' => $this->activePeriod->id,
+            'nik' => $payload['nik'],
+            'referral_source_id' => $source->id,
+            'referrer_source' => 'ALUMNI',
+        ]);
+    }
+
+    public function test_create_form_respects_period_visibility_settings(): void
+    {
+        $admin = $this->makeUser('ADMIN');
+        $url = route('admin.registrations.create', ['period_id' => $this->activePeriod->id]);
+
+        $this->activePeriod->update([
+            'show_graduation_score' => true,
+            'enable_achievement_relief' => true,
+        ]);
+
+        $this->actingAs($admin)->get($url)->assertOk()
+            ->assertSee('name="graduation_year"', false)
+            ->assertSee('name="graduation_score"', false)
+            ->assertSee('Keringanan / Prestasi');
+
+        $this->activePeriod->update([
+            'show_graduation_score' => false,
+            'enable_achievement_relief' => false,
+        ]);
+
+        $this->actingAs($admin)->get($url)->assertOk()
+            ->assertSee('name="graduation_year"', false)
+            ->assertDontSee('name="graduation_score"', false)
+            ->assertDontSee('Keringanan / Prestasi');
     }
 
     private function makeUser(string $role): User
@@ -1038,6 +1292,7 @@ class AdminRegistrationCreateTest extends TestCase
 
             'whatsapp' => '081277770001',
 
+            'graduation_year' => 2026,
             'graduation_score' => 85.50,
 
             'major_id' =>
@@ -1046,7 +1301,7 @@ class AdminRegistrationCreateTest extends TestCase
             'referrer_name' => 'PAK AHMAD',
             'referrer_source' => 'ALUMNI',
 
-            'relief_options' => [],
+
             'special_programs' => [],
 
             'notes' => 'Input oleh petugas.',

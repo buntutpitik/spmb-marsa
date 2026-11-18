@@ -332,7 +332,8 @@ class PublicRegistrationOriginSchoolTest extends TestCase
 
                 'whatsapp' => '081234567890',
 
-                'graduation_score' => 88.50,
+                'graduation_year' => 2026,
+                    'graduation_score' => 88.50,
 
                 'relief_options' => [],
                 'special_programs' => [],
