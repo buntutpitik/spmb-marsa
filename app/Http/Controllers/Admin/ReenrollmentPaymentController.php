@@ -38,7 +38,8 @@ class ReenrollmentPaymentController extends Controller
                 [
                     'ip_address' => $request->ip(),
                     'user_agent' => $request->userAgent(),
-                ]
+                ],
+                idempotencyKey: $request->validated('idempotency_key')
             );
         } catch (InvalidArgumentException $exception) {
             return redirect()

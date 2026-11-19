@@ -24,7 +24,8 @@ class ReenrollmentPaymentService
         ?string $paymentMethod = null,
         ?string $referenceNumber = null,
         ?string $notes = null,
-        array $auditContext = []
+        array $auditContext = [],
+        ?string $idempotencyKey = null
     ): ReenrollmentPayment {
         if ($amount <= 0) {
             throw new InvalidArgumentException(
@@ -39,7 +40,8 @@ class ReenrollmentPaymentService
             $paymentMethod,
             $referenceNumber,
             $auditContext,
-            $notes
+            $notes,
+            $idempotencyKey
         ) {
             /*
              * Lock registration agar pembayaran dan perubahan status
@@ -51,6 +53,41 @@ class ReenrollmentPaymentService
                 ])
                 ->lockForUpdate()
                 ->findOrFail($registration->id);
+
+            /*
+            * Idempotensi pembayaran:
+            * request yang sama tidak boleh mencatat transaksi dua kali.
+            *
+            * Lock registration memastikan request untuk pendaftaran
+            * yang sama diproses secara berurutan.
+            */
+            if ($idempotencyKey !== null) {
+                $existingPayment = ReenrollmentPayment::query()
+                    ->where('idempotency_key', $idempotencyKey)
+                    ->first();
+
+                if ($existingPayment !== null) {
+                    $sameRequest =
+                        (int) $existingPayment->registration_id === (int) $registration->id
+                        && (int) $existingPayment->amount === $amount
+                        && $existingPayment->payment_method === $paymentMethod
+                        && $existingPayment->reference_number === $referenceNumber
+                        && $existingPayment->notes === $notes
+                        && (
+                            $existingPayment->received_by === null
+                                ? $receiver === null
+                                : (int) $existingPayment->received_by === $receiver?->id
+                        );
+
+                    if (! $sameRequest) {
+                        throw new InvalidArgumentException(
+                            'Identitas transaksi sudah digunakan untuk pembayaran berbeda.'
+                        );
+                    }
+
+                    return $existingPayment;
+                }
+            }
 
             if (
                 ! $registration->period
@@ -114,6 +151,7 @@ class ReenrollmentPaymentService
                 'reference_number' => $referenceNumber,
                 'received_by' => $receiver?->id,
                 'notes' => $notes,
+                'idempotency_key' => $idempotencyKey,
             ]);
 
             $newTotalPaid = $totalPaid + $amount;

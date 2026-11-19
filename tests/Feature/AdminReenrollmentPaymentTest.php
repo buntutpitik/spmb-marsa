@@ -8,10 +8,13 @@ use App\Models\PpdbPeriod;
 use App\Models\Registration;
 use App\Models\School;
 use App\Models\User;
+use App\Jobs\SendWhatsappTemplateJob;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use Illuminate\Support\Str;
 
 class AdminReenrollmentPaymentTest extends TestCase
 {
@@ -104,6 +107,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                 $registration
             ),
             [
+                'idempotency_key' => (string) Str::uuid(),
                 'amount' => 100000,
                 'payment_method' => 'CASH',
             ]
@@ -135,6 +139,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => '100.000',
                     'payment_method' => 'CASH',
                     'reference_number' => null,
@@ -205,6 +210,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => '150000',
                     'payment_method' => 'TRANSFER',
                     'reference_number' => 'TRX-PELUNASAN-001',
@@ -290,6 +296,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 150001,
                     'payment_method' => 'CASH',
                 ]
@@ -338,6 +345,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 100000,
                     'payment_method' => 'CASH',
                 ]
@@ -382,6 +390,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => '0',
                     'payment_method' => 'CASH',
                 ]
@@ -424,6 +433,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 50000,
                     'payment_method' => 'BITCOIN',
                 ]
@@ -461,6 +471,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => '50.000',
                     'payment_method' => 'transfer',
                     'reference_number' => ' REF-TEST-001 ',
@@ -509,6 +520,7 @@ class AdminReenrollmentPaymentTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 250000,
                     'payment_method' => 'CASH',
                     'notes' => 'Pelunasan audit context.',
@@ -552,7 +564,228 @@ class AdminReenrollmentPaymentTest extends TestCase
                 'SPMB-MARSA-Payment-Audit-Test/1.0',
         ]
     );
-}
+    }
+
+    public function test_repeated_http_payment_with_same_uuid_is_idempotent(): void
+    {
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $uuid = (string) Str::uuid();
+
+        $url = route(
+            'admin.registrations.reenrollment-payments.store',
+            $registration
+        );
+
+        $payload = [
+            'idempotency_key' => $uuid,
+            'amount' => '100.000',
+            'payment_method' => 'CASH',
+            'reference_number' => null,
+            'notes' => 'HTTP idempotency test.',
+        ];
+
+        $this->actingAs($this->admin)
+            ->post($url, $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->post($url, $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            1,
+            DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->count()
+        );
+
+        $this->assertSame(
+            100000,
+            (int) DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->sum('amount')
+        );
+
+        $this->assertSame(
+            1,
+            DB::table('activity_logs')
+                ->where('registration_id', $registration->id)
+                ->where('action', 'REENROLLMENT_PAYMENT')
+                ->count()
+        );
+
+        $this->assertDatabaseHas('reenrollment_payments', [
+            'registration_id' => $registration->id,
+            'idempotency_key' => $uuid,
+            'amount' => 100000,
+        ]);
+
+        $registration->refresh();
+
+        $this->assertSame('REENROLLED', $registration->status);
+    }
+
+    public function test_same_uuid_with_different_amount_is_rejected(): void
+    {
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $uuid = (string) Str::uuid();
+
+        $url = route(
+            'admin.registrations.reenrollment-payments.store',
+            $registration
+        );
+
+        $payload = [
+            'idempotency_key' => $uuid,
+            'amount' => '100000',
+            'payment_method' => 'CASH',
+            'reference_number' => null,
+            'notes' => 'Pembayaran pertama.',
+        ];
+
+        $this->actingAs($this->admin)
+            ->post($url, $payload)
+            ->assertSessionHasNoErrors();
+
+        // UUID sama, tetapi nominal pembayaran berbeda.
+        $payload['amount'] = '50000';
+
+        $this->post($url, $payload)
+            ->assertSessionHasErrors('payment');
+
+        $this->assertSame(
+            1,
+            DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->count()
+        );
+
+        $this->assertSame(
+            100000,
+            (int) DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->sum('amount')
+        );
+
+        $this->assertSame(
+            1,
+            DB::table('activity_logs')
+                ->where('registration_id', $registration->id)
+                ->where('action', 'REENROLLMENT_PAYMENT')
+                ->count()
+        );
+
+        $this->assertDatabaseHas('reenrollment_payments', [
+            'registration_id' => $registration->id,
+            'idempotency_key' => $uuid,
+            'amount' => 100000,
+        ]);
+
+        $this->assertDatabaseMissing('reenrollment_payments', [
+            'registration_id' => $registration->id,
+            'idempotency_key' => $uuid,
+            'amount' => 50000,
+        ]);
+    }
+
+    public function test_malformed_payment_amounts_are_rejected(): void
+    {
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $url = route(
+            'admin.registrations.reenrollment-payments.store',
+            $registration
+        );
+
+        $invalidAmounts = [
+            '-100000',
+            '100abc200',
+            '100,50',
+            '100.50',
+            'Rp100000',
+            '1.00.000',
+            '999999999999999999999999999999',
+        ];
+
+        foreach ($invalidAmounts as $amount) {
+            $this->actingAs($this->admin)
+                ->post($url, [
+                    'idempotency_key' => (string) Str::uuid(),
+                    'amount' => $amount,
+                    'payment_method' => 'CASH',
+                ])
+                ->assertSessionHasErrors('amount');
+        }
+
+        $this->assertSame(
+            0,
+            DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->count()
+        );
+
+        $this->assertSame(
+            0,
+            DB::table('activity_logs')
+                ->where('registration_id', $registration->id)
+                ->where('action', 'REENROLLMENT_PAYMENT')
+                ->count()
+        );
+
+        $registration->refresh();
+
+        $this->assertSame('ACCEPTED', $registration->status);
+    }
+
+    public function test_repeated_http_payment_does_not_duplicate_whatsapp_notification(): void
+    {
+        Queue::fake();
+
+        $registration = $this->makeRegistration('ACCEPTED');
+
+        $uuid = (string) Str::uuid();
+
+        $url = route(
+            'admin.registrations.reenrollment-payments.store',
+            $registration
+        );
+
+        $payload = [
+            'idempotency_key' => $uuid,
+            'amount' => '100000',
+            'payment_method' => 'CASH',
+            'reference_number' => null,
+            'notes' => 'HTTP WhatsApp idempotency test.',
+        ];
+
+        $this->actingAs($this->admin)
+            ->post($url, $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->post($url, $payload)
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame(
+            1,
+            DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->count()
+        );
+
+        $this->assertSame(
+            1,
+            DB::table('whatsapp_logs')
+                ->where('registration_id', $registration->id)
+                ->whereNotNull('reenrollment_payment_id')
+                ->count()
+        );
+
+        Queue::assertPushed(
+            SendWhatsappTemplateJob::class,
+            1
+        );
+    }
 
     private function makeRegistration(
         string $status

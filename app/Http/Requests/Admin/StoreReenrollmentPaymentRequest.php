@@ -15,6 +15,11 @@ class StoreReenrollmentPaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'idempotency_key' => [
+                'required',
+                'uuid',
+            ],
+
             'amount' => [
                 'required',
                 'integer',
@@ -66,21 +71,35 @@ class StoreReenrollmentPaymentRequest extends FormRequest
 
             'notes.max' =>
                 'Catatan maksimal 1000 karakter.',
+
+            'idempotency_key.required' =>
+                'Identitas transaksi pembayaran wajib tersedia.',
+
+            'idempotency_key.uuid' =>
+                'Identitas transaksi pembayaran tidak valid.',
         ];
     }
 
     protected function prepareForValidation(): void
     {
-        $amount = preg_replace(
-            '/\D+/',
-            '',
-            (string) $this->input('amount')
-        );
+        $amount = trim((string) $this->input('amount'));
+
+        /*
+        * Terima angka bulat biasa atau format ribuan Indonesia:
+        * 100000, 100.000, 1.000.000
+        *
+        * Jangan menghapus karakter yang tidak valid.
+        */
+        if (preg_match('/^[0-9]+$/D', $amount)) {
+            // Nominal sudah dalam format angka bulat.
+        } elseif (preg_match('/^[1-9][0-9]{0,2}(\.[0-9]{3})+$/D', $amount)) {
+            $amount = str_replace('.', '', $amount);
+        }
 
         $this->merge([
-            'amount' => $amount !== ''
-                ? (int) $amount
-                : null,
+            'amount' => $amount === ''
+                ? null
+                : $amount,
 
             'payment_method' =>
                 $this->filled('payment_method')

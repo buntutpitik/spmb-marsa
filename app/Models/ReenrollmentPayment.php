@@ -15,6 +15,7 @@ class ReenrollmentPayment extends Model
         'reference_number',
         'received_by',
         'notes',
+        'idempotency_key',
     ];
 
     protected $casts = [

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AdmissionPath;
+use Illuminate\Support\Str;
 use App\Models\Major;
 use App\Models\PpdbPeriod;
 use App\Models\Registration;
@@ -153,6 +154,7 @@ class AdminRegistrationMutationPeriodTest extends TestCase
                     ]
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 100000,
                     'payment_method' => 'CASH',
                 ]
@@ -186,6 +188,7 @@ class AdminRegistrationMutationPeriodTest extends TestCase
                     ]
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 100000,
                     'payment_method' => 'CASH',
                 ]
@@ -256,6 +259,7 @@ class AdminRegistrationMutationPeriodTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 100000,
                     'payment_method' => 'CASH',
                 ]

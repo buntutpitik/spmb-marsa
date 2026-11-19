@@ -266,19 +266,43 @@
 
                         <div
                             x-data="{
-                                paymentOpen: false,
+                                paymentOpen: @js($errors->hasAny(['amount', 'idempotency_key', 'payment', 'payment_method', 'reference_number', 'notes'])),
                                 amountDisplay: '',
                                 amountRaw: '',
+                                paymentUuid: @js(old('idempotency_key', (string) \Illuminate\Support\Str::uuid())),
+                                paymentSubmitting: false,
+                                init() {
+                                    const previousAmount = @js(old('amount', ''));
+
+                                    if (previousAmount !== '') {
+                                        this.formatAmount(previousAmount);
+                                    }
+                                },
 
                                 formatAmount(value) {
-                                    const numeric = String(value || '')
-                                        .replace(/\D/g, '');
+                                    const input = String(value ?? '').trim();
 
-                                    this.amountRaw = numeric;
+                                    // Terima angka bulat tanpa pemisah ribuan.
+                                    if (/^[0-9]+$/.test(input)) {
+                                        this.amountRaw = input;
 
-                                    this.amountDisplay = numeric
-                                        ? new Intl.NumberFormat('id-ID').format(numeric)
-                                        : '';
+                                        this.amountDisplay = input
+                                            ? input.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
+                                            : '';
+
+                                        return;
+                                    }
+
+                                    // Terima format ribuan Indonesia yang benar.
+                                    if (/^[1-9][0-9]{0,2}(\.[0-9]{3})+$/.test(input)) {
+                                        this.amountRaw = input.replace(/\./g, '');
+                                        this.amountDisplay = input;
+                                        return;
+                                    }
+
+                                    // Input tidak valid tidak boleh diubah menjadi angka valid.
+                                    this.amountRaw = input;
+                                    this.amountDisplay = input;
                                 },
 
                                 useRemaining() {
@@ -424,8 +448,20 @@
                                                 'period_id' => $registration->period_id,
                                             ]
                                         ) }}"
+                                        @submit="
+                                            if (paymentSubmitting) {
+                                                $event.preventDefault();
+                                            } else {
+                                                paymentSubmitting = true;
+                                            }
+                                        "
                                     >
                                         @csrf
+                                        <input
+                                            type="hidden"
+                                            name="idempotency_key"
+                                            :value="paymentUuid"
+                                        >
 
                                         <div class="border-b border-slate-100 px-6 py-5">
 
@@ -568,19 +604,19 @@
                                                         Pilih metode
                                                     </option>
 
-                                                    <option value="CASH">
+                                                    <option value="CASH" @selected(old('payment_method') === 'CASH')>
                                                         Tunai
                                                     </option>
 
-                                                    <option value="TRANSFER">
+                                                    <option value="TRANSFER" @selected(old('payment_method') === 'TRANSFER')>
                                                         Transfer
                                                     </option>
 
-                                                    <option value="QRIS">
+                                                    <option value="QRIS" @selected(old('payment_method') === 'QRIS')>
                                                         QRIS
                                                     </option>
 
-                                                    <option value="OTHER">
+                                                    <option value="OTHER" @selected(old('payment_method') === 'OTHER')>
                                                         Lainnya
                                                     </option>
                                                 </select>
@@ -608,7 +644,7 @@
                                                 <input
                                                     id="reference_number"
                                                     type="text"
-                                                    name="reference_number"
+                                                    name="reference_number" value="{{ old('reference_number') }}"
                                                     maxlength="100"
                                                     placeholder="Nomor transfer / referensi transaksi"
                                                     class="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
@@ -635,7 +671,7 @@
                                                     maxlength="1000"
                                                     placeholder="Catatan pembayaran..."
                                                     class="w-full resize-none rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
-                                                ></textarea>
+                                                >{{ old('notes') }}</textarea>
 
                                             </div>
 
@@ -653,6 +689,8 @@
 
                                             <button
                                                 type="submit"
+                                                :disabled="paymentSubmitting"
+                                                :class="{ 'opacity-60 cursor-not-allowed': paymentSubmitting }"
                                                 class="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-700"
                                             >
                                                 <i
@@ -660,7 +698,12 @@
                                                     class="h-4 w-4"
                                                 ></i>
 
-                                                Simpan Pembayaran
+                                                <span x-show="!paymentSubmitting">
+                                                    Simpan Pembayaran
+                                                </span>
+                                                <span x-show="paymentSubmitting">
+                                                    Memproses...
+                                                </span>
                                             </button>
 
                                         </div>

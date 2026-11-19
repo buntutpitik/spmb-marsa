@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AdmissionPath;
+use Illuminate\Support\Str;
 use App\Models\Major;
 use App\Models\OriginSchool;
 use App\Models\PpdbPeriod;
@@ -402,6 +403,7 @@ class AdminRoleAccessTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 100000,
                     'payment_method' => 'CASH',
                     'reference_number' => null,
@@ -446,6 +448,7 @@ class AdminRoleAccessTest extends TestCase
                     $registration
                 ),
                 [
+                    'idempotency_key' => (string) Str::uuid(),
                     'amount' => 100000,
                     'payment_method' => 'CASH',
                 ]
