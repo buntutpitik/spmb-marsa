@@ -15,6 +15,7 @@ class WhatsappLog extends Model
 
     protected $fillable = [
         'registration_id',
+        'reenrollment_payment_id',
         'phone',
         'message_type',
         'message',
@@ -33,6 +34,11 @@ class WhatsappLog extends Model
         'sent_at' => 'datetime',
         'failed_at' => 'datetime',
     ];
+
+    public function payment(): BelongsTo
+    {
+        return $this->belongsTo(ReenrollmentPayment::class, 'reenrollment_payment_id');
+    }
 
     public function registration(): BelongsTo
     {

@@ -165,11 +165,11 @@ class AdminReenrollmentPaymentTest extends TestCase
         $registration->refresh();
 
         $this->assertSame(
-            'ACCEPTED',
+            'REENROLLED',
             $registration->status
         );
 
-        $this->assertNull(
+        $this->assertNotNull(
             $registration->reenrolled_at
         );
 
@@ -254,7 +254,7 @@ class AdminReenrollmentPaymentTest extends TestCase
 
         $response->assertSessionHas(
             'success',
-            'Pembayaran berhasil dicatat. Biaya daftar ulang telah lunas dan status pendaftar otomatis menjadi Daftar Ulang.'
+            'Pembayaran berhasil dicatat. Biaya daftar ulang telah lunas.'
         );
     }
 

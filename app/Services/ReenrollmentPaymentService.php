@@ -62,9 +62,9 @@ class ReenrollmentPaymentService
                 );
             }
 
-            if ($registration->status !== 'ACCEPTED') {
+            if (! in_array($registration->status, ['ACCEPTED', 'REENROLLED'], true)) {
                 throw new InvalidArgumentException(
-                    'Pembayaran daftar ulang hanya dapat dilakukan untuk pendaftar berstatus ACCEPTED.'
+                    'Pembayaran daftar ulang hanya dapat dilakukan untuk pendaftar berstatus ACCEPTED atau REENROLLED.'
                 );
             }
 
@@ -149,23 +149,39 @@ class ReenrollmentPaymentService
              *
              * 1. ubah status ACCEPTED -> REENROLLED
              * 2. refresh registration
-             * 3. queue notifikasi daftar ulang selesai
+             * 3. antrekan notifikasi diproses berdasarkan transaksi pembayaran
              */
-            if ($newRemaining === 0) {
+            if ($registration->status === 'ACCEPTED') {
                 $registration = $this->statusService->change(
                     $registration,
                     'REENROLLED',
                     $receiver,
-                    'Pembayaran daftar ulang telah lunas.',
+                    'Pembayaran daftar ulang pertama telah diterima.',
                     $auditContext
                 );
 
                 $registration->refresh();
-
-                $this->notificationService->reenrollmentComplete(
-                    $registration
-                );
             }
+
+            $notificationEvent = $totalPaid === 0
+                ? 'reenrollment_first_payment'
+                : ($newRemaining === 0
+                    ? 'reenrollment_payment_paid_off'
+                    : 'reenrollment_payment_received');
+
+            $this->notificationService->queuePayment(
+                $payment,
+                $notificationEvent,
+                [
+                    $registration->full_name,
+                    $registration->registration_number,
+                    'Rp'.number_format($amount, 0, ',', '.'),
+                    'Rp'.number_format($newTotalPaid, 0, ',', '.'),
+                    'Rp'.number_format($newRemaining, 0, ',', '.'),
+                    $newRemaining === 0 ? 'Lunas' : 'Belum Lunas',
+                ],
+                'Notifikasi pembayaran daftar ulang.'
+            );
 
             return $payment->refresh();
         });

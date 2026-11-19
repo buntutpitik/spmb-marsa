@@ -247,7 +247,7 @@
 
                         </div>
 
-                    @elseif ($registration->status === 'ACCEPTED')
+                    @elseif (in_array($registration->status, ['ACCEPTED', 'REENROLLED'], true))
 
                         @php
                             $requiredFee = (int) (
@@ -322,9 +322,35 @@
 
                             </div>
 
+                            @if ($requiredFee === 0)
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                                    Status Pembayaran: Tidak Ada Tagihan
+                                </div>
+                            @elseif ($remaining === 0)
+                                <div class="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
+                                    Status Pembayaran: Lunas
+                                </div>
+                            @elseif ($totalPaid > 0)
+                                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-800">
+                                    Status Pembayaran: Belum Lunas
+                                </div>
+                            @else
+                                <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700">
+                                    Status Pembayaran: Belum Melakukan Pembayaran
+                                </div>
+                            @endif
+
+                            @if ($registration->status === 'REENROLLED')
+                                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                                    Jika pendaftar mengundurkan diri, pembayaran daftar ulang
+                                    yang telah diterima tetap tercatat dan tidak dapat dikembalikan.
+                                </div>
+                            @endif
+
                             <div class="flex flex-wrap gap-3">
 
                                @if (
+                                     $remaining > 0 &&
                                     auth()->user()?->hasRole(
                                         'SUPERADMIN',
                                         'ADMIN',
@@ -362,6 +388,7 @@
                             </div>
 
                             @if (
+                                 $remaining > 0 &&
                                 auth()->user()?->hasRole(
                                     'SUPERADMIN',
                                     'ADMIN',
@@ -647,40 +674,6 @@
                             </div>
 
                         </div>
-
-                        @elseif ($registration->status === 'REENROLLED')
-
-                            <div class="flex flex-col gap-4">
-
-                                <div class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-                                    <div class="text-sm font-semibold text-amber-800">
-                                        Pendaftar sudah menyelesaikan daftar ulang.
-                                    </div>
-
-                                    <div class="mt-1 text-sm text-amber-700">
-                                        Jika pendaftar mengundurkan diri, pembayaran daftar ulang
-                                        yang telah diterima tetap tercatat dan tidak dapat dikembalikan.
-                                    </div>
-                                </div>
-
-                                <div class="flex flex-wrap gap-3">
-
-                                    <button
-                                        type="button"
-                                        @click="openAction('WITHDRAWN')"
-                                        class="inline-flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
-                                    >
-                                        <i
-                                            data-lucide="log-out"
-                                            class="h-4 w-4"
-                                        ></i>
-
-                                        Mengundurkan Diri
-                                    </button>
-
-                                </div>
-
-                            </div>
 
                     @endif
 

@@ -54,9 +54,9 @@ class ReenrollmentPaymentController extends Controller
 
         $registration->refresh();
 
-        if ($registration->status === 'REENROLLED') {
+        if ($this->paymentService->remaining($registration) === 0) {
             $message =
-                'Pembayaran berhasil dicatat. Biaya daftar ulang telah lunas dan status pendaftar otomatis menjadi Daftar Ulang.';
+                'Pembayaran berhasil dicatat. Biaya daftar ulang telah lunas.';
         } else {
             $remaining = $this->paymentService->remaining(
                 $registration

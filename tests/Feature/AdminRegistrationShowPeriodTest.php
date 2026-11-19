@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AdmissionPath;
 use App\Models\Major;
 use App\Models\PpdbPeriod;
+use App\Models\ReenrollmentPayment;
 use App\Models\Registration;
 use App\Models\School;
 use App\Models\User;
@@ -170,7 +171,7 @@ class AdminRegistrationShowPeriodTest extends TestCase
             ->assertSee('Aksi Pendaftaran');
     }
 
-    public function test_reenrolled_registration_shows_withdrawal_action_without_payment_action(): void
+    public function test_reenrolled_registration_without_payment_shows_payment_and_withdrawal_actions(): void
     {
         $registration = $this->makeRegistration(
             $this->activePeriod
@@ -188,7 +189,7 @@ class AdminRegistrationShowPeriodTest extends TestCase
             ]))
             ->assertOk()
             ->assertSee('Aksi Pendaftaran')
-            ->assertSee('Pendaftar sudah menyelesaikan daftar ulang.')
+            ->assertSee('Status Pembayaran: Belum Melakukan Pembayaran')
             ->assertSee('Mengundurkan Diri')
             ->assertSee(
                 'Jika pendaftar mengundurkan diri, pembayaran daftar ulang'
@@ -196,7 +197,72 @@ class AdminRegistrationShowPeriodTest extends TestCase
             ->assertSee(
                 'yang telah diterima tetap tercatat dan tidak dapat dikembalikan.'
             )
+            ->assertSee('Input Pembayaran');
+    }
+
+    public function test_reenrolled_partial_payment_shows_remaining_payment_action(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update([
+            'status' => 'REENROLLED', 'reenrolled_at' => now()]);
+        ReenrollmentPayment::query()->create([
+            'registration_id' => $registration->id, 'amount' => 100000, 'paid_at' => now(), 'payment_method' => 'CASH', 'received_by' => $this->admin->id]);
+        $this->actingAs($this->admin)->get(route(
+            'admin.registrations.show', ['registration' => $registration, 'period_id' => $this->activePeriod->id]))
+            ->assertOk()->assertSee(
+                'Status Pembayaran: Belum Lunas'
+            )
+            ->assertSee(
+                'Rp 100.000'
+            )->assertSee(
+                'Rp 250.000'
+            )
+            ->assertSee(
+                'Input Pembayaran'
+            )->assertSee(
+                'Mengundurkan Diri'
+            );
+    }
+
+    public function test_reenrolled_paid_off_hides_payment_action(): void
+    {
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update([
+            'status' => 'REENROLLED', 'reenrolled_at' => now()]);
+        ReenrollmentPayment::query()->create([
+            'registration_id' => $registration->id, 'amount' => 350000, 'paid_at' => now(), 'payment_method' => 'CASH', 'received_by' => $this->admin->id]);
+        $this->actingAs($this->admin)->get(route(
+            'admin.registrations.show', ['registration' => $registration, 'period_id' => $this->activePeriod->id]))
+            ->assertOk()->assertSee(
+                'Status Pembayaran: Lunas'
+            )
+            ->assertSee(
+                'Rp 350.000'
+            )
+            ->assertDontSee(
+                'Input Pembayaran'
+            )->assertSee(
+                'Mengundurkan Diri'
+            );
+    }
+
+    public function test_zero_reenrollment_fee_shows_no_bill(): void
+    {
+        $this->activePeriod->update(['default_reenroll_fee' => 0]);
+        $registration = $this->makeRegistration($this->activePeriod);
+        $registration->update(['status' => 'ACCEPTED']);
+
+        $this->actingAs($this->admin)
+            ->get(route('admin.registrations.show', [
+                'registration' => $registration,
+                'period_id' => $this->activePeriod->id,
+            ]))
+            ->assertOk()
+            ->assertSee('Status Pembayaran: Tidak Ada Tagihan')
+            ->assertDontSee('Status Pembayaran: Lunas')
             ->assertDontSee('Input Pembayaran');
+
+        $this->assertSame('ACCEPTED', $registration->fresh()->status);
     }
 
     private function makePeriod(
@@ -235,8 +301,7 @@ class AdminRegistrationShowPeriodTest extends TestCase
             'admission_path_id' => $this->admissionPath->id,
             'major_id' => $this->major->id,
 
-            'registration_number' =>
-                'PERIOD-SHOW-'
+            'registration_number' => 'PERIOD-SHOW-'
                 .str_pad(
                     (string) $sequence,
                     4,
@@ -244,8 +309,7 @@ class AdminRegistrationShowPeriodTest extends TestCase
                     STR_PAD_LEFT
                 ),
 
-            'nik' =>
-                '3388888888'
+            'nik' => '3388888888'
                 .str_pad(
                     (string) $sequence,
                     6,
@@ -261,8 +325,7 @@ class AdminRegistrationShowPeriodTest extends TestCase
             'religion' => 'ISLAM',
             'origin_school' => 'SMP PERIOD SHOW TEST',
 
-            'whatsapp' =>
-                '08128888'
+            'whatsapp' => '08128888'
                 .str_pad(
                     (string) $sequence,
                     4,

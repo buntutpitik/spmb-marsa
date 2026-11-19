@@ -15,6 +15,9 @@
                 'registration_accepted' => 'Pendaftaran Diterima',
                 'registration_rejected' => 'Pendaftaran Ditolak',
                 'reenrollment_complete' => 'Daftar Ulang Selesai',
+                'reenrollment_first_payment' => 'Daftar Ulang Berhasil',
+                'reenrollment_payment_received' => 'Pembayaran Daftar Ulang Diterima',
+                'reenrollment_payment_paid_off' => 'Pembayaran Daftar Ulang Lunas',
                 'registration_withdrawn' => 'Mengundurkan Diri',
             ];
         @endphp

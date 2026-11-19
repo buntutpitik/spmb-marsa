@@ -59,6 +59,28 @@ class WhatsappNotificationService
         return $log;
     }
 
+    public function queuePayment(\App\Models\ReenrollmentPayment $payment, string $event, array $bodyParameters, ?string $message = null): WhatsappLog
+    {
+        $payment->loadMissing('registration');
+        $registration = $payment->registration;
+        if (! $registration || $payment->registration_id !== $registration->id) {
+            throw new InvalidArgumentException('Pembayaran tidak memiliki pendaftar yang valid.');
+        }
+        $template = config('whatsapp.templates.'.$event);
+        if (! is_array($template) || empty($template['name'])) {
+            throw new InvalidArgumentException('Template WhatsApp pembayaran tidak ditemukan: '.$event);
+        }
+        $messageType = strtoupper($event);
+        $log = WhatsappLog::query()->firstOrCreate(
+            ['reenrollment_payment_id' => $payment->id, 'message_type' => $messageType],
+            ['registration_id' => $registration->id, 'phone' => $registration->whatsapp, 'message' => $message ?? $event, 'status' => 'PENDING', 'attempt_count' => 0]
+        );
+        if ($log->wasRecentlyCreated) {
+            SendWhatsappTemplateJob::dispatch($log->id, $template['name'], $template['language'] ?? 'id', $bodyParameters)->afterCommit();
+        }
+        return $log;
+    }
+
     public function registrationSuccess(
         Registration $registration
     ): WhatsappLog {

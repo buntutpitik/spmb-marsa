@@ -72,6 +72,21 @@ return [
             ),
         ],
 
+        'reenrollment_first_payment' => [
+            'name' => env('META_WA_TEMPLATE_REENROLLMENT_FIRST_PAYMENT', 'reenrollment_first_payment'),
+            'language' => env('META_WA_TEMPLATE_REENROLLMENT_FIRST_PAYMENT_LANG', 'id'),
+        ],
+
+        'reenrollment_payment_received' => [
+            'name' => env('META_WA_TEMPLATE_REENROLLMENT_PAYMENT_RECEIVED', 'reenrollment_payment_received'),
+            'language' => env('META_WA_TEMPLATE_REENROLLMENT_PAYMENT_RECEIVED_LANG', 'id'),
+        ],
+
+        'reenrollment_payment_paid_off' => [
+            'name' => env('META_WA_TEMPLATE_REENROLLMENT_PAYMENT_PAID_OFF', 'reenrollment_payment_paid_off'),
+            'language' => env('META_WA_TEMPLATE_REENROLLMENT_PAYMENT_PAID_OFF_LANG', 'id'),
+        ],
+
         'registration_withdrawn' => [
             'name' => env(
                 'META_WA_TEMPLATE_REGISTRATION_WITHDRAWN',

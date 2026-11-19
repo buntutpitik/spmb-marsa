@@ -143,7 +143,7 @@ class ReenrollmentPaymentServiceTest extends TestCase
         $registration->refresh();
 
         $this->assertSame(
-            'ACCEPTED',
+            'REENROLLED',
             $registration->status
         );
 
@@ -159,11 +159,9 @@ class ReenrollmentPaymentServiceTest extends TestCase
         );
     }
 
-    public function test_partial_payment_does_not_change_status_to_reenrolled(): void
+    public function test_first_partial_payment_changes_status_to_reenrolled(): void
     {
-        $registration = $this->makeRegistration(
-            'ACCEPTED'
-        );
+        $registration = $this->makeRegistration('ACCEPTED');
 
         $this->service->addPayment(
             $registration,
@@ -173,21 +171,24 @@ class ReenrollmentPaymentServiceTest extends TestCase
 
         $registration->refresh();
 
+        $this->assertSame('REENROLLED', $registration->status);
+
+        $this->assertNotNull($registration->reenrolled_at);
+
+        $this->assertDatabaseHas('registration_status_histories', [
+            'registration_id' => $registration->id,
+            'from_status' => 'ACCEPTED',
+            'to_status' => 'REENROLLED',
+            'changed_by' => $this->user->id,
+        ]);
+
         $this->assertSame(
-            'ACCEPTED',
-            $registration->status
+            150000,
+            $this->service->remaining($registration)
         );
 
-        $this->assertNull(
-            $registration->reenrolled_at
-        );
-
-        $this->assertDatabaseMissing(
-            'registration_status_histories',
-            [
-                'registration_id' => $registration->id,
-                'to_status' => 'REENROLLED',
-            ]
+        $this->assertFalse(
+            $this->service->isPaidOff($registration)
         );
     }
 
@@ -228,7 +229,7 @@ class ReenrollmentPaymentServiceTest extends TestCase
         );
         $whatsappLog = WhatsappLog::query()
             ->where('registration_id', $registration->id)
-            ->where('message_type', 'REENROLLMENT_COMPLETE')
+            ->where('message_type', 'REENROLLMENT_FIRST_PAYMENT')
             ->firstOrFail();
 
         $this->assertSame(
@@ -248,11 +249,15 @@ class ReenrollmentPaymentServiceTest extends TestCase
                 $registration
             ) {
                 return $job->whatsappLogId === $whatsappLog->id
-                    && $job->templateName === 'reenrollment_complete'
+                    && $job->templateName === 'reenrollment_first_payment'
                     && $job->languageCode === 'id'
                     && $job->bodyParameters === [
                         $registration->full_name,
                         $registration->registration_number,
+                        'Rp250.000',
+                        'Rp250.000',
+                        'Rp0',
+                        'Lunas',
                     ];
             }
         );
@@ -260,9 +265,7 @@ class ReenrollmentPaymentServiceTest extends TestCase
 
     public function test_multiple_payments_can_complete_reenrollment(): void
     {
-        $registration = $this->makeRegistration(
-            'ACCEPTED'
-        );
+        $registration = $this->makeRegistration('ACCEPTED');
 
         $this->service->addPayment(
             $registration,
@@ -272,10 +275,9 @@ class ReenrollmentPaymentServiceTest extends TestCase
 
         $registration->refresh();
 
-        $this->assertSame(
-            'ACCEPTED',
-            $registration->status
-        );
+        $this->assertSame('REENROLLED', $registration->status);
+        $this->assertSame(150000, $this->service->remaining($registration));
+        $this->assertFalse($this->service->isPaidOff($registration));
 
         $this->service->addPayment(
             $registration,
@@ -285,19 +287,30 @@ class ReenrollmentPaymentServiceTest extends TestCase
 
         $registration->refresh();
 
-        $this->assertSame(
-            'REENROLLED',
-            $registration->status
-        );
+        $this->assertSame('REENROLLED', $registration->status);
+        $this->assertSame(0, $this->service->remaining($registration));
+        $this->assertTrue($this->service->isPaidOff($registration));
 
         $this->assertSame(
             250000,
             (int) DB::table('reenrollment_payments')
-                ->where(
-                    'registration_id',
-                    $registration->id
-                )
+                ->where('registration_id', $registration->id)
                 ->sum('amount')
+        );
+
+        $this->assertSame(
+            2,
+            DB::table('reenrollment_payments')
+                ->where('registration_id', $registration->id)
+                ->count()
+        );
+
+        $this->assertSame(
+            1,
+            DB::table('registration_status_histories')
+                ->where('registration_id', $registration->id)
+                ->where('to_status', 'REENROLLED')
+                ->count()
         );
     }
 
@@ -342,7 +355,7 @@ class ReenrollmentPaymentServiceTest extends TestCase
         $registration->refresh();
 
         $this->assertSame(
-            'ACCEPTED',
+            'REENROLLED',
             $registration->status
         );
     }
@@ -633,6 +646,7 @@ class ReenrollmentPaymentServiceTest extends TestCase
                 'user_id',
                 $this->user->id
             )
+            ->where('action', 'REENROLLMENT_PAYMENT')
             ->latest('id')
             ->first();
 
@@ -655,6 +669,19 @@ class ReenrollmentPaymentServiceTest extends TestCase
             100000,
             (int) $metadata['amount']
         );
+
+        $this->assertDatabaseHas('activity_logs', [
+            'registration_id' => $registration->id,
+            'user_id' => $this->user->id,
+            'action' => 'CHANGE_STATUS',
+        ]);
+
+        $this->assertDatabaseHas('registration_status_histories', [
+            'registration_id' => $registration->id,
+            'from_status' => 'ACCEPTED',
+            'to_status' => 'REENROLLED',
+            'changed_by' => $this->user->id,
+        ]);
     }
 
     public function test_fee_helpers_return_correct_values(): void
