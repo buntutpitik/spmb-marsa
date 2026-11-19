@@ -563,8 +563,10 @@
                                                         id="payment-amount-display"
                                                         type="text"
                                                         inputmode="numeric"
-                                                        x-model="amountDisplay"
-                                                        @input="formatAmount($event.target.value)"
+                                                        :value="amountDisplay"
+                                                        @focus="$event.target.value = amountRaw"
+                                                        @input="amountRaw = $event.target.value; amountDisplay = $event.target.value"
+                                                        @blur="formatAmount($event.target.value); $event.target.value = amountDisplay"
                                                         placeholder="0"
                                                         class="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 text-sm font-semibold focus:border-violet-500 focus:ring-4 focus:ring-violet-100"
                                                         required
